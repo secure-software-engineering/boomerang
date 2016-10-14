@@ -68,7 +68,7 @@ class ParamAllocWorklistEntry extends IWorklistEntry {
             ContextResolver.getAllocationSiteTargetsFor(ap, callSite, callee, dartcontext);
         for (AccessGraph t : targets) {
           Set<AccessGraph> toSearch = new HashSet<>();
-          if (t.getFieldCount() > 0) {
+          if ((!t.isStatic() && t.getFieldCount() > 0) || (t.isStatic() && t.getFieldCount() > 1)) {
             WrappedSootField lastField = t.getLastField();
             Set<AccessGraph> withoutLastfields = t.popLastField();
             for (AccessGraph withoutLastfield : withoutLastfields) {

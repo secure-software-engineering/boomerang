@@ -74,7 +74,8 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
    */
   private void reachesStartPointOfStartMethod(IPathEdge<Unit, AccessGraph> edge) {
     boolean doTurnaround =
-        context.isParameterOrThisValue(edge.getTarget(), edge.factAtTarget().getBase());
+        context.isParameterOrThisValue(edge.getTarget(), edge.factAtTarget().getBase()) ||
+        (edge.factAtTarget().isStatic() && context.trackStaticFields());
     if (doTurnaround) {
       if (context.getSubQuery() == null)
         return;
