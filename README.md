@@ -1,6 +1,6 @@
 # Boomerang
 
-Boomerang is a demand-driven context and flow-sensitive pointer analysis for Java. It is built on top of [Soot](https://sable.github.io/soot/) and [Heros](https://github.com/Sable/heros). 
+Boomerang is a demand-driven context and flow-sensitive pointer analysis for Java. It is built on top of [Soot](https://sable.github.io/soot/) and [Heros](https://github.com/Sable/heros).
 
 The key novelties of Boomerang are the *query format* and the *client-driven context-resolution*.
 
@@ -16,4 +16,4 @@ We have prepared a couple of examples on how to use Boomerang. They can be found
 Boomerang is released under LGPL - see [LICENSE.txt](LICENSE.txt) for details.
 
 # Authors
-Boomerang has been developed by [Johannes Späth](mailto:joh.spaeth@gmail.com), Lisa Nguyen Quang Do, [Karim Ali](http://karimali.ca) and [Eric Bodden](bodden.de).
+Boomerang has been developed by [Johannes Späth](mailto:joh.spaeth@gmail.com), Lisa Nguyen Quang Do, [Karim Ali](http://karimali.ca) and [Eric Bodden](http://bodden.de).
