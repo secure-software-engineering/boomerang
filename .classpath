@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="example"/>
+	<classpathentry kind="src" path="exampleTarget"/>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="/Users/johannesspath/Documents/workspace/ideal/libs/boomerang/libs/grph-1.8.0-big.jar"/>
+	<classpathentry kind="lib" path="/Users/johannesspath/Documents/workspace/ideal/libs/boomerang/libs/guava-18.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/soot"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

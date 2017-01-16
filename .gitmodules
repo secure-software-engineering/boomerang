@@ -1,0 +1,9 @@
+[submodule "libs/heros"]
+	path = libs/heros
+	url = git@github.com:Sable/heros.git
+[submodule "libs/soot"]
+	path = libs/soot
+	url = git@github.com:Sable/soot.git
+[submodule "libs/jasmin"]
+	path = libs/jasmin
+	url = git@github.com:Sable/jasmin.git
