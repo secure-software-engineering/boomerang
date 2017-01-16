@@ -8,6 +8,17 @@ The key novelties of Boomerang are the *query format* and the *client-driven con
 
 *Client-driven context-resolution:* Each query of Boomerang can be limited to a context dictated by the client - the analysis Boomerang is integrated into. Instead of merging points-to information across all possible call sites of a method, Boomerang allows to filter context such that the queries output is with respect to a given calling context. This improves precision when integrating into a context-sensitive analysis, such as a taint or typestate analysis.
 
+# Instructions
+
+This project is an eclipse project and can be imported into your workspace. It depends on the git repositories [Soot](https://github.com/Sable/soot), [Heros](https://github.com/Sable/heros) and [Jasmin](https://github.com/Sable/jasmin). These are included as git submodules to ease the synchronisation process and avoid compile time errors.
+To clone a compilable version all submodulues must be available as well. This is taken care of by the use of the --recursive option of git clone.
+
+```
+git clone --recursive git@github.com:uasys/boomerang.git
+```
+
+After the checkout, the root folder of Boomerang will contain a libs folder with the three submodule repositories. Each of them is an eclipse project. Also import these projects as existing Java projects into your eclipse workspace. Boomerang then has all it dependencies and is ready to be used.
+
 # Examples
 
 We have prepared a couple of examples on how to use Boomerang. They can be found [here](example/example/Example.java).
