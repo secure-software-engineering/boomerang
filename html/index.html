@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>jQuery.getJSON demo</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="webix/codebase/webix.css">
+  <script src="data.js"></script>
+  <script src="jquery-3.1.1.min.js"></script>
+  <script src="cytoscape.js"></script>
+  <script src="webix/codebase/webix.js"></script>
+  <script src="dagre.min.js"></script>
+  <script src="cytoscape-dagre.js"></script>
+  <script src="cytoscape-qtip.js"></script>
+
+
+</head>
+<body>
+<script>
+var activeMethod = null;
+var selectedDirection ="BACKWARD";
+var isShortNotation = true;
+webix.ui({
+  view: "tabview",
+  cells: [
+    {
+      header: "ESG",
+      body: {view: "flexlayout",
+        rows:[
+          {
+            cols:[
+              { 
+               header:"Methods", body:
+                {
+                view:"list", 
+                width:320,
+                template:"#name#",
+                id:"methodList",
+                data: methodList,
+                select:1,
+                navigation:true,
+                on:{
+                  onSelectChange: function(methodId){
+                    activeMethod = methodId;
+                    renderMethod();
+                  }
+                }
+                }
+              },
+             {
+                 view:"resizer",
+                 id:"resizerRight"
+             },
+              {
+                rows:[{view:"toolbar",
+                      id:"myToolbar",
+                      cols:[
+                          { view:"segmented", width: 270,
+                            on:{
+                              onChange: function(selection){
+                                selectedDirection = selection;
+                                renderMethod();
+                              }
+                            }, 
+                            
+                            options:[
+                            {id:"BACKWARD", value:"Backward"},
+                            {id:"FORWARD", value:"Forward"},
+                            ] 
+                          }]},
+                      {
+                    view: "template",
+                    template: "<div id='main'></div>",on:{
+                    onAfterRender: renderMethod
+                  }},
+                    ]
+                }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      header: "Subquery Graph",
+      body: {
+                  view: "template",
+                  template: "<div id='subqueryGraph' style='height:100%;';></div>",
+                  on:{
+                    onAfterRender: renderSubqueryGraph
+                  }
+      }
+    }
+  ]});
+
+function isReverseEdge(el){
+  if(el.data().direction == "FORWARD"){
+    return el.source().position().y > el.target().position().y;
+  } else{
+    return el.source().position().y < el.target().position().y;
+  }
+}
+function isIdentityEdge(el){
+    return el.source().position().x == el.target().position().x;
+}
+
+function addClassWhileOver(overElement,elements,cls){
+  elements.addClass(cls);
+  overElement.once('mouseout', function(event){
+      elements.removeClass(cls);
+  })
+}
+
+function renderSubqueryGraph(){
+   var methodDiv = $("div[id=subqueryGraph]");
+   var cy = cytoscape({
+          container: methodDiv,
+          zoomingEnabled: false,
+          userZoomingEnabled: false,
+          panningEnabled: true,
+          userPanningEnabled: true,
+          layout: {
+            name: 'dagre'
+          },
+
+
+          style: [
+            {
+              selector: 'node',
+              style: {
+                'height': 30,
+                'width':30,
+                'background-color': '#fff',
+                'label': 'data(label)',
+                'text-wrap': 'wrap',
+                'text-valign': 'center',
+                'text-halign': 'center',
+                'font-size': '12pt',
+                'color': '#666',
+              }
+            },
+            {
+              selector: 'edge',
+              style: {
+                'target-arrow-shape': 'triangle',
+                'target-arrow-color':  '#0ac60a',
+                'width': 1,
+                'line-color': '#0ac60a',
+                'curve-style':'bezier'
+              }
+            }
+          ],
+
+          elements: subQueries});
+          cy.on('mouseover','node',function(event){
+            var el = webix.ui({
+                view:"template",
+                id: "subqueryContextMenu", 
+                width: 500,
+                height: 120,
+                template: "<div class='hover'><div class='label'>Access Graph:</div>#accessGraph#<br><div class='label'>Statement:</div>#stmt#<br><div class='label'>Method:</div>#method#<br><div class='label'>Results:</div>#results#</div>",
+                data:event.cyTarget.data()}).show();
+
+            
+            event.cyTarget.once('mouseout', function(event){
+                $$("subqueryContextMenu").hide();
+            })
+
+          });
+}
+function renderMethod(){
+  $.each( methods, function( i, item ) {
+        if(item.methodId != activeMethod)
+          return;
+        console.log("HERE")
+        var methodDiv = $("div[id=main]");
+        var cy = cytoscape({
+          container: methodDiv,
+          zoomingEnabled: false,
+          userZoomingEnabled: false,
+          panningEnabled: true,
+          userPanningEnabled: true,
+          layout: {
+            name: 'preset'
+          },
+
+          style: [
+            {
+              selector: 'node',
+              style: {
+                'height': 6,
+                'width':6,
+                'background-color': '#cccccc',
+              }
+            },
+          {
+              selector: '.stmt.label',
+              style: {
+                'background-color': '#ffffff',
+                'label': (isShortNotation ? 'data(shortLabel)' : 'data(label)'),
+                'text-halign': 'right',
+                'font-size': '12pt',
+                'color': '#666',
+                'height': 20,
+                'width':50,
+                'font-family': 'Courier'
+              }
+            }, 
+            {
+              selector: '.fact.label',
+              style: {
+                'label': 'data(label)',
+                'background-color': '#ffffff',
+                'text-rotation': '90deg',
+                'text-halign': 'left',
+                'font-size': '12pt',
+                'color': '#666',
+                'font-family': 'Courier'
+              }, },
+            {
+              selector: '.label.bold',
+              style: {
+                "font-weight": "bold",
+                'color': '#111',
+              }
+            },
+            {
+              selector: 'edge',
+              style: {
+                'target-arrow-shape': 'triangle',
+                'target-arrow-color': function(el){ return (isIdentityEdge(el) ? '#cccccc' : '#0ac60a');},
+                'width': 1,
+                'line-color': function(el){ return (isIdentityEdge(el) ? "#cccccc" : '#0ac60a');},
+                
+                'curve-style': function(el){return (isReverseEdge(el) ? 'unbundled-bezier': 'bezier');}
+              }
+            },{
+              selector: '.hidden',
+              style: {
+                'opacity': '0'
+              }
+            },{
+              selector: '.callFlow',
+              style: {
+                'target-arrow-color': 'blue',
+                'line-color': 'blue',
+              }
+            },{
+              selector: '.returnFlow',
+              style: {
+                'target-arrow-color': 'red',
+                'line-color': 'red',
+              }
+            },{
+              selector: '.call2ReturnFlow',
+              style: {
+              }
+            },{
+              selector: '.indirectReadFlow',
+              style: {
+                'target-arrow-color': 'green',
+                'line-color': 'green',
+                'line-style': 'dashed',
+              }
+            },{
+              selector: '.indirectCallFlow',
+              style: {
+                'target-arrow-color': 'green',
+                'line-color': 'green',
+                'line-style': 'dashed',
+              }
+            },{
+              selector: '.indirectReturnFlow',
+              style: {
+                'target-arrow-color': 'green',
+                'line-color': 'green',
+                'line-style': 'dashed',
+              }
+            },{
+              selector: '.highlight',
+              style: {
+                'height': 8,
+                'width':8,
+                'opacity': '1',
+                'background-color': 'orange'
+              }
+            },{
+              selector: '.indirectWriteFlow',
+              style: {
+                'target-arrow-color': 'green',
+                'line-color': 'green',
+                'line-style': 'dashed',
+              }
+            }
+          ],
+
+          elements: item.data});
+
+          cy.$("*").addClass("hidden");
+          cy.$(".label").removeClass("hidden");
+          cy.$(".method"+activeMethod+"."+selectedDirection).removeClass("hidden");
+          
+          cy.on('mouseover','node[callSite]',function(event){console.log(event);
+            var el = webix.ui({
+                view:"contextmenu",
+                id: "callSiteContextMenu", 
+                width: 500,
+                template: "#name#",
+                on:{
+                  onItemClick: function(el){
+                    activeMethod = el;
+                    renderMethod();
+                  }
+                },
+                data:event.cyTarget.data().callees}).show();
+
+            $$("callSiteContextMenu").setPosition(event.originalEvent.x,event.originalEvent.y);
+            event.cyTarget.once('mouseout', function(event){
+                $$("callSiteContextMenu").hide();
+            })
+
+          });
+          cy.on('mouseover', 'node', function(event) {
+            var tgt = event.cyTarget;
+              if(tgt.hasClass("hidden"))
+                return;
+              if(!tgt.hasClass("queryNode"))
+                return;
+            var queryId = tgt.data().queryId;
+            var elements = cy.elements("node[queryId="+queryId+"]");
+           
+            addClassWhileOver(tgt,elements,"hightlight");
+          });
+           cy.on('mouseover', 'node.esgNode', function(event) {
+            var tgt = event.cyTarget;
+              if(tgt.hasClass("hidden"))
+                return;
+            var stmtId = tgt.data().stmtId;
+            var elements = cy.$("node[stmtId="+stmtId+"]");
+            addClassWhileOver(tgt,elements,"bold");
+
+            var factId = tgt.data().factId;
+            var elements = cy.$("node[factId="+factId+"]");
+            addClassWhileOver(tgt,elements,"bold");
+          });
+  });
+};
+</script>
+ 
+</body>
+</html>

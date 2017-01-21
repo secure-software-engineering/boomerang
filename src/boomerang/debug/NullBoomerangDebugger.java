@@ -163,4 +163,35 @@ public class NullBoomerangDebugger implements IBoomerangDebugger {
 	public void onProcessNormal(IPathEdge<Unit, AccessGraph> edge) {
 	}
 
+	@Override
+	public void callFlow(Direction direction, Unit target, AccessGraph startFact, Unit calleeSp,
+			AccessGraph targetFact) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void indirectFlowEdgeAtRead(AccessGraph source, Unit curr, AccessGraph ap, Unit succ) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void indirectFlowEdgeAtWrite(AccessGraph source, Unit target, AccessGraph ag, Unit curr) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void indirectFlowEdgeAtReturn(AccessGraph source, Unit callSite, AccessGraph alias, Unit returnSite) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void indirectFlowEdgeAtCall(AccessGraph source, Unit callSite, AccessGraph alias, Unit returnSite) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

@@ -67,6 +67,7 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
       if (!isValid(d3))
         continue;
       PathEdge<N, D> succEdge = new PathEdge<N, D>(calleeSp, d3, calleeSp, d3);
+      debugger.callFlow(direction, prevEdge.getTarget(), d2, calleeSp, d3);
       out.addAll(callFunctionExtendor(prevEdge, succEdge, callee));
     }
     sanitize(out);

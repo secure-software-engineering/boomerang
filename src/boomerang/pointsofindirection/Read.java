@@ -136,6 +136,7 @@ public class Read implements BackwardBackwardHandler {
       }
       IPathEdge<Unit, AccessGraph> newEdge =
           new BackwardEdge(edge.getStart(), edge.factAtSource(), succ, ap);
+      context.debugger.indirectFlowEdgeAtRead(source,curr,ap, succ);
       backwardsSolver.propagate(newEdge, edge, PropagationType.Normal, null);
     }
     backwardsSolver.awaitExecution();

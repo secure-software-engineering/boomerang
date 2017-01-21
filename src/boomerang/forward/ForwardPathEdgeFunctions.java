@@ -310,6 +310,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
             new PathEdge<Unit, AccessGraph>(succEdge.getStart(), succEdge.factAtSource(),
                 succEdge.getTarget(), alias);
         out.add(succAliasEdge);
+        context.debugger.indirectFlowEdgeAtReturn(d, callSite, alias, succEdge.getTarget());
       }
     }
 
@@ -378,6 +379,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
             new PathEdge<Unit, AccessGraph>(succEdge.getStart(), succEdge.factAtSource(),
                 succEdge.getTarget(), alias);
         out.add(succAliasEdge);
+        context.debugger.indirectFlowEdgeAtReturn(d2, callSite, alias, succEdge.getTarget());
       }
     }
 

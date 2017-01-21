@@ -53,4 +53,11 @@ public void onProcessingParamPOI(BackwardParameterTurnHandler backwardParameterT
 public void onAliasQueryFinished(Query q, AliasResults res);
 
 public void onAliasTimeout(Query q);
+
+public void indirectFlowEdgeAtRead(AccessGraph source, Unit curr, AccessGraph ap, Unit succ);
+
+public void indirectFlowEdgeAtWrite(AccessGraph source, Unit target, AccessGraph ag, Unit curr);
+
+public void indirectFlowEdgeAtReturn(AccessGraph source, Unit callSite, AccessGraph alias, Unit returnSite);
+public void indirectFlowEdgeAtCall(AccessGraph source, Unit callSite, AccessGraph alias, Unit returnSite);
 }

@@ -19,6 +19,7 @@ public interface IFDSDebugger<N, D, M, I extends BiDiInterproceduralCFG<N, M>> {
   public void callToReturn(Direction dir, N start, D startFact, N target, D targetFact);
 
   public void returnFlow(Direction dir, N start, D startFact, N target, D targetFact);
+  public void callFlow(Direction direction, N target, D startFact, N calleeSp, D targetFact);
 
   public void backwardStart(Direction backward, Unit stmt, AccessGraph d1, Unit s);
 

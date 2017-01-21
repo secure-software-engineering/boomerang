@@ -53,12 +53,14 @@ public class Write implements ForwardPointOfIndirection {
       throw new BoomerangTimeoutException();
     this.icfg = context.icfg;
     AliasFinder dart = new AliasFinder(context);
-    AliasResults res = dart.findAliasAtStmt(new AccessGraph(base, base.getType()), curr,
-        new WriteContextRequester(context.getCurrentForwardSolver()));
+    AliasResults res = dart.findAliasAtStmt(new AccessGraph(base, base.getType()), curr);
     Set<AccessGraph> set =
         AliasResults.appendField(res.mayAliasSet(), new WrappedSootField(field, source.getBaseType(),
             curr), context);
     set = AliasResults.appendFields(set, source, context);
+    for(AccessGraph ag: set){
+    	context.debugger.indirectFlowEdgeAtWrite(source,edge.getTarget(),ag, curr);
+    }
     return set;
   }
 

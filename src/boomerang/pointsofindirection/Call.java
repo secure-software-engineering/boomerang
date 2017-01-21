@@ -43,6 +43,7 @@ public class Call implements BackwardBackwardHandler, PointOfIndirection {
         }
         IPathEdge<Unit, AccessGraph> newEdge =
             new BackwardEdge(null, factInsideCall, returnSiteOfCall, ap);
+        context.debugger.indirectFlowEdgeAtCall(factInsideCall, returnSiteOfCall, ap, returnSiteOfCall);
         backwardsSolver.propagate(newEdge, prevEdge, PropagationType.Normal, null);
       }
       backwardsSolver.awaitExecution();

@@ -1,0 +1,62 @@
+.stmts{
+  float:left;
+}
+.stmt{
+  margin: 3px;
+  margin-left: 30px;
+}
+
+.node{
+  color: red;
+  position: relative;
+}
+
+.clear{
+  clear:both;
+}
+
+canvas{
+  position: absolute;
+}
+
+.activeNode{
+  height:2px;
+  width:2px;
+  top: 0px;
+  margin: 0 auto;
+  background-color: red;
+}
+
+.arrow {
+  width: 100%;
+  color: black;
+  height: 1px;
+  background-color: black;
+}
+.method{
+  position: relative;
+}
+
+div#main {
+    height:100vh;
+}
+
+.label{
+  font-weight: bold;
+    float: left;
+    width: 120px;
+}
+
+#subqueryWrapper,#methodList{
+  position: absolute;
+  right: 0;
+  top:0 ;
+}
+.hidden{
+    opacity: 0;
+}
+.hover{
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
