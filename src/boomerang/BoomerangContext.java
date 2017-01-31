@@ -102,6 +102,7 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
     this.icfg = icfg;
     this.bwicfg = bwicfg;
     this.debugger = options.getDebugger();
+    this.debugger.setContext(this);
     this.budgetInMilliSeconds = options.getTimeBudget();
     WrappedSootField.TRACK_TYPE = options.getTrackType();
     WrappedSootField.TRACK_STMT = options.getTrackStatementsInFields();

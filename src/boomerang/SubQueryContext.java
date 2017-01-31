@@ -29,14 +29,14 @@ import soot.Unit;
 import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 
 public class SubQueryContext {
-	private Query query;
-	private Incomings incomings = new Incomings();
-	private Set<PointOfIndirection> directProcessedPOI = new HashSet<>();
-	private BoomerangContext context;
-	private PathEdgeStore FW_PATHEDGES;
-	private PathEdgeStore BW_PATHEDGES;
-	private LinkedList<PointOfIndirection> worklist = new LinkedList<>();
-	private BackwardsPathConstructor<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> BW_PATH_CONSTRUCTOR;
+  private final Query query;
+  private Incomings incomings = new Incomings();
+  private Set<PointOfIndirection> directProcessedPOI = new HashSet<>();
+  private BoomerangContext context;
+  private PathEdgeStore FW_PATHEDGES;
+  private PathEdgeStore BW_PATHEDGES;
+  private LinkedList<PointOfIndirection> worklist = new LinkedList<>();
+  private BackwardsPathConstructor<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> BW_PATH_CONSTRUCTOR;
   private ForwardSolver forwardSolver;
 
 	SubQueryContext(Query q, BoomerangContext c, SubQueryContext parent) {
@@ -120,12 +120,15 @@ public class SubQueryContext {
 		return incomings.incoming(startStmtAndFact, callee);
 	}
 
-	void cleanup() {
-		query = null;
-		incomings.clear();
-		incomings = null;
-	}
-
+  void cleanup() {
+    incomings.clear();
+    incomings = null;
+    BW_PATH_CONSTRUCTOR = null;
+    BW_PATHEDGES.clear();
+    BW_PATHEDGES = null;
+    FW_PATHEDGES.clear();
+    FW_PATHEDGES = null;
+  }
 
 	/**
 	 * Adds a {@link PointOfIndirection} to the worklist. Beforehand a check is

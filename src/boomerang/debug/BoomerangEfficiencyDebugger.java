@@ -3,6 +3,7 @@ package boomerang.debug;
 import java.util.Collection;
 import java.util.HashSet;
 
+import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
@@ -209,6 +210,12 @@ public class BoomerangEfficiencyDebugger implements IBoomerangDebugger {
 
 	@Override
 	public void indirectFlowEdgeAtCall(AccessGraph source, Unit callSite, AccessGraph alias, Unit returnSite) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setContext(BoomerangContext boomerangContext) {
 		// TODO Auto-generated method stub
 		
 	}

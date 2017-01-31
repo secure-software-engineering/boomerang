@@ -21,6 +21,7 @@ import boomerang.cache.ResultCache.WithContextRequesterQueryCache;
 import boomerang.context.ContextResolver;
 import boomerang.context.IContextRequester;
 import boomerang.context.NoContextRequester;
+import boomerang.debug.BoomerangDebugger;
 import boomerang.forward.ForwardProblem;
 import boomerang.forward.ForwardSolver;
 import boomerang.pointsofindirection.BackwardBackwardHandler;
@@ -46,6 +47,8 @@ public class AliasFinder {
 			return "ARRAY";
 		}
 	};
+
+	private static final boolean DEBUG = false;
 
 	/**
 	 * General context object, this object is globally accessible for the entire
@@ -81,8 +84,9 @@ public class AliasFinder {
 
 	public AliasFinder(IInfoflowCFG cfg, BackwardsInfoflowCFG bwcfg, BoomerangOptions options) {
 		this.context = new BoomerangContext(cfg, bwcfg, options);
+    if (DEBUG)
+      context.debugger = new BoomerangDebugger();
 	}
-
 	/**
 	 * Constructs an AliasFinder with the provided context. The context carries
 	 * global information, such as the call graph.
@@ -92,6 +96,8 @@ public class AliasFinder {
 	 */
 	public AliasFinder(BoomerangContext context) {
 		this.context = context;
+    if (DEBUG)
+      context.debugger = new BoomerangDebugger();
 	}
 
 	/**

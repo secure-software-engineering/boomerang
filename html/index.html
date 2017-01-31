@@ -20,10 +20,11 @@
 var activeMethod = null;
 var selectedDirection ="BACKWARD";
 var isShortNotation = true;
+var highlightedNode;
 webix.ui({
   view: "tabview",
   cells: [
-    {
+   /* {
       header: "ESG",
       body: {view: "flexlayout",
         rows:[
@@ -42,7 +43,7 @@ webix.ui({
                 on:{
                   onSelectChange: function(methodId){
                     activeMethod = methodId;
-                    renderMethod();
+                    renderMethodWithESG(methodId, $("div[id=main]"));
                   }
                 }
                 }
@@ -59,7 +60,7 @@ webix.ui({
                             on:{
                               onChange: function(selection){
                                 selectedDirection = selection;
-                                renderMethod();
+                                renderMethodWithESG(activeMethod,$("div[id=main]"));
                               }
                             }, 
                             
@@ -70,24 +71,57 @@ webix.ui({
                           }]},
                       {
                     view: "template",
-                    template: "<div id='main'></div>",on:{
-                    onAfterRender: renderMethod
-                  }},
+                    template: "<div id='main'></div>",
+                    on:{
+                      onAfterRender: function(){
+                        renderMethodWithESG(activeMethod,$("div[id=main]"));
+                      }
+                    }},
                     ]
                 }
             ]
           }
         ]
       }
-    },
+    },*/
     {
       header: "Subquery Graph",
       body: {
+        rows:[
+              { 
                   view: "template",
-                  template: "<div id='subqueryGraph' style='height:100%;';></div>",
+                  template: "<div id='subqueryGraph' style='height:100%;'></div>",
                   on:{
                     onAfterRender: renderSubqueryGraph
-                  }
+                  },
+                  minHeight: 200,
+              },
+             {
+                 view:"resizer",
+             },
+              {rows:[{view:"toolbar",
+                      id:"myToolbar",
+                      cols:[
+                          { view:"segmented", width: 270,
+                            on:{
+                              onChange: function(selection){
+                                selectedDirection = selection;
+                                renderMethodWithESG(activeMethod,$("div[id=methodGraph]"));
+                              }
+                            }, 
+                            
+                            options:[
+                            {id:"BACKWARD", value:"Backward"},
+                            {id:"FORWARD", value:"Forward"},
+                            ] 
+                          }]},{
+                view:"template",
+                id: "subqueryInfo", 
+                template: "Hover any of the nodes left",
+                minHeight: 200,
+                }]}
+        ]
+      
       }
     }
   ]});
@@ -147,33 +181,84 @@ function renderSubqueryGraph(){
                 'line-color': '#0ac60a',
                 'curve-style':'bezier'
               }
+            },{
+              selector: '.hightlightNode',
+              style:{
+                'background-color': '#ccc'
+              }
             }
           ],
 
           elements: subQueries});
-          cy.on('mouseover','node',function(event){
-            var el = webix.ui({
+          cy.on('mouseover','node',showQueryInformation);
+}
+function showQueryInformation(event){
+  if(highlightedNode)
+    highlightedNode.removeClass("hightlightNode");
+var container = $("div[view_id=subqueryInfo]");
+  container.empty();
+   webix.ui({
+    container: container[0],
                 view:"template",
                 id: "subqueryContextMenu", 
-                width: 500,
-                height: 120,
-                template: "<div class='hover'><div class='label'>Access Graph:</div>#accessGraph#<br><div class='label'>Statement:</div>#stmt#<br><div class='label'>Method:</div>#method#<br><div class='label'>Results:</div>#results#</div>",
+                height: '100%',
+                template: "<div id='queryDetails'><div class='fact' factid='#factId#'><span class='label'>Access Graph:</span>#fact#</div><div class='stmt' stmtid='#stmtId#'><span class='label'>Statement:</span>#stmt#</div><div><span class='label'>Method:</span>#method#</div><div><span class='label'>Results:</span></div><div id='results'></div></div><div id='methodGraph' style='height: 100%;'></div>",
                 data:event.cyTarget.data()}).show();
 
-            
-            event.cyTarget.once('mouseout', function(event){
-                $$("subqueryContextMenu").hide();
-            })
+  $.each(event.cyTarget.data().results.allocSites, function(i,allocSites){
+    var text = allocSites.stmt +" -> {";
+    $.each(allocSites.values,function(i,o){
+        text += "<span class='accessGraph' factId='"+o.factId+"'>" + o.fact+",</span>";
+    })
+    text += "}<br>";
+    var resultsDiv = $("#results");
+    $("<span class='allocSite'>").html(text).attr("stmtId",allocSites.stmtId).appendTo(resultsDiv);
+  });
 
-          });
+  
+
+  activeMethod = event.cyTarget.data().methodId;
+  var cy = renderMethodWithESG(activeMethod, $("div[id=methodGraph]"));
+  event.cyTarget[0].addClass("hightlightNode");
+  highlightedNode = event.cyTarget[0];
+  var els = null;
+  $("span.allocSite").hover(function(ev){
+    var stmtId = $(ev.target).attr("stmtid");
+    if(!stmtId)
+      return
+    els = cy.$("node[stmtId="+stmtId+"]");
+    $(ev.target).children("span.accessGraph").each(function(i,el){
+      var factId = $(el).attr("factid");
+      var element = cy.$("node[factId="+factId+"]");
+      els = els.union(cy.$("node[factId="+factId+"]"));
+    });
+    els.addClass("bold");},
+    function(){
+      if(els != null)
+        els.removeClass("bold");
+    });
+  var queryEls = null
+  $("div#queryDetails").hover(function(ev){
+  /*  test = $(ev.target);
+    console.log(test);
+    var stmtId = $(ev.target).children("div.stmt")[0].attr("stmtid");
+    var factId = $(ev.target).children("div.fact")[0].attr("factid");
+    els = cy.$("node[stmtId="+stmtId+"]");
+    els = els.union(cy.$("node[factId="+factId+"]"));
+    els.addClass("boldHighlight");*/
+  },function(ev){
+      if(els != null)
+        els.removeClass("boldHighlight");
+  })
 }
-function renderMethod(){
+
+
+function renderMethodIn(methodId, methodDiv){
+  var cy = null;
   $.each( methods, function( i, item ) {
-        if(item.methodId != activeMethod)
+        if(item.methodId != methodId)
           return;
-        console.log("HERE")
-        var methodDiv = $("div[id=main]");
-        var cy = cytoscape({
+        cy = cytoscape({
           container: methodDiv,
           zoomingEnabled: false,
           userZoomingEnabled: false,
@@ -223,6 +308,15 @@ function renderMethod(){
                 'color': '#111',
               }
             },
+
+            {
+              selector: '.label.boldHighlight',
+              style: {
+                "font-weight": "bold",
+                'color': 'rgb(255, 156, 49)',
+              }
+            },
+
             {
               selector: 'edge',
               style: {
@@ -294,10 +388,18 @@ function renderMethod(){
           ],
 
           elements: item.data});
+  });
+  return cy;
+}
+function renderMethodWithESG(methodId, methodDiv){
 
+        var cy = renderMethodIn(methodId,methodDiv);
+        if(cy == null)
+          return;
+        console.log(cy);
           cy.$("*").addClass("hidden");
           cy.$(".label").removeClass("hidden");
-          cy.$(".method"+activeMethod+"."+selectedDirection).removeClass("hidden");
+          cy.$(".method"+methodId+"."+selectedDirection).removeClass("hidden");
           
           cy.on('mouseover','node[callSite]',function(event){console.log(event);
             var el = webix.ui({
@@ -307,8 +409,7 @@ function renderMethod(){
                 template: "#name#",
                 on:{
                   onItemClick: function(el){
-                    activeMethod = el;
-                    renderMethod();
+                    renderMethodWithESG(el,$("div[id=main]"));
                   }
                 },
                 data:event.cyTarget.data().callees}).show();
@@ -342,7 +443,7 @@ function renderMethod(){
             var elements = cy.$("node[factId="+factId+"]");
             addClassWhileOver(tgt,elements,"bold");
           });
-  });
+           return cy;
 };
 </script>
  

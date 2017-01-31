@@ -1,10 +1,6 @@
 .stmts{
   float:left;
 }
-.stmt{
-  margin: 3px;
-  margin-left: 30px;
-}
 
 .node{
   color: red;
@@ -18,27 +14,8 @@
 canvas{
   position: absolute;
 }
-
-.activeNode{
-  height:2px;
-  width:2px;
-  top: 0px;
-  margin: 0 auto;
-  background-color: red;
-}
-
-.arrow {
-  width: 100%;
-  color: black;
-  height: 1px;
-  background-color: black;
-}
-.method{
-  position: relative;
-}
-
 div#main {
-    height:100vh;
+  height:100vh;
 }
 
 .label{
@@ -55,8 +32,8 @@ div#main {
 .hidden{
     opacity: 0;
 }
-.hover{
+#queryDetails{
   position: absolute;
-  bottom: 10px;
-  left: 10px;
+  right: 10px;
+  top:10px ;
 }

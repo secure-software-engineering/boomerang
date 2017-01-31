@@ -2,6 +2,7 @@ package boomerang.debug;
 
 import java.util.Collection;
 
+import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
@@ -60,4 +61,7 @@ public void indirectFlowEdgeAtWrite(AccessGraph source, Unit target, AccessGraph
 
 public void indirectFlowEdgeAtReturn(AccessGraph source, Unit callSite, AccessGraph alias, Unit returnSite);
 public void indirectFlowEdgeAtCall(AccessGraph source, Unit callSite, AccessGraph alias, Unit returnSite);
+
+public void setContext(BoomerangContext boomerangContext);
+
 }

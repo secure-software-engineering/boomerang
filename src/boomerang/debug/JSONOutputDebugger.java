@@ -57,9 +57,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	private Set<SubqueryEdge> subQueryEdges = new HashSet<>();
 	private Map<Subquery,AliasResults> queries = new HashMap<>();
 	
-	public JSONOutputDebugger(BoomerangContext context, File jsonFile) {
-		this.context = context;
-		this.icfg = context.icfg;
+	public JSONOutputDebugger(File jsonFile) {
 		this.jsonFile = jsonFile;
 		
 	}
@@ -157,8 +155,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	@Override
 	public void finishedQuery(Query q, AliasResults res) {
 		queries.put(new Subquery(context.getSubQuery(),0),res);
-		
-
 	}
 
 	@Override
@@ -566,16 +562,19 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 		}
 	}
 
+	private String escapeHTML(String s){
+		return StringEscapeUtils.escapeHtml4(s);
+	}
 	private class Subquery extends JSONObject{
 		private SubQueryContext sq;
 
 		Subquery(SubQueryContext sq, int level){
 			this.sq = sq;
 			JSONObject data = new JSONObject();
-			data.put("stmt", StringEscapeUtils.escapeHtml4(sq.getStmt().toString()));
-			data.put("method", StringEscapeUtils.escapeHtml4(sq.getMethod().toString()));
-			data.put("accessGraph", StringEscapeUtils.escapeHtml4(sq.getAccessPath().toString()));
-			data.put("accessGraphId", id(sq.getAccessPath()));
+			data.put("stmt", escapeHTML(getShortLabel(sq.getStmt())));
+			data.put("method", escapeHTML(sq.getMethod().toString()));
+			data.put("fact", escapeHTML(sq.getAccessPath().toString()));
+			data.put("factId", id(sq.getAccessPath()));
 			data.put("methodId", id(sq.getMethod()));
 			data.put("stmtId", id(sq.getStmt()));
 			data.put("level", level);
@@ -589,7 +588,25 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 
 		public void setResults(AliasResults aliasResults) {
 			JSONObject obj = (JSONObject)this.get("data");
-			obj.put("results", aliasResults.toString());
+			JSONObject res = new JSONObject();
+			res.put("plain", escapeHTML(aliasResults.toString()));
+			JSONArray allocSites = new JSONArray();
+			for(Pair<Unit, AccessGraph> key : aliasResults.keySet()){
+				JSONObject alloc = new JSONObject();
+				alloc.put("stmt", escapeHTML(getShortLabel(key.getO1())));
+				alloc.put("stmtId", id(key.getO1()));
+				JSONArray values = new JSONArray();
+				for(AccessGraph a : aliasResults.get(key)){
+					JSONObject o = new JSONObject();
+					o.put("fact", escapeHTML(a.toString()));
+					o.put("factId", id(a));
+					values.add(o);
+				}
+				alloc.put("values", values);
+				allocSites.add(alloc);
+			}
+			res.put("allocSites",allocSites);
+			obj.put("results", res);
 		}
 
 
@@ -627,5 +644,10 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 			data.put("target","sq"+ id(target));
 			this.put("data", data);
 		}
+	}
+	@Override
+	public void setContext(BoomerangContext boomerangContext) {
+		this.context = boomerangContext;		
+		this.icfg = context.icfg;
 	}
 }
