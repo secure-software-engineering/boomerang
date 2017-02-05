@@ -26,4 +26,8 @@ class PerMethodIncomings implements IPerMethodIncomings {
 			return Collections.emptySet();
 		return collection;
 	}
+	@Override
+	public String toString() {
+		return startNodeToIncEdges.toString();
+	}
 }

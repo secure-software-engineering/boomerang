@@ -39,6 +39,11 @@ public class Incomings implements IIncomings<Unit, SootMethod, AccessGraph> {
 		}
 		return perMethodIncomings;
 	}
+	
+	@Override
+	public String toString() {
+		return methodToInc.toString();
+	}
 
 	@Override
 	public void clear() {		

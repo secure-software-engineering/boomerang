@@ -173,6 +173,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
       return Collections.emptySet();
 
 
+    matchingAllocationIncomingEdge = new HashSet<>();
     for (IPathEdge<Unit, AccessGraph> currBwEdge : collection) {
       if (context.getSubQuery() == null)
         return Collections.emptySet();
@@ -184,7 +185,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 
       if (incomingMap == null)
         return Collections.emptySet();
-      matchingAllocationIncomingEdge = new HashSet<>();
       // check that parentsolver has callSite in incomingMap, Otherwise we do not need to return;
       for (IPathEdge<Unit, AccessGraph> inc : incomingMap) {
         Unit callSiteOfAlloc = inc.getTarget();
