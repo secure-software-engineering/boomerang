@@ -12,7 +12,6 @@ import boomerang.bidi.PathEdgeStore.Direction;
 import boomerang.cache.Query;
 import boomerang.forward.ForwardSolver;
 import boomerang.ifdssolver.IPathEdge;
-import boomerang.pathconstructor.BackwardsPathConstructor;
 import boomerang.pointsofindirection.Alloc;
 import boomerang.pointsofindirection.BackwardParameterTurnHandler;
 import boomerang.pointsofindirection.Call;
@@ -26,18 +25,17 @@ import heros.solver.Pair;
 import soot.SootMethod;
 import soot.Type;
 import soot.Unit;
-import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 
 public class SubQueryContext {
-  private final Query query;
-  private Incomings incomings = new Incomings();
-  private Set<PointOfIndirection> directProcessedPOI = new HashSet<>();
-  private BoomerangContext context;
-  private PathEdgeStore FW_PATHEDGES;
-  private PathEdgeStore BW_PATHEDGES;
-  private LinkedList<PointOfIndirection> worklist = new LinkedList<>();
-  private BackwardsPathConstructor<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> BW_PATH_CONSTRUCTOR;
-  private ForwardSolver forwardSolver;
+	private Query query;
+	private Incomings incomings = new Incomings();
+	private Set<PointOfIndirection> directProcessedPOI = new HashSet<>();
+	private BoomerangContext context;
+	private PathEdgeStore FW_PATHEDGES;
+	private PathEdgeStore BW_PATHEDGES;
+	private Set<SootMethod> backwardVisitedMethods = new HashSet<>();
+	private LinkedList<PointOfIndirection> worklist = new LinkedList<>();
+    private ForwardSolver forwardSolver;
 
 	SubQueryContext(Query q, BoomerangContext c, SubQueryContext parent) {
 		this.query = q;
@@ -45,7 +43,6 @@ public class SubQueryContext {
 
 		FW_PATHEDGES = new PathEdgeStore(c, Direction.Forward);
 		BW_PATHEDGES = new PathEdgeStore(c, Direction.Backward);
-		BW_PATH_CONSTRUCTOR = new BackwardsPathConstructor<>(BW_PATHEDGES);
 	}
 
 	public PathEdgeStore getFwEdges() {
@@ -54,9 +51,6 @@ public class SubQueryContext {
 
 	public PathEdgeStore getBwEdges() {
 		return BW_PATHEDGES;
-	}
-	public BackwardsPathConstructor<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> getPathConstructor() {
-		return BW_PATH_CONSTRUCTOR;
 	}
 
 	/**
@@ -123,7 +117,6 @@ public class SubQueryContext {
   void cleanup() {
     incomings.clear();
     incomings = null;
-    BW_PATH_CONSTRUCTOR = null;
     BW_PATHEDGES.clear();
     BW_PATHEDGES = null;
     FW_PATHEDGES.clear();
@@ -266,5 +259,13 @@ public class SubQueryContext {
 		} else if (!query.equals(other.query))
 			return false;
 		return true;
+	}
+
+	public boolean visitedBackwardMethod(SootMethod m) {
+		return backwardVisitedMethods.contains(m);
+	}
+	
+	public void addAsVisitedBackwardMethod(SootMethod m){
+		backwardVisitedMethods.add(m);
 	}
 }

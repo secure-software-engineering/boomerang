@@ -96,7 +96,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
   @Override
   protected Collection<? extends IPathEdge<Unit, AccessGraph>> normalFunctionExtendor(
       IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
-
     return Collections.singleton(succEdge);
   }
 
@@ -170,6 +169,7 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
     Call handler = new Call(initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(), prevEdge);
     if (handler.isValid(context) && context.getSubQuery() != null)
       context.getSubQuery().add(handler);
+    context.getSubQuery().addAsVisitedBackwardMethod(callee);
 
     return Collections.singleton(initialSelfLoop);
   }

@@ -29,7 +29,6 @@ import boomerang.mock.DefaultForwardDataFlowMocker;
 import boomerang.mock.DefaultNativeCallHandler;
 import boomerang.mock.MockedDataFlow;
 import boomerang.mock.NativeCallHandler;
-import boomerang.pathconstructor.BackwardsPathConstructor;
 import heros.solver.Pair;
 import soot.Local;
 import soot.SootMethod;
@@ -309,10 +308,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 
   public PathEdgeStore getForwardPathEdges() {
     return getSubQuery().getFwEdges();
-  }
-
-  public BackwardsPathConstructor<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> getPathConstructor() {
-    return getSubQuery().getPathConstructor();
   }
 
   public void setRecursive(Query q) {

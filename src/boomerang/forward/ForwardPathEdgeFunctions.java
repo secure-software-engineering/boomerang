@@ -43,44 +43,17 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
   }
 
   private boolean isActivePath(Unit target, Pair<Unit, AccessGraph> fwedge) {
+	 SootMethod m = context.icfg.getMethodOf(target);
     if (unrestrictedMethodsAndDp.contains(new Pair<SootMethod, AccessGraph>(context.icfg
         .getMethodOf(target), fwedge.getO2()))) {
       return true;
     }
-    Collection<IPathEdge<Unit, AccessGraph>> collection = fwToBwEdge.get(fwedge);
-    for (IPathEdge<Unit, AccessGraph> bwedge : collection) {
-      Set<Unit> set = this.restrictedDtoPath.get(bwedge.getTargetNode());
-      if (set != null && set.contains(target)) {
-        return true;
-      }
-    }
-    return false;
+    return context.getSubQuery().visitedBackwardMethod(m);
   }
 
   void addToFwBwEdge(Pair<Unit, AccessGraph> node, IPathEdge<Unit, AccessGraph> edge) {
     this.fwToBwEdge.put(node, edge);
   }
-
-  /**
-   * Construct the set of statement which can be visited by the supplied backward path edge. These
-   * set will then be passed to method {@link #widenPath(Pair, Collection)} to allow the forward
-   * 
-   * @param pe
-   */
-  void constructPath(IPathEdge<Unit, AccessGraph> pe) {
-    Collection<Unit> path = context.getPathConstructor().computeSetOfVisitableStatements(pe);
-    widenPath(pe.getTargetNode(), path);
-  }
-
-  private void widenPath(Pair<Unit, AccessGraph> pair, Collection<Unit> flattendResult) {
-    Set<Unit> set = restrictedDtoPath.get(pair);
-    if (set == null) {
-      set = new HashSet<Unit>();
-    }
-    set.addAll(flattendResult);
-    restrictedDtoPath.put(pair, set);
-  }
-
   /**
    * Whenever the forward analysis reaches the end of a path (that is, the backward analysis has not
    * visited a certain statement), the forward edge is stored as a "meetable" edge. The backward
@@ -190,7 +163,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
         Unit callSiteOfAlloc = inc.getTarget();
         if (callSiteOfAlloc.equals(callSite)) {
           matchingAllocationIncomingEdge.add(inc);
-          constructPath(inc);
         }
       }
     }

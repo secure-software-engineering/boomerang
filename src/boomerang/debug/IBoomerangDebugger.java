@@ -63,5 +63,4 @@ public void indirectFlowEdgeAtReturn(AccessGraph source, Unit callSite, AccessGr
 public void indirectFlowEdgeAtCall(AccessGraph source, Unit callSite, AccessGraph alias, Unit returnSite);
 
 public void setContext(BoomerangContext boomerangContext);
-
 }

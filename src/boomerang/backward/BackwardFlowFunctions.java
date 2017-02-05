@@ -50,6 +50,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions implements
       final Unit succ) {
     final Unit curr = edge.getTarget();
     final SootMethod method = context.icfg.getMethodOf(curr);
+    context.getSubQuery().addAsVisitedBackwardMethod(method);
     final Local thisLocal = method.isStatic() ? null : method.getActiveBody().getThisLocal();
     return new FlowFunction<AccessGraph>() {
       @Override

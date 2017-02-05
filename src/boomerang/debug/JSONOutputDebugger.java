@@ -59,7 +59,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	
 	public JSONOutputDebugger(File jsonFile) {
 		this.jsonFile = jsonFile;
-		
 	}
 	@Override
 	public void addIncoming(Direction direction, SootMethod callee, Pair<Unit, AccessGraph> pair,
@@ -647,7 +646,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	}
 	@Override
 	public void setContext(BoomerangContext boomerangContext) {
-		this.context = boomerangContext;		
+		this.context = boomerangContext;
 		this.icfg = context.icfg;
 	}
 }
