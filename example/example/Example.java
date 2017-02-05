@@ -91,7 +91,7 @@ public class Example {
     Options.v().setPhaseOption("cg.spark", "on");
 
     String userdir = System.getProperty("user.dir");
-    String sootCp = userdir + "/targets";
+    String sootCp = userdir + "/targetsBin";
     Options.v().set_soot_classpath(sootCp);
 
     Options.v().set_prepend_classpath(true);
