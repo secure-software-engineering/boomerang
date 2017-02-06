@@ -545,7 +545,16 @@ public class FieldGraph implements IFieldGraph{
 
 	@Override
 	public boolean shouldOverApproximate() {
-		return (graph == null ? false : graph.getAllCycles().size() > 1);
+		if(graph == null)
+			return false;
+		int counter = 0;
+		for(IntCursor i : graph.getAllOutEdgeDegrees()){
+			if(i.value >= 2)
+				counter++;
+			if(counter > 1)
+				return true;
+		}
+		return false;
 	}
 
 	@Override

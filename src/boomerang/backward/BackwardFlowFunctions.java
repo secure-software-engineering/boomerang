@@ -339,7 +339,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 			for (int i = 0; i < callee.getParameterCount(); i++)
 				paramLocals[i] = callee.getActiveBody().getParameterLocal(i);
 		}
-		context.getSubQuery().addAsVisitedBackwardMethod(context.icfg.getMethodOf(edge.getStart()));
+		context.getSubQuery().addAsVisitedBackwardMethod(context.icfg.getMethodOf(edge.getTarget()));
 		final Unit callSite = edge.getTarget();
 		return new FlowFunction<AccessGraph>() {
 			@Override

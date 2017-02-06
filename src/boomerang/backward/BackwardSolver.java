@@ -28,9 +28,9 @@ public class BackwardSolver extends
 
 
   public void startPropagation(AccessGraph d1, Unit stmt) {
-    PathEdge<Unit, AccessGraph> prevEdge = new PathEdge<Unit, AccessGraph>(stmt, d1, stmt, d1);
+    PathEdge<Unit, AccessGraph> prevEdge = new PathEdge<Unit, AccessGraph>(null, d1, stmt, d1);
     for (Unit s : icfg.getSuccsOf(stmt)) {
-      PathEdge<Unit, AccessGraph> edge = new PathEdge<Unit, AccessGraph>(stmt, d1, s, d1);
+      PathEdge<Unit, AccessGraph> edge = new PathEdge<Unit, AccessGraph>(null, d1, s, d1);
       debugger.backwardStart(Direction.BACKWARD, stmt, d1, s);
       checkForMeetingPoints(edge, stmt);
       propagate(edge, prevEdge, PropagationType.Normal, null);

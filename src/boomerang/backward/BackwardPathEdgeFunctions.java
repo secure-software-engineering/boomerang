@@ -162,11 +162,11 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
       SootMethod callee) {
 
     initialSelfLoop =
- new PathEdge<>(initialSelfLoop.getStart(), initialSelfLoop.factAtSource(),
+ new PathEdge<>(null, initialSelfLoop.factAtSource(),
         initialSelfLoop.getTarget(),
             initialSelfLoop.factAtTarget());
     performMeetCheckOnEnter(initialSelfLoop, prevEdge);
-    Call handler = new Call(initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(), prevEdge);
+    Call handler = new Call(initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(), prevEdge, callee);
     if (handler.isValid(context) && context.getSubQuery() != null)
       context.getSubQuery().add(handler);
 

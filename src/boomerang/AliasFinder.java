@@ -396,8 +396,11 @@ public class AliasFinder {
 				throw new BoomerangTimeoutException();
 			}
 			PointOfIndirection first = context.getSubQuery().removeFirst();
-
-			processPOI(first, backwardsolver);
+			if(!context.isProcessedPOI(first)){
+				processPOI(first, backwardsolver);
+				context.addProcessedPOI(first);
+			}
+			
 		}
 		if (Thread.interrupted()) {
 			context.forceTerminate();

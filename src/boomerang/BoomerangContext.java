@@ -29,6 +29,8 @@ import boomerang.mock.DefaultForwardDataFlowMocker;
 import boomerang.mock.DefaultNativeCallHandler;
 import boomerang.mock.MockedDataFlow;
 import boomerang.mock.NativeCallHandler;
+import boomerang.pointsofindirection.Call;
+import boomerang.pointsofindirection.PointOfIndirection;
 import heros.solver.Pair;
 import soot.Local;
 import soot.SootMethod;
@@ -41,293 +43,296 @@ import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 @SuppressWarnings("serial")
 public class BoomerangContext extends LinkedList<SubQueryContext> {
 
-  /**
-   * Holds the summaries for all backward IFDS problems.
-   */
-  public ISummaries<Unit, SootMethod, AccessGraph> BW_SUMMARIES;
+	/**
+	 * Holds the summaries for all backward IFDS problems.
+	 */
+	public ISummaries<Unit, SootMethod, AccessGraph> BW_SUMMARIES;
 
-  /**
-   * Holds the summaries for all forward IFDS problems.
-   */
-  public ISummaries<Unit, SootMethod, AccessGraph> FW_SUMMARIES;
-  /**
-   * The inter-procedural control flow graph to be used.
-   */
-  public IInfoflowCFG icfg;
+	/**
+	 * Holds the summaries for all forward IFDS problems.
+	 */
+	public ISummaries<Unit, SootMethod, AccessGraph> FW_SUMMARIES;
+	/**
+	 * The inter-procedural control flow graph to be used.
+	 */
+	public IInfoflowCFG icfg;
 
-  public IBoomerangDebugger debugger;
+	public IBoomerangDebugger debugger;
 
-  private Set<Query> recursiveQueries = new HashSet<>();
-
-
-  /**
-   * The inter-procedural backward control flow graph to be used.
-   */
-  public IInfoflowCFG bwicfg;
-
-  /**
-   * Global query cache, holding different caches.
-   */
-  public ResultCache querycache;
+	private Set<Query> recursiveQueries = new HashSet<>();
 
 
-  /**
-   * Native call handler, defines how aliases flow at native call sites.
-   */
-  public NativeCallHandler ncHandler = new DefaultNativeCallHandler();
+	/**
+	 * The inter-procedural backward control flow graph to be used.
+	 */
+	public IInfoflowCFG bwicfg;
 
-  /**
-   * Can be used to specify forward flow function for certain functions.
-   */
-  public MockedDataFlow forwardMockHandler = new DefaultForwardDataFlowMocker(this);
+	/**
+	 * Global query cache, holding different caches.
+	 */
+	public ResultCache querycache;
 
-  /**
-   * Can be used to specify backward flow function for certain functions.
-   */
-  public MockedDataFlow backwardMockHandler = new DefaultBackwardDataFlowMocker(this);
+	/**
+	 * Native call handler, defines how aliases flow at native call sites.
+	 */
+	public NativeCallHandler ncHandler = new DefaultNativeCallHandler();
 
-  Stopwatch startTime;
-  private long budgetInMilliSeconds = 10000;
-  private boolean trackStaticFields;
-  @SuppressWarnings("rawtypes")
-  private Set<IFDSSolver> solvers = new HashSet<>();
-  private Multimap<Pair<Unit, AccessGraph>, Unit> meetingPointToPath = HashMultimap.create();
+	/**
+	 * Can be used to specify forward flow function for certain functions.
+	 */
+	public MockedDataFlow forwardMockHandler = new DefaultForwardDataFlowMocker(this);
 
-  public BoomerangContext(IInfoflowCFG icfg, IInfoflowCFG bwicfg) {
-    this(icfg, bwicfg, new BoomerangOptions());
-  }
+	/**
+	 * Can be used to specify backward flow function for certain functions.
+	 */
+	public MockedDataFlow backwardMockHandler = new DefaultBackwardDataFlowMocker(this);
 
-  public BoomerangContext(IInfoflowCFG icfg, IInfoflowCFG bwicfg, BoomerangOptions options) {
-    this.icfg = icfg;
-    this.bwicfg = bwicfg;
-    this.debugger = options.getDebugger();
-    this.debugger.setContext(this);
-    this.budgetInMilliSeconds = options.getTimeBudget();
-    WrappedSootField.TRACK_TYPE = options.getTrackType();
-    WrappedSootField.TRACK_STMT = options.getTrackStatementsInFields();
-    this.trackStaticFields = options.getTrackStaticFields();
+	Stopwatch startTime;
+	private long budgetInMilliSeconds = 10000;
+	private boolean trackStaticFields;
+	@SuppressWarnings("rawtypes")
+	private Set<IFDSSolver> solvers = new HashSet<>();
+	private Multimap<Pair<Unit, AccessGraph>, Unit> meetingPointToPath = HashMultimap.create();
 
-    FW_SUMMARIES = new Summaries(this);
-    BW_SUMMARIES = new Summaries(this);
-    querycache = new ResultCache();
-  }
+	private Set<PointOfIndirection> processedPOIs = new HashSet<>();
 
+	public BoomerangContext(IInfoflowCFG icfg, IInfoflowCFG bwicfg) {
+		this(icfg, bwicfg, new BoomerangOptions());
+	}
 
-  public SubQueryContext getSubQuery() {
-    return peek();
-  }
+	public BoomerangContext(IInfoflowCFG icfg, IInfoflowCFG bwicfg, BoomerangOptions options) {
+		this.icfg = icfg;
+		this.bwicfg = bwicfg;
+		this.debugger = options.getDebugger();
+		this.debugger.setContext(this);
+		this.budgetInMilliSeconds = options.getTimeBudget();
+		WrappedSootField.TRACK_TYPE = options.getTrackType();
+		WrappedSootField.TRACK_STMT = options.getTrackStatementsInFields();
+		this.trackStaticFields = options.getTrackStaticFields();
 
-  public String toString() {
-    SubQueryContext subQuery = getSubQuery();
-    return "[Pos: " + size() + " " + (subQuery != null
-        ? getSubQuery() + " € " + icfg.getMethodOf(getSubQuery().getStmt()) : "") + "]";
-  }
+		FW_SUMMARIES = new Summaries(this);
+		BW_SUMMARIES = new Summaries(this);
+		querycache = new ResultCache();
+	}
 
+	public SubQueryContext getSubQuery() {
+		return peek();
+	}
 
+	public String toString() {
+		SubQueryContext subQuery = getSubQuery();
+		return "[Pos: " + size() + " "
+				+ (subQuery != null ? getSubQuery() + " € " + icfg.getMethodOf(getSubQuery().getStmt()) : "") + "]";
+	}
 
-  public boolean isValidAccessPath(AccessGraph a) {
-    return true;
-  }
+	public boolean isValidAccessPath(AccessGraph a) {
+		return true;
+	}
 
-  public boolean isParameterOrThisValue(Unit stmtInMethod, Local local) {
-    SootMethod method = bwicfg.getMethodOf(stmtInMethod);
-    return isParameterOrThisValue(method, local);
-  }
+	public boolean isParameterOrThisValue(Unit stmtInMethod, Local local) {
+		SootMethod method = bwicfg.getMethodOf(stmtInMethod);
+		return isParameterOrThisValue(method, local);
+	}
 
-  public static boolean isParameterOrThisValue(SootMethod method, Local local) {
-    boolean isParameter = method.getActiveBody().getParameterLocals().contains(local);
-    if (isParameter)
-      return true;
-    return isThisValue(method, local);
-  }
+	public static boolean isParameterOrThisValue(SootMethod method, Local local) {
+		boolean isParameter = method.getActiveBody().getParameterLocals().contains(local);
+		if (isParameter)
+			return true;
+		return isThisValue(method, local);
+	}
 
-  public static boolean isThisValue(SootMethod method, Local local) {
-    if (!method.isStatic()) {
-      return method.getActiveBody().getThisLocal().equals(local);
-    }
-    return false;
-  }
+	public static boolean isThisValue(SootMethod method, Local local) {
+		if (!method.isStatic()) {
+			return method.getActiveBody().getThisLocal().equals(local);
+		}
+		return false;
+	}
 
-  public void resetQueryCache() {
-    querycache.clear();
-  }
+	public void resetQueryCache() {
+		querycache.clear();
+	}
 
-  public void cleanQueryCache() {
-    if (querycache != null)
-      querycache.clean();
-  }
+	public void cleanQueryCache() {
+		if (querycache != null)
+			querycache.clean();
+	}
 
+	public void resetSummaries() {
+		FW_SUMMARIES.clear();
+		BW_SUMMARIES.clear();
+		FW_SUMMARIES = new Summaries(this);
+		BW_SUMMARIES = new Summaries(this);
+	}
 
-  public void resetSummaries() {
-    FW_SUMMARIES.clear();
-    BW_SUMMARIES.clear();
-    FW_SUMMARIES = new Summaries(this);
-    BW_SUMMARIES = new Summaries(this);
-  }
+	public void forceTerminate() {
+		while (!isEmpty()) {
+			SubQueryContext peek = this.pollFirst();
+			if (peek != null) {
+				peek.cleanup();
+			}
+		}
+		if (solvers != null) {
+			for (@SuppressWarnings("rawtypes")
+			IFDSSolver s : new HashSet<>(solvers)) {
+				if (s != null)
+					s.cleanup();
+			}
+			solvers.clear();
+		}
+		cleanQueryCache();
+		meetingPointToPath.clear();
+		meetingPointToPath = HashMultimap.create();
+	}
 
-  public void forceTerminate() {
-    while (!isEmpty()) {
-      SubQueryContext peek = this.pollFirst();
-      if (peek != null) {
-        peek.cleanup();
-      }
-    }
-    if (solvers != null) {
-      for (@SuppressWarnings("rawtypes")
-      IFDSSolver s : new HashSet<>(solvers)) {
-        if (s != null)
-          s.cleanup();
-      }
-      solvers.clear();
-    }
-    cleanQueryCache();
-    meetingPointToPath.clear();
-    meetingPointToPath = HashMultimap.create();
-  }
+	public boolean isIgnoredMethod(SootMethod m) {
+		return false;
+	}
 
-  public boolean isIgnoredMethod(SootMethod m) {
-    return false;
-  }
+	public void sanityCheckEdge(IPathEdge<Unit, AccessGraph> edge) {
+		if (edge.getStart() == null)
+			return;
+		SootMethod m1 = icfg.getMethodOf(edge.getStart());
+		SootMethod m2 = icfg.getMethodOf(edge.getTarget());
+		assert m1 == m2 : "The path edge " + edge + "contains statements of two different method: " + m1.toString()
+				+ " and " + m2.toString();
+		;
+		assert !isIgnoredMethod(m1) : "The path edge resides in a method which should be ignored " + m1.toString();
+	}
 
-  public void sanityCheckEdge(IPathEdge<Unit, AccessGraph> edge) {
-    if (edge.getStart() == null)
-      return;
-    SootMethod m1 = icfg.getMethodOf(edge.getStart());
-    SootMethod m2 = icfg.getMethodOf(edge.getTarget());
-    assert m1 == m2 : "The path edge " + edge + "contains statements of two different method: "
-        + m1.toString() + " and " + m2.toString();;
-    assert !isIgnoredMethod(m1) : "The path edge resides in a method which should be ignored "
-        + m1.toString();
-  }
+	@SuppressWarnings("rawtypes")
+	public void addSolver(IFDSSolver backwardsolver) {
+		this.solvers.add(backwardsolver);
+	}
 
-  @SuppressWarnings("rawtypes")
-  public void addSolver(IFDSSolver backwardsolver) {
-    this.solvers.add(backwardsolver);
-  }
+	@SuppressWarnings("rawtypes")
+	public void removeSolver(IFDSSolver solver) {
+		solver.cleanup();
+		this.solvers.remove(solver);
+	}
 
-  @SuppressWarnings("rawtypes")
-  public void removeSolver(IFDSSolver solver) {
-    solver.cleanup();
-    this.solvers.remove(solver);
-  }
+	public boolean isAlreadyStartedMeetingPoint(Pair<Unit, AccessGraph> startedPair, Unit stmt) {
+		Collection<Unit> collection = meetingPointToPath.get(startedPair);
+		return collection.contains(stmt);
+	}
 
+	public void addMeetingPoint(Pair<Unit, AccessGraph> startedPair, Unit stmt) {
+		Set<Unit> paths = constructAllPathFrom(stmt, startedPair.getO1());
+		meetingPointToPath.putAll(startedPair, paths);
+	}
 
-  public boolean isAlreadyStartedMeetingPoint(Pair<Unit, AccessGraph> startedPair, Unit stmt) {
-    Collection<Unit> collection = meetingPointToPath.get(startedPair);
-    return collection.contains(stmt);
-  }
+	private Set<Unit> constructAllPathFrom(Unit source, Unit dest) {
+		Set<Unit> visited = new HashSet<>();
+		LinkedList<Unit> worklist = new LinkedList<>();
+		worklist.add(source);
+		visited.add(source);
+		while (!worklist.isEmpty()) {
+			Unit next = worklist.removeFirst();
+			for (Unit pred : icfg.getPredsOf(next)) {
+				if (!visited.contains(pred)) {
+					visited.add(pred);
+					if (!dest.equals(pred))
+						worklist.add(pred);
+				}
+			}
+		}
+		return visited;
+	}
 
-  public void addMeetingPoint(Pair<Unit, AccessGraph> startedPair, Unit stmt) {
-    Set<Unit> paths = constructAllPathFrom(stmt, startedPair.getO1());
-    meetingPointToPath.putAll(startedPair, paths);
-  }
+	public boolean isReturnValue(SootMethod method, Local base) {
+		Collection<Unit> endPointsOf = icfg.getEndPointsOf(method);
 
-  private Set<Unit> constructAllPathFrom(Unit source, Unit dest) {
-    Set<Unit> visited = new HashSet<>();
-    LinkedList<Unit> worklist = new LinkedList<>();
-    worklist.add(source);
-    visited.add(source);
-    while (!worklist.isEmpty()) {
-      Unit next = worklist.removeFirst();
-      for (Unit pred : icfg.getPredsOf(next)) {
-        if (!visited.contains(pred)) {
-          visited.add(pred);
-          if (!dest.equals(pred))
-            worklist.add(pred);
-        }
-      }
-    }
-    return visited;
-  }
+		for (Unit eP : endPointsOf) {
+			if (eP instanceof ReturnStmt) {
+				ReturnStmt returnStmt = (ReturnStmt) eP;
+				Value op = returnStmt.getOp();
+				if (op.equals(base))
+					return true;
+			}
+		}
+		return false;
+	}
 
-  public boolean isReturnValue(SootMethod method, Local base) {
-    Collection<Unit> endPointsOf = icfg.getEndPointsOf(method);
+	public boolean isValidQuery(AccessGraph ap, Unit stmt) {
+		SootMethod m = bwicfg.getMethodOf(stmt);
+		if (!ap.isStatic() && !m.getActiveBody().getLocals().contains(ap.getBase())) {
+			return false;
+		}
 
-    for (Unit eP : endPointsOf) {
-      if (eP instanceof ReturnStmt) {
-        ReturnStmt returnStmt = (ReturnStmt) eP;
-        Value op = returnStmt.getOp();
-        if (op.equals(base))
-          return true;
-      }
-    }
-    return false;
-  }
+		if (ap.getBase() instanceof PrimitiveType) {
+			return false;
+		}
+		if (!ap.isStatic() && !m.isStatic()) {
+			Local thisLocal = m.getActiveBody().getThisLocal();
+			if (ap.baseMatches(thisLocal)) {
+				if (!ForwardFlowFunctions.hasCompatibleTypesForCall(ap, m.getDeclaringClass())) {
+					return false;
+				}
+			}
+		}
+		return true;
+	};
 
-  public boolean isValidQuery(AccessGraph ap, Unit stmt) {
-    SootMethod m = bwicfg.getMethodOf(stmt);
-    if (!ap.isStatic() && !m.getActiveBody().getLocals().contains(ap.getBase())) {
-      return false;
-    }
+	public boolean isOutOfBudget() {
+		if (startTime.elapsed(TimeUnit.MILLISECONDS) > budgetInMilliSeconds)
+			return true;
+		return false;
+	}
 
-    if (ap.getBase() instanceof PrimitiveType) {
-      return false;
-    }
-    if (!ap.isStatic() && !m.isStatic()) {
-      Local thisLocal = m.getActiveBody().getThisLocal();
-      if (ap.baseMatches(thisLocal)) {
-        if (!ForwardFlowFunctions.hasCompatibleTypesForCall(ap, m.getDeclaringClass())) {
-          return false;
-        }
-      }
-    }
-    return true;
-  };
+	public void validateInput(AccessGraph ap, Unit stmt) {
+		SootMethod m = bwicfg.getMethodOf(stmt);
+		if (!ap.isStatic() && !m.getActiveBody().getLocals().contains(ap.getBase())) {
+			throw new IllegalArgumentException(
+					"Base value of access path " + ap + " is not a local of the Method at which the Query was asked!");
+		}
+		if (stmt == null)
+			throw new IllegalArgumentException("Statment must not be null");
 
-  public boolean isOutOfBudget() {
-    if (startTime.elapsed(TimeUnit.MILLISECONDS) > budgetInMilliSeconds)
-      return true;
-    return false;
-  }
+		if (ap.getBase() instanceof PrimitiveType) {
+			throw new IllegalArgumentException("The queried variable is not of pointer type");
+		}
+		if (!ap.isStatic() && !m.isStatic()) {
+			Local thisLocal = m.getActiveBody().getThisLocal();
+			if (ap.baseMatches(thisLocal)) {
+				if (!ForwardFlowFunctions.hasCompatibleTypesForCall(ap, m.getDeclaringClass())) {
+					throw new IllegalArgumentException("The type is incompatible");
+				}
+			}
+		}
+	}
 
-  public void validateInput(AccessGraph ap, Unit stmt) {
-    SootMethod m = bwicfg.getMethodOf(stmt);
-    if (!ap.isStatic() && !m.getActiveBody().getLocals().contains(ap.getBase())) {
-      throw new IllegalArgumentException("Base value of access path " + ap
-          + " is not a local of the Method at which the Query was asked!");
-    }
-    if (stmt == null)
-      throw new IllegalArgumentException("Statment must not be null");
+	public PathEdgeStore getBackwardsPathEdges() {
+		return getSubQuery().getBwEdges();
+	}
 
-    if (ap.getBase() instanceof PrimitiveType) {
-      throw new IllegalArgumentException("The queried variable is not of pointer type");
-    }
-    if (!ap.isStatic() && !m.isStatic()) {
-      Local thisLocal = m.getActiveBody().getThisLocal();
-      if (ap.baseMatches(thisLocal)) {
-        if (!ForwardFlowFunctions.hasCompatibleTypesForCall(ap, m.getDeclaringClass())) {
-          throw new IllegalArgumentException("The type is incompatible");
-        }
-      }
-    }
-  }
+	public PathEdgeStore getForwardPathEdges() {
+		return getSubQuery().getFwEdges();
+	}
 
-  public PathEdgeStore getBackwardsPathEdges() {
-    return getSubQuery().getBwEdges();
-  }
+	public void setRecursive(Query q) {
+		recursiveQueries.add(q);
+	}
 
-  public PathEdgeStore getForwardPathEdges() {
-    return getSubQuery().getFwEdges();
-  }
+	public boolean isRecursive(Query q) {
+		return recursiveQueries.contains(q);
+	}
 
-  public void setRecursive(Query q) {
-    recursiveQueries.add(q);
-  }
+	public boolean trackStaticFields() {
+		return this.trackStaticFields;
+	}
 
-  public boolean isRecursive(Query q) {
-    return recursiveQueries.contains(q);
-  }
+	public void setCurrentForwardSolver(ForwardSolver solver) {
+		getSubQuery().setCurrentForwardSolver(solver);
+	}
 
-  public boolean trackStaticFields() {
-    return this.trackStaticFields;
-  }
+	public ForwardSolver getCurrentForwardSolver() {
+		return getSubQuery().getCurrentForwardSolver();
+	}
 
-  public void setCurrentForwardSolver(ForwardSolver solver) {
-    getSubQuery().setCurrentForwardSolver(solver);
-  }
+	public boolean isProcessedPOI(PointOfIndirection poi) {
+		return (poi instanceof Call && processedPOIs.contains(poi));
+	}
 
-  public ForwardSolver getCurrentForwardSolver() {
-    return getSubQuery().getCurrentForwardSolver();
-  }
-
+	public void addProcessedPOI(PointOfIndirection poi) {
+		processedPOIs.add(poi);
+	}
 }

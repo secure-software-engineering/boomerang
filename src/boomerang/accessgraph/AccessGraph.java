@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import boomerang.AliasFinder;
@@ -38,6 +40,7 @@ public class AccessGraph {
 	 * allocation site.
 	 */
 	private final IFieldGraph apg;
+	private static List<IFieldGraph> apgs;
 
 	private int hashCode = 0;
 
@@ -96,7 +99,16 @@ public class AccessGraph {
 	protected AccessGraph(Local value, Type t, IFieldGraph apg, Unit sourceStmt) {
 		this.value = value;
 		this.type = (WrappedSootField.TRACK_TYPE ? t : null);
-		this.apg = apg;
+		if(apgs == null){
+			apgs = new LinkedList<IFieldGraph>();
+		}
+		int index = apgs.indexOf(apg);
+		if(index >= 0){
+			this.apg = apgs.get(index);
+		} else{
+			apgs.add(apg);
+			this.apg = apg;
+		}
 		this.allocationSite = sourceStmt;
 	}
 

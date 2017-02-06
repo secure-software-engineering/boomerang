@@ -32,7 +32,6 @@ public class PathEdge<N, D> implements IPathEdge<N, D> {
    */
   public PathEdge(N start, D dSource, N target, D dTarget) {
 	super();
-	assert start != null;
 	assert target != null;
     this.target = target;
     this.start = start;
