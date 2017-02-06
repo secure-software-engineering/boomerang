@@ -545,10 +545,10 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 		if(u instanceof Stmt && ((Stmt) u).containsInvokeExpr()){
 			InvokeExpr invokeExpr =  ((Stmt) u).getInvokeExpr();
 			if(invokeExpr instanceof StaticInvokeExpr)
-				return invokeExpr.getMethod().getNumber()+"(" +invokeExpr.getArgs().toString()+")";
+				return (u instanceof AssignStmt ? ((AssignStmt)u).getLeftOp() + " = " : "") + invokeExpr.getMethod().getName()+"(" +invokeExpr.getArgs().toString()+")";
 			if(invokeExpr instanceof InstanceInvokeExpr) {
 				InstanceInvokeExpr iie = (InstanceInvokeExpr) invokeExpr;
-				return iie.getBase() +"."+ invokeExpr.getMethod().getName() +"(" +invokeExpr.getArgs().toString()+")";
+				return (u instanceof AssignStmt ? ((AssignStmt)u).getLeftOp() + " = " : "") + iie.getBase() +"."+ invokeExpr.getMethod().getName() +"(" +invokeExpr.getArgs().toString()+")";
 			}
 		}
 		return u.toString();
