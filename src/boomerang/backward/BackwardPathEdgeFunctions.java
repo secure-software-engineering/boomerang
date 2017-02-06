@@ -169,7 +169,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
     Call handler = new Call(initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(), prevEdge);
     if (handler.isValid(context) && context.getSubQuery() != null)
       context.getSubQuery().add(handler);
-    context.getSubQuery().addAsVisitedBackwardMethod(callee);
 
     return Collections.singleton(initialSelfLoop);
   }
