@@ -187,7 +187,7 @@ class AliasWorklistEntry extends IWorklistEntry {
             continue;
           Unit callerCallSite = callerContext.getStmt();
 
-          WrappedSootField lastField = apValue.getLastField();
+		for(WrappedSootField lastField:apValue.getLastField()){
           // we have to remove the last field, as all aliases of this access access graph without
           // the last field reflect back to the access graph.
           Set<AccessGraph> withoutLastFields = apValue.popLastField();
@@ -217,6 +217,7 @@ class AliasWorklistEntry extends IWorklistEntry {
             Set<IWorklistEntry> entry = contextGraph.storeResults(context, res);
             if (entry != null)
               out.addAll(entry);
+          }
           }
         }
 

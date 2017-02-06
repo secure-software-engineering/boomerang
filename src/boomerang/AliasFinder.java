@@ -366,7 +366,7 @@ public class AliasFinder {
 			if (subFields.length > 0) {
 				changeSet = new HashSet<>();
 				for (AccessGraph alias : prevAliases) {
-					if (AliasResults.canAppend(alias, subFields[0])) {
+					if (alias.canAppend(subFields[0])) {
 						AccessGraph appendFields = alias.appendFields(subFields);
 						if (out.contains(appendFields))
 							continue;
@@ -468,7 +468,11 @@ public class AliasFinder {
 			if (context.isOutOfBudget()) {
 				throw new BoomerangTimeoutException();
 			}
-			if (!context.icfg.accessesField(context.icfg.getMethodOf(stmt), a.getFirstField().getField()))
+			boolean accessesField = false;
+			for(WrappedSootField wrappedField : a.getFirstField()){
+				accessesField = accessesField || context.icfg.accessesField(context.icfg.getMethodOf(stmt), wrappedField.getField());
+			}
+			if (!accessesField)
 				res.add(a);
 			else
 				res.addAll(

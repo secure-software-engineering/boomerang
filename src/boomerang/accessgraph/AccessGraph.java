@@ -1,11 +1,14 @@
 package boomerang.accessgraph;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import boomerang.AliasFinder;
 import soot.Local;
+import soot.Scene;
 import soot.SootField;
 import soot.Type;
 import soot.Unit;
@@ -18,7 +21,7 @@ import soot.Value;
  * @author spaeth
  *
  */
-public class AccessGraph implements Cloneable {
+public class AccessGraph {
 
 	/**
 	 * The local variable at which the field graph is rooted.
@@ -34,7 +37,7 @@ public class AccessGraph implements Cloneable {
 	 * The {@link FieldGraph} representing the accesses which yield to the
 	 * allocation site.
 	 */
-	private final FieldGraph apg;
+	private final IFieldGraph apg;
 
 	private int hashCode = 0;
 
@@ -90,7 +93,7 @@ public class AccessGraph implements Cloneable {
 		this(val, t, (f == null || f.length == 0 ? null : new FieldGraph(f)), null);
 	}
 
-	protected AccessGraph(Local value, Type t, FieldGraph apg, Unit sourceStmt) {
+	protected AccessGraph(Local value, Type t, IFieldGraph apg, Unit sourceStmt) {
 		this.value = value;
 		this.type = (WrappedSootField.TRACK_TYPE ? t : null);
 		this.apg = apg;
@@ -121,7 +124,7 @@ public class AccessGraph implements Cloneable {
 	 * @return The first field of the access graph (might return
 	 *         <code>null</code>)
 	 */
-	public WrappedSootField getFirstField() {
+	public Collection<WrappedSootField> getFirstField() {
 		if (apg == null)
 			return null;
 		return apg.getEntryNode();
@@ -134,12 +137,24 @@ public class AccessGraph implements Cloneable {
 	 *            The field to check against
 	 * @return {@link Boolean} whether the field matches or not.
 	 */
-	public boolean firstFieldMatches(SootField field) {
+	public boolean firstFieldMustMatch(SootField field) {
 		if (apg == null)
 			return false;
-		return getFirstField().getField().equals(field);
+		if(getFirstField().size() > 1)
+			return false;
+		for(WrappedSootField f: getFirstField())
+			return f.getField().equals(field);
+		throw new RuntimeException("Unreachable Code");
 	}
 
+	
+
+	private boolean firstFirstFieldMayMatch(SootField field) {
+		for(WrappedSootField f: getFirstField())
+			if(f.getField().equals(field))
+				return true;
+		return false;
+	}
 	/**
 	 * Returns the number of field accesses (in cases where the field graph has
 	 * loops, the shortest version is picked.)
@@ -170,13 +185,8 @@ public class AccessGraph implements Cloneable {
 		if (value != null)
       str += value.toString();// + "(" + getBaseType() + ")";
 		if (apg != null) {
-			if (!apg.hasLoops())
-				str += Arrays.toString(apg.getFields());
-			else {
-				str += apg.getNodesString();
-				str += apg.getEdgeString();
-			}
-			// str += apg.toString();
+			
+			 str += apg.toString();
 		}
 		if (allocationSite != null) {
       // str += " at " +sourceStmt.toString();
@@ -207,7 +217,10 @@ public class AccessGraph implements Cloneable {
 	 * @return the access graph derived with the appended fields.
 	 */
 	public AccessGraph appendFields(WrappedSootField[] toAppend) {
-		FieldGraph newapg = (apg != null ? apg.appendFields(toAppend) : new FieldGraph(toAppend));
+		IFieldGraph newapg = (apg != null ? apg.appendFields(toAppend) : new FieldGraph(toAppend));
+		if(newapg.shouldOverApproximate()){
+			newapg = newapg.overapproximation();
+		}
 		return new AccessGraph(value, type, newapg, allocationSite);
 	}
 
@@ -218,13 +231,75 @@ public class AccessGraph implements Cloneable {
 	 *            The field graph to append
 	 * @return the access graph derived with the appended fields.
 	 */
-	public AccessGraph appendGraph(FieldGraph graph) {
+	public AccessGraph appendGraph(IFieldGraph graph) {
 		if (graph == null)
 			return this;
-		FieldGraph newapg = (apg != null ? apg.append(graph) : graph);
+		IFieldGraph newapg = (apg != null ? apg.append(graph) : graph);
+		if(newapg.shouldOverApproximate()){
+			newapg = newapg.overapproximation();
+		}
 		return new AccessGraph(value, type, newapg, allocationSite);
 	}
+	
+	 /**
+	   * Checks if a field can be appended to a single access graph.
+	   * 
+	   * @param accessgraph The access graph
+	   * @param firstField The field to be appended
+	   * @return <code>true</code> if the field can be appended.
+	   */
+	  public boolean canAppend(WrappedSootField firstField) {
+	    if (firstField.getField().equals(AliasFinder.ARRAY_FIELD))
+	      return true;
+	    SootField field = firstField.getField();
+	    Type child = field.getDeclaringClass().getType();
+	    Type parent = null;
+	    if (this.getFieldCount() < 1) {
+	      parent = this.getBaseType();
 
+	      return Scene.v().getFastHierarchy().canStoreType(child, parent)
+	    		  || Scene.v().getFastHierarchy().canStoreType(parent, child);
+	    } else {
+	      if (firstFirstFieldMayMatch(AliasFinder.ARRAY_FIELD))
+	        return true;
+	      for(WrappedSootField lastField : this.getLastField()){
+		      parent = lastField.getType();
+	  	    if(Scene.v().getFastHierarchy().canStoreType(child, parent)
+	  	        || Scene.v().getFastHierarchy().canStoreType(parent, child)){
+	  	    	return true;
+	  	    }
+	      }
+	    }
+	    return false;
+	  }
+
+	
+
+	/**
+	   * Checks if the field can be prepended to a single access graph.
+	   * 
+	   * @param accessgraph The access graph
+	   * @param firstField The field to be appended
+	   * @return <code>true</code> if the field can be appended.
+	   */
+	  public boolean canPrepend(WrappedSootField newFirstField) {
+	    SootField newFirst = newFirstField.getField();
+	    if (newFirst.equals(AliasFinder.ARRAY_FIELD))
+	      return true;
+
+	    if (this.getFieldCount() < 1) {
+	    } else {
+	      if (firstFieldMustMatch(AliasFinder.ARRAY_FIELD))
+	        return true;
+	    }
+	    Type child = newFirst.getDeclaringClass().getType();
+	    Type parent = this.getBaseType();
+	    boolean res =
+	        Scene.v().getFastHierarchy().canStoreType(child, parent)
+	            || Scene.v().getFastHierarchy().canStoreType(parent, child);
+	    return res;
+	  }
+	
 	/**
 	 * Add the provided field to the beginning of the field graph. This is
 	 * typically called at field write statements.
@@ -234,7 +309,10 @@ public class AccessGraph implements Cloneable {
 	 * @return A copy of the current access graph with the field appended
 	 */
 	public AccessGraph prependField(WrappedSootField f) {
-		FieldGraph newapg = (apg != null ? apg.prependField(f) : new FieldGraph(f));
+		IFieldGraph newapg = (apg != null ? apg.prependField(f) : new FieldGraph(f));
+		if(newapg.shouldOverApproximate()){
+			newapg = newapg.overapproximation();
+		}
 		return new AccessGraph(value, type, newapg, allocationSite);
 	}
 
@@ -265,7 +343,7 @@ public class AccessGraph implements Cloneable {
 		if (!baseMatches(local)) {
 			return false;
 		}
-		return firstFieldMatches(field);
+		return firstFieldMustMatch(field);
 	}
 
 	/**
@@ -281,11 +359,11 @@ public class AccessGraph implements Cloneable {
 		if (apg == null)
 			throw new RuntimeException("Try to remove the first field from an access graph which has no field" + this);
 
-		Set<FieldGraph> newapg = apg.popFirstField();
+		Set<IFieldGraph> newapg = apg.popFirstField();
 		if (newapg.isEmpty())
 			return Collections.singleton(new AccessGraph(value, type, null, allocationSite));
 		Set<AccessGraph> out = new HashSet<>();
-		for (FieldGraph a : newapg) {
+		for (IFieldGraph a : newapg) {
 			if (a.equals(FieldGraph.EMPTY_GRAPH))
 				out.add(new AccessGraph(value, type, allocationSite));
 			out.add(new AccessGraph(value, type, a, allocationSite));
@@ -304,12 +382,12 @@ public class AccessGraph implements Cloneable {
 		if (apg == null)
 			throw new RuntimeException("Try to remove the first field from an access graph which has no field" + this);
 
-		Set<FieldGraph> newapg = apg.popLastField();
+		Set<IFieldGraph> newapg = apg.popLastField();
 
 		Set<AccessGraph> out = new HashSet<>();
 		if (newapg.isEmpty())
 			return Collections.singleton(new AccessGraph(value, type, null, allocationSite));
-		for (FieldGraph a : newapg) {
+		for (IFieldGraph a : newapg) {
 			out.add(new AccessGraph(value, type, a, allocationSite));
 		}
 		return out;
@@ -375,7 +453,7 @@ public class AccessGraph implements Cloneable {
 	 * @return The derived access graph.
 	 */
 	public AccessGraph makeStatic() {
-		return new AccessGraph(null, null, (apg == null ? null : apg.clone()), allocationSite);
+		return new AccessGraph(null, null, apg, allocationSite);
 	}
 
 	/**
@@ -392,7 +470,7 @@ public class AccessGraph implements Cloneable {
 	 * 
 	 * @return Last field, might be null.
 	 */
-	public WrappedSootField getLastField() {
+	public Collection<WrappedSootField> getLastField() {
 		if (apg == null)
 			return null;
 
@@ -404,8 +482,8 @@ public class AccessGraph implements Cloneable {
 	 * 
 	 * @return The field graph.
 	 */
-	public FieldGraph getFieldGraph() {
-		return (apg != null ? apg.clone() : null);
+	public IFieldGraph getFieldGraph() {
+		return apg;
 	}
 
 	/**
@@ -414,8 +492,14 @@ public class AccessGraph implements Cloneable {
 	 * 
 	 * @return The type of the graph
 	 */
-	public Type getType() {
-		return ((!isStatic() && getFieldCount() == 0) ? value.getType() : getLastField().getField().getType());
+	public Collection<Type> getType() {
+		if(!isStatic() && getFieldCount() == 0)
+			return Collections.singleton(value.getType());
+		Collection<Type> out = new HashSet<>();
+		for(WrappedSootField lastField: getLastField()){
+			out.add(lastField.getType());
+		}
+		return out;
 	}
 
 	@Override

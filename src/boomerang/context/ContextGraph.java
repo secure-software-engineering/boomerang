@@ -18,6 +18,7 @@ import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
 import heros.solver.Pair;
 import soot.Scene;
+import soot.Type;
 import soot.Unit;
 import soot.jimple.AssignStmt;
 import soot.jimple.NewArrayExpr;
@@ -162,10 +163,22 @@ class ContextGraph {
 		for (Context u : resultGraph.keySet()) {
 			AliasResults res = resultGraph.get(u);
 			for (Pair<Unit, AccessGraph> k : res.keySet()) {
-				if (k.getO2().hasAllocationSite() && (isArrayAlloc(k.getO2().getSourceStmt())
-						|| Scene.v().getFastHierarchy().canStoreType(k.getO2().getType(), query.getType()))) {
+				if (k.getO2().hasAllocationSite()) {
 					out.putAll(k, conntectedResult(u, res.get(k), initialContext,
 							HashMultimap.<Context, AccessGraph> create()));
+					boolean someTypeMatch = false;
+					for(Type a: k.getO2().getType()){
+						for(Type b: query.getType()){
+							if(Scene.v().getFastHierarchy().canStoreType(a, b)){
+								someTypeMatch = true;
+							}
+						
+						}
+					}
+					if(isArrayAlloc(k.getO2().getSourceStmt()) || someTypeMatch){
+						out.putAll(k, conntectedResult(u, res.get(k), initialContext,
+								HashMultimap.<Context, AccessGraph> create()));
+					}
 				}
 			}
 		}

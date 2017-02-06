@@ -69,11 +69,12 @@ class ParamAllocWorklistEntry extends IWorklistEntry {
         for (AccessGraph t : targets) {
           Set<AccessGraph> toSearch = new HashSet<>();
           if ((!t.isStatic() && t.getFieldCount() > 0) || (t.isStatic() && t.getFieldCount() > 1)) {
-            WrappedSootField lastField = t.getLastField();
-            Set<AccessGraph> withoutLastfields = t.popLastField();
-            for (AccessGraph withoutLastfield : withoutLastfields) {
-              Set<AccessGraph> rec = getRecursiveResults(callSiteContext, withoutLastfield);
-              toSearch = AliasResults.appendField(rec, lastField, dartcontext);
+            for(WrappedSootField lastField : t.getLastField()){
+	            Set<AccessGraph> withoutLastfields = t.popLastField();
+	            for (AccessGraph withoutLastfield : withoutLastfields) {
+	              Set<AccessGraph> rec = getRecursiveResults(callSiteContext, withoutLastfield);
+	              toSearch = AliasResults.appendField(rec, lastField, dartcontext);
+	            }
             }
           } else {
             Query q = new Query(t, callSite, dartcontext.icfg.getMethodOf(callSite));

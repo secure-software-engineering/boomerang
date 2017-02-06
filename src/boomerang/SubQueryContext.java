@@ -141,7 +141,7 @@ public class SubQueryContext {
 		return query.toString();
 	}
 
-	public Type getType() {
+	public Collection<Type> getType() {
 		return query.getType();
 	}
 

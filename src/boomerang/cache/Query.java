@@ -1,5 +1,7 @@
 package boomerang.cache;
 
+import java.util.Collection;
+
 import boomerang.accessgraph.AccessGraph;
 import soot.SootMethod;
 import soot.Type;
@@ -69,7 +71,7 @@ public class Query {
     return true;
   }
 
-  public Type getType() {
+  public Collection<Type> getType() {
     return accessPath.getType();
   }
 }

@@ -39,17 +39,19 @@ public class Alloc implements BackwardForwardHandler {
     ptsSolver.startPropagationAlongPath(target, alloc, factAtTarget, pathEdge);
     
     // Case in which the allocation site is also a field write statement (a.f = new)
+    //TODO Is this necessary?
     if (factAtTarget.getFieldCount() > 0) {
       Set<AccessGraph> bases = factAtTarget.popFirstField();
       for (AccessGraph base : bases) {
-        WrappedSootField field = factAtTarget.getFirstField();
-        AliasFinder dart = new AliasFinder(context);
-        AliasResults res = dart.findAliasAtStmt(base, target);
-        Set<AccessGraph> withField = AliasResults.appendField(res.mayAliasSet(), field, context);
-        for (AccessGraph alias : withField) {
-          if (alias.equals(alloc))
-            continue;
-          ptsSolver.startPropagationAlongPath(target, alloc, alias, pathEdge);
+        for(WrappedSootField field : factAtTarget.getFirstField()){
+	        AliasFinder dart = new AliasFinder(context);
+	        AliasResults res = dart.findAliasAtStmt(base, target);
+	        Set<AccessGraph> withField = AliasResults.appendField(res.mayAliasSet(), field, context);
+	        for (AccessGraph alias : withField) {
+	          if (alias.equals(alloc))
+	            continue;
+	          ptsSolver.startPropagationAlongPath(target, alloc, alias, pathEdge);
+	        }
         }
       }
     }

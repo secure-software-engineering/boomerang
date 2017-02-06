@@ -1,6 +1,7 @@
 package boomerang.accessgraph;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -15,6 +16,7 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import grph.Grph;
 import grph.in_memory.InMemoryGrph;
 import heros.solver.Pair;
+import toools.collections.Collections;
 import toools.set.IntSet;
 
 /**
@@ -28,7 +30,7 @@ import toools.set.IntSet;
  * @author spaeth
  *
  */
-public class FieldGraph {
+public class FieldGraph implements IFieldGraph{
 	/**
 	 * The integer representing the first field of the field graph (initial
 	 * state in term of FSM)
@@ -194,11 +196,11 @@ public class FieldGraph {
 	 * 
 	 * @return
 	 */
-	Set<FieldGraph> popFirstField() {
+	public Set<IFieldGraph> popFirstField() {
 		if (graph == null || graph.getVertices().size() == 0)
 			return new HashSet<>();
 		IntSet outEdges = graph.getOutEdges(entryNode);
-		Set<FieldGraph> out = new HashSet<>();
+		Set<IFieldGraph> out = new HashSet<>();
 		for (IntCursor newEntryCur : outEdges) {
 			int newEntry = newEntryCur.value;
 			int newHead = graph.getDirectedSimpleEdgeHead(newEntry);
@@ -319,7 +321,7 @@ public class FieldGraph {
 		return visited;
 	}
 
-	WrappedSootField[] getFields() {
+	public WrappedSootField[] getFields() {
 		if (graph == null || graph.getVertices().size() == 0) {
 			return new WrappedSootField[] { intToField(entryNode) };
 		}
@@ -334,19 +336,19 @@ public class FieldGraph {
 		return out;
 	}
 
-	FieldGraph prependField(WrappedSootField f) {
+	public IFieldGraph prependField(WrappedSootField f) {
 		Grph newGraph = (graph == null ? createGraph() : myClone(graph));
 		int tail = fieldToInt(f);
 		addEdge(tail, entryNode, newGraph);
 		return new FieldGraph(tail, targetNode, newGraph);
 	}
 
-	Set<FieldGraph> popLastField() {
+	public Set<IFieldGraph> popLastField() {
 		if (graph == null || graph.getVertices().size() == 0)
 			return new HashSet<>();
 		IntSet inEdges = graph.getInEdges(targetNode);
 
-		Set<FieldGraph> out = new HashSet<>();
+		Set<IFieldGraph> out = new HashSet<>();
 		for (IntCursor newExitCur : inEdges) {
 			int newExit = newExitCur.value;
 			int newTail = graph.getDirectedSimpleEdgeTail(newExit);
@@ -371,26 +373,34 @@ public class FieldGraph {
 		return out;
 	}
 
-	FieldGraph append(FieldGraph other) {
-		Grph newGraph = (graph == null ? createGraph() : myClone(graph));
-		if (other.graph != null) {
-			for (IntCursor aCur : other.graph.getVertices()) {
-				int a = aCur.value;
-				if (!newGraph.containsVertex(a))
-					newGraph.addVertex(a);
-			}
-			for (IntCursor eCur : other.graph.getEdges()) {
-				int e = eCur.value;
-				int t = other.graph.getDirectedSimpleEdgeTail(e);
-				int h = other.graph.getDirectedSimpleEdgeHead(e);
-				addEdge(t, h, newGraph);
-			}
+	public IFieldGraph append(IFieldGraph o) {
+		if(o instanceof SetBasedFieldGraph){
+			SetBasedFieldGraph setBasedFieldGraph = (SetBasedFieldGraph) o;
+			return setBasedFieldGraph.append(this);
 		}
-		addEdge(targetNode, other.entryNode, newGraph);
-		return new FieldGraph(entryNode, other.targetNode, newGraph);
+		else if(o instanceof FieldGraph){
+			FieldGraph other = (FieldGraph) o;
+			Grph newGraph = (graph == null ? createGraph() : myClone(graph));
+			if (other.graph != null) {
+				for (IntCursor aCur : other.graph.getVertices()) {
+					int a = aCur.value;
+					if (!newGraph.containsVertex(a))
+						newGraph.addVertex(a);
+				}
+				for (IntCursor eCur : other.graph.getEdges()) {
+					int e = eCur.value;
+					int t = other.graph.getDirectedSimpleEdgeTail(e);
+					int h = other.graph.getDirectedSimpleEdgeHead(e);
+					addEdge(t, h, newGraph);
+				}
+			}
+			addEdge(targetNode, other.entryNode, newGraph);
+			return new FieldGraph(entryNode, other.targetNode, newGraph);
+		}
+		throw new RuntimeException("Not yet implemented!");
 	}
 
-	FieldGraph appendFields(WrappedSootField[] toAppend) {
+	public IFieldGraph appendFields(WrappedSootField[] toAppend) {
 		return append(new FieldGraph(toAppend));
 	}
 
@@ -399,8 +409,10 @@ public class FieldGraph {
 			newGraph.addDirectedSimpleEdge(tail, head);
 	}
 
-	WrappedSootField getEntryNode() {
-		return intToField(entryNode);
+	public Set<WrappedSootField> getEntryNode() {
+		Set<WrappedSootField> out = new HashSet<>();
+		out.add(intToField(entryNode));
+		return out;
 	}
 
 	boolean hasLoops() {
@@ -432,19 +444,18 @@ public class FieldGraph {
 		return false;
 	}
 
-	WrappedSootField getExitNode() {
-		return intToField(targetNode);
-	}
-
-	protected FieldGraph clone() {
-		return new FieldGraph(entryNode, targetNode, graph == null ? null : graph);
+	public Collection<WrappedSootField> getExitNode() {
+		return Collections.singleton(intToField(targetNode));
 	}
 
 	public String toString() {
 		String str = "";
-		str += Arrays.toString(getFields());
-		str += hasLoops() ? "*" : "";
-		str += graph != null ? graph.toGrphText() : "";
+		if (!hasLoops())
+			str += Arrays.toString(getFields());
+		else {
+			str += getNodesString();
+			str += getEdgeString();
+		}
 		return str;
 	}
 
@@ -505,14 +516,6 @@ public class FieldGraph {
 			clone.addDirectedSimpleEdge(t, e, h);
 		}
 
-		// for (Property p : other.getProperties())
-		// {
-		// if (p.getName() != null)
-		// {
-		// Property cloneProperty = clone.findPropertyByName(p.getName());
-		// p.cloneValuesTo(cloneProperty);
-		// }
-		// }
 		assert other.equals(clone);
 		assert other.getVertices().hashCode() == clone.getVertices().hashCode();
 		assert other.getEdges().hashCode() == clone.getEdges().hashCode();
@@ -538,6 +541,24 @@ public class FieldGraph {
 			s += "(" + intToField(t) + ">" + intToField(h) + ")";
 		}
 		return s + "";
+	}
+
+	@Override
+	public boolean shouldOverApproximate() {
+		return (graph == null ? false : graph.getAllCycles().size() > 1);
+	}
+
+	@Override
+	public IFieldGraph overapproximation() {
+		return new SetBasedFieldGraph(getAllFields());
+	}
+
+	private Set<WrappedSootField> getAllFields() {
+		Set<WrappedSootField> fields = new HashSet<>();
+		for (int a : graph.getVertices().toIntArray()) {
+			fields.add(intToField(a));
+		}
+		return fields;
 	}
 
 

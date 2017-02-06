@@ -1,5 +1,6 @@
 package boomerang.pointsofindirection;
 
+import java.util.Collection;
 import java.util.Set;
 
 import boomerang.AliasFinder;
@@ -30,23 +31,25 @@ public class Call implements BackwardBackwardHandler, PointOfIndirection {
   @Override
   public void execute(BackwardSolver backwardsSolver, BoomerangContext context) {
 	  context.debugger.onProcessCallPOI(this);
-    WrappedSootField lastField = factInsideCall.getLastField();
-    Set<AccessGraph> prefixes = factInsideCall.popLastField();
-    for (AccessGraph prefix : prefixes) {
-      AliasFinder dart = new AliasFinder(context);
-      Set<AccessGraph> aliases = dart.findAliasAtStmtRec(prefix, returnSiteOfCall);
-      aliases = AliasResults.appendField(aliases, lastField, context);
-      for (AccessGraph ap : aliases) {
-
-        if (ap.equals(factInsideCall)) {
-          continue;
-        }
-        IPathEdge<Unit, AccessGraph> newEdge =
-            new BackwardEdge(returnSiteOfCall, factInsideCall, returnSiteOfCall, ap);
-        context.debugger.indirectFlowEdgeAtCall(factInsideCall, returnSiteOfCall, ap, returnSiteOfCall);
-        backwardsSolver.propagate(newEdge, prevEdge, PropagationType.Normal, null);
-      }
-      backwardsSolver.awaitExecution();
+    Collection<WrappedSootField> lastFields = factInsideCall.getLastField();
+    for(WrappedSootField lastField : lastFields){
+	    Set<AccessGraph> prefixes = factInsideCall.popLastField();
+	    for (AccessGraph prefix : prefixes) {
+	      AliasFinder dart = new AliasFinder(context);
+	      Set<AccessGraph> aliases = dart.findAliasAtStmtRec(prefix, returnSiteOfCall);
+	      aliases = AliasResults.appendField(aliases, lastField, context);
+	      for (AccessGraph ap : aliases) {
+	
+	        if (ap.equals(factInsideCall)) {
+	          continue;
+	        }
+	        IPathEdge<Unit, AccessGraph> newEdge =
+	            new BackwardEdge(returnSiteOfCall, factInsideCall, returnSiteOfCall, ap);
+	        context.debugger.indirectFlowEdgeAtCall(factInsideCall, returnSiteOfCall, ap, returnSiteOfCall);
+	        backwardsSolver.propagate(newEdge, prevEdge, PropagationType.Normal, null);
+	      }
+	      backwardsSolver.awaitExecution();
+	    }
     }
   }
 

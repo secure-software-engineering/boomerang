@@ -37,7 +37,6 @@ import soot.jimple.Stmt;
 
 public class ForwardFlowFunctions extends AbstractFlowFunctions implements
     FlowFunctions<Unit, AccessGraph, SootMethod> {
-  private BoomerangContext context;
 
   public ForwardFlowFunctions(BoomerangContext c) {
     this.context = c;
@@ -147,7 +146,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
 
               AccessGraph withNewLocal = source.deriveWithNewLocal(lBase, lBase.getType());
               WrappedSootField newFirstField = new WrappedSootField(field, source.getBaseType(), curr);
-              if (AliasResults.canPrepend(withNewLocal, newFirstField)) {
+              if (withNewLocal.canPrepend(newFirstField)) {
                 AccessGraph newAp = withNewLocal.prependField(newFirstField);
                 out.add(newAp);
                 computeAliasesOnInstanceWrite(curr, source, lBase, field, (Local) rightOp, out,
@@ -191,10 +190,13 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
             // e = a.f && source == a.f.*
             // replace in source
             if (leftOp instanceof Local && !source.baseMatches(leftOp)) {
-              AccessGraph deriveWithNewLocal =
-                  source.deriveWithNewLocal((Local) leftOp, source.getFirstField().getType());
-              
-              out.addAll(deriveWithNewLocal.popFirstField());
+
+            	  for(WrappedSootField wrappedField : source.getFirstField()){
+		              AccessGraph deriveWithNewLocal =
+		                  source.deriveWithNewLocal((Local) leftOp, wrappedField.getType());
+		              
+		              out.addAll(deriveWithNewLocal.popFirstField());
+            	  }
             }
           }
         } else if (rightOp instanceof ArrayRef) {
@@ -203,16 +205,18 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
 
             Set<AccessGraph> withoutFirstField = source.popFirstField();
             for (AccessGraph a : withoutFirstField) {
-              out.add(a.deriveWithNewLocal((Local) leftOp, source.getFirstField().getType()));
+          	  for(WrappedSootField wrappedField : source.getFirstField())
+          		  out.add(a.deriveWithNewLocal((Local) leftOp, wrappedField.getType()));
             }
           }
         } else if (rightOp instanceof StaticFieldRef && context.trackStaticFields()) {
           StaticFieldRef sfr = (StaticFieldRef) rightOp;
-          if (source.isStatic() && source.firstFieldMatches(sfr.getField())) {
+          if (source.isStatic() && source.firstFieldMustMatch(sfr.getField())) {
             if (leftOp instanceof Local) {
               Set<AccessGraph> withoutFirstField = source.popFirstField();
               for (AccessGraph a : withoutFirstField) {
-                out.add(a.deriveWithNewLocal((Local) leftOp, source.getFirstField().getType()));
+            	  for(WrappedSootField wrappedField : source.getFirstField())
+            		  out.add(a.deriveWithNewLocal((Local) leftOp, wrappedField.getType()));
               }
             }
           }
@@ -256,7 +260,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
         source = source.deriveWithoutAllocationSite();
         if (context.trackStaticFields() && source.isStatic()) {
           if (callee != null
-              && context.icfg.isStaticFieldUsed(callee, source.getFirstField().getField())) {
+              && isFirstFieldUsedTransitivelyInMethod(source, callee)) {
             return Collections.singleton(source);
           } else {
             return Collections.emptySet();
@@ -416,7 +420,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
 
         if (context.trackStaticFields() && source.isStatic()) {
           if (callee == null
-              || !context.icfg.isStaticFieldUsed(callee, source.getFirstField().getField())) {
+              || !isFirstFieldUsedTransitivelyInMethod(source, callee)) {
             return Collections.singleton(source);
           } else {
             return Collections.emptySet();

@@ -1,5 +1,6 @@
 package boomerang.pointsofindirection;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,15 +31,19 @@ public class Return implements ForwardPointOfIndirection {
   public Set<AccessGraph> process(BoomerangContext context) {
 	  context.debugger.onProcessReturnPOI(this);
     assert context.bwicfg.isCallStmt(callSite);
-    WrappedSootField lastField = outcomings.getLastField();
-    Set<AccessGraph> withOutLastFields = outcomings.popLastField();
+    Collection<WrappedSootField> lastFields = outcomings.getLastField();
     Set<AccessGraph> newAliases = new HashSet<>();
-    for (AccessGraph withOutLastField : withOutLastFields) {
-      AliasFinder dart = new AliasFinder(context);
-      Set<AccessGraph> irRes = dart.findAliasAtStmtRec(withOutLastField, callSite);
-      newAliases.addAll(AliasResults.appendField(irRes, lastField, context));
+    Set<AccessGraph> withOutLastFields = outcomings.popLastField();
+    for(WrappedSootField lastField :lastFields){
+	    
+	    for (AccessGraph withOutLastField : withOutLastFields) {
+	      AliasFinder dart = new AliasFinder(context);
+	      Set<AccessGraph> irRes = dart.findAliasAtStmtRec(withOutLastField, callSite);
+	      newAliases.addAll(AliasResults.appendField(irRes, lastField, context));
+	    }
     }
     return newAliases;
+    
   }
 
   public boolean isValid(BoomerangContext context) {
