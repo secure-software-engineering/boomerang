@@ -32,10 +32,10 @@ public class AliasResults extends ForwardingMultimap<Pair<Unit, AccessGraph>, Ac
   public AliasResults(Multimap<Pair<Unit, AccessGraph>, AccessGraph> res) {
     this.delegate = HashMultimap.create();
     for (Pair<Unit, AccessGraph> key : res.keySet()) {
-      Pair<Unit, AccessGraph> clonedKey = new Pair<>(key.getO1(), key.getO2().clone());
+      Pair<Unit, AccessGraph> clonedKey = new Pair<>(key.getO1(), key.getO2());
       Set<AccessGraph> out = new HashSet<>();
       for (AccessGraph value : res.get(key)) {
-        out.add(value.clone());
+        out.add(value);
       }
       delegate.putAll(clonedKey, out);
     }

@@ -334,7 +334,7 @@ public class AccessGraph implements Cloneable {
 	 * @return The derived access graph
 	 */
 	public AccessGraph deriveWithAllocationSite(Unit stmt) {
-		return new AccessGraph(value, type, (apg == null ? null : apg.clone()), stmt);
+		return new AccessGraph(value, type, apg, stmt);
 	}
 
 	/**
@@ -355,16 +355,7 @@ public class AccessGraph implements Cloneable {
 	 * @return The derived access graph
 	 */
 	public AccessGraph deriveWithoutAllocationSite() {
-		return new AccessGraph(value, type, (apg == null ? null : apg.clone()), null);
-	}
-
-	/**
-	 * A deep copy of the access graph.
-	 * 
-	 * @return The derived access graph
-	 */
-	public AccessGraph clone() {
-		return new AccessGraph(value, type, (apg == null ? null : apg.clone()), allocationSite);
+		return new AccessGraph(value, type,apg, null);
 	}
 
 	/**

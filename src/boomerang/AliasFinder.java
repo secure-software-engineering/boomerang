@@ -472,7 +472,7 @@ public class AliasFinder {
 				res.add(a);
 			else
 				res.addAll(
-						internalFindAliasAtStmt(new Query(a.clone(), stmt, context.icfg.getMethodOf(stmt)), requestor)
+						internalFindAliasAtStmt(new Query(a, stmt, context.icfg.getMethodOf(stmt)), requestor)
 								.mayAliasSet());
 		}
 		return res;

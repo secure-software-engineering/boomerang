@@ -14,7 +14,7 @@ public class BackwardParameterTurnHandler implements BackwardForwardHandler {
   public BackwardParameterTurnHandler(IPathEdge<Unit, AccessGraph> pathedge) {
     this.pathedge = pathedge;
     target = pathedge.getTarget();
-    factAtTarget = pathedge.factAtTarget().clone();
+    factAtTarget = pathedge.factAtTarget();
   }
 
   @Override
