@@ -104,7 +104,23 @@ public class ComplextNextList extends AliasTest {
 			@Override
 			public ArrayList<MethodQueries> queryAndResults() {
 				ArrayList<MethodQueries> res = new ArrayList<>();
-				res.add(inMethod("<cases.ComplexNextListTarget: void complex()>").askForLocalAtStmt(34, "$r13",
+				res.add(inMethod("<cases.ComplexNextListTarget: void complex()>").askForLocalAtStmt(35, "$r13",
+						andExpectNonEmpty()));
+
+				
+				return res;
+			}
+		});
+	}
+	@Test
+	public void tailQuery2Test() {
+		runAnalysis(false, new IQueryHandler() {
+			@Override
+			public ArrayList<MethodQueries> queryAndResults() {
+				ArrayList<MethodQueries> res = new ArrayList<>();
+				res.add(inMethod("<cases.ComplexNextListTarget: void complex()>").askForLocalAtStmt(18, "head",
+						andExpectNonEmpty()));
+				res.add(inMethod("<cases.ComplexNextListTarget: void complex()>").askForLocalAtStmt(18, "tail",
 						andExpectNonEmpty()));
 
 				
@@ -188,6 +204,34 @@ public void recQueryTest() {
 			public ArrayList<MethodQueries> queryAndResults() {
 				ArrayList<MethodQueries> res = new ArrayList<>();
 				res.add(inMethod("<cases.ComplexNextListTarget: void complex()>").askForLocalAtStmt(34, "$r14",
+						andExpectNonEmpty()));
+
+				
+				return res;
+			}
+		});
+	}
+	@Test
+	public void queryTest2() {
+		runAnalysis(false, new IQueryHandler() {
+			@Override
+			public ArrayList<MethodQueries> queryAndResults() {
+				ArrayList<MethodQueries> res = new ArrayList<>();
+				res.add(inMethod("<cases.ComplexNextListTarget: void complex()>").askForLocalAtStmt(41, "v1",
+						andExpectNonEmpty()));
+
+				
+				return res;
+			}
+		});
+	}
+	@Test
+	public void simpleTest2() {
+		runAnalysis(false, new IQueryHandler() {
+			@Override
+			public ArrayList<MethodQueries> queryAndResults() {
+				ArrayList<MethodQueries> res = new ArrayList<>();
+				res.add(inMethod("<cases.ComplexNextListTarget: void simple()>").askForLocalAtStmt(16, "g",
 						andExpectNonEmpty()));
 
 				

@@ -24,7 +24,8 @@ public class ComplexNextListTarget {
 	      Cell tail = head;
 	      for (int i = 0; i < 100; i++) {
 	        tail.next = new Cell();
-	        tail = tail.next;
+	        Cell ir = tail.next;
+	        tail = ir;
 	      }
 
 	      boolean b = (new Random().nextBoolean());
@@ -46,7 +47,9 @@ public class ComplexNextListTarget {
 		for (int i = 0; i < 100; i++) {
 			tail.next = new Cell();
 			tail = tail.next;
-		}
+		}	
+		Cell test = head.next;
+		Cell g = head.next;
 	}
 	
 	private static void complex() {
@@ -60,10 +63,11 @@ public class ComplexNextListTarget {
 			Cell tail = head;
 			for (int i = 0; i < 100; i++) {
 				tail.next = new Cell();
-				tail = tail.next;
+		        Cell ir = tail.next;
+		        tail = ir;
 			}
 			head.next.next.next.next.v = v1;
-			head.next.next.next.v = v2;
+			head.next.next.next.next.v = v2;
 			head.next.next.next.next.v.firstElement();
 
 		} catch (Exception e) {
@@ -81,7 +85,7 @@ public class ComplexNextListTarget {
 	}
 
 	private static class Cell {
-		Cell next;
+		Cell next = null;
 
 		Vector v;
 	}
