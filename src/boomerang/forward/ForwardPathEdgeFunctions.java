@@ -197,7 +197,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
         for (IPathEdge<Unit, AccessGraph> p : this.matchingAllocationIncomingEdge) {
           PathEdge<Unit, AccessGraph> toContinue =
               new PathEdge<Unit, AccessGraph>(p.getStart(), p.factAtSource(), allocRetSiteC, ap);
-          context.getBackwardsPathEdges().connect(toContinue, p);
           Query query = new Query(ap, callSite);
           if (!cache.isProcessing(query)) {
             context.getSubQuery().add(new Unbalanced(toContinue));
