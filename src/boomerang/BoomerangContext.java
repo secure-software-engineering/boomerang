@@ -16,6 +16,7 @@ import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.bidi.PathEdgeStore;
 import boomerang.bidi.Summaries;
+import boomerang.bidi.PathEdgeStore.Direction;
 import boomerang.cache.Query;
 import boomerang.cache.ResultCache;
 import boomerang.debug.IBoomerangDebugger;
@@ -30,6 +31,7 @@ import boomerang.mock.DefaultNativeCallHandler;
 import boomerang.mock.MockedDataFlow;
 import boomerang.mock.NativeCallHandler;
 import boomerang.pointsofindirection.Call;
+import boomerang.pointsofindirection.ForwardPointOfIndirection;
 import boomerang.pointsofindirection.PointOfIndirection;
 import heros.solver.Pair;
 import soot.Local;
@@ -94,6 +96,8 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 	private Set<IFDSSolver> solvers = new HashSet<>();
 	private Multimap<Pair<Unit, AccessGraph>, Unit> meetingPointToPath = HashMultimap.create();
 
+	private PathEdgeStore BW_PATHEDGES;
+	private PathEdgeStore FW_PATHEDGES;
 	private Set<PointOfIndirection> processedPOIs = new HashSet<>();
 
 	public BoomerangContext(IInfoflowCFG icfg, IInfoflowCFG bwicfg) {
@@ -112,6 +116,8 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 
 		FW_SUMMARIES = new Summaries(this);
 		BW_SUMMARIES = new Summaries(this);
+		BW_PATHEDGES = new PathEdgeStore(this, Direction.Backward);
+		FW_PATHEDGES = new PathEdgeStore(this, Direction.Forward);
 		querycache = new ResultCache();
 	}
 
@@ -210,33 +216,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		this.solvers.remove(solver);
 	}
 
-	public boolean isAlreadyStartedMeetingPoint(Pair<Unit, AccessGraph> startedPair, Unit stmt) {
-		Collection<Unit> collection = meetingPointToPath.get(startedPair);
-		return collection.contains(stmt);
-	}
-
-	public void addMeetingPoint(Pair<Unit, AccessGraph> startedPair, Unit stmt) {
-		Set<Unit> paths = constructAllPathFrom(stmt, startedPair.getO1());
-		meetingPointToPath.putAll(startedPair, paths);
-	}
-
-	private Set<Unit> constructAllPathFrom(Unit source, Unit dest) {
-		Set<Unit> visited = new HashSet<>();
-		LinkedList<Unit> worklist = new LinkedList<>();
-		worklist.add(source);
-		visited.add(source);
-		while (!worklist.isEmpty()) {
-			Unit next = worklist.removeFirst();
-			for (Unit pred : icfg.getPredsOf(next)) {
-				if (!visited.contains(pred)) {
-					visited.add(pred);
-					if (!dest.equals(pred))
-						worklist.add(pred);
-				}
-			}
-		}
-		return visited;
-	}
 
 	public boolean isReturnValue(SootMethod method, Local base) {
 		Collection<Unit> endPointsOf = icfg.getEndPointsOf(method);
@@ -271,7 +250,21 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		}
 		return true;
 	};
-
+	private Set<PointOfIndirection> directProcessedPOI = new HashSet<>();
+	/**
+	 * Forward POI ({@link ForwardPointOfIndirection}) are special and treated
+	 * specially, as they are directly processed and NOT put to a worklist. But
+	 * still they are added to the global set of processed POI, as they also
+	 * should never be computed twice.
+	 * 
+	 * @param poi
+	 *            The {@link ForwardPointOfIndirection}
+	 * @return <code>true</code> or <code>false</code> depending whether the POI
+	 *         has been added.
+	 */
+	public boolean addToDirectlyProcessed(ForwardPointOfIndirection poi) {
+		return directProcessedPOI.add(poi);
+	}
 	public boolean isOutOfBudget() {
 		if (startTime.elapsed(TimeUnit.MILLISECONDS) > budgetInMilliSeconds)
 			return true;
@@ -301,11 +294,11 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 	}
 
 	public PathEdgeStore getBackwardsPathEdges() {
-		return getSubQuery().getBwEdges();
+		return BW_PATHEDGES;
 	}
 
 	public PathEdgeStore getForwardPathEdges() {
-		return getSubQuery().getFwEdges();
+		return FW_PATHEDGES;
 	}
 
 	public void setRecursive(Query q) {

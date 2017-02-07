@@ -1,7 +1,6 @@
 package boomerang.bidi;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,7 +17,6 @@ import com.google.common.collect.Multimap;
 import boomerang.BoomerangContext;
 import boomerang.BoomerangTimeoutException;
 import boomerang.accessgraph.AccessGraph;
-import boomerang.backward.IBackwardPathEdge;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.IPathEdges;
 import heros.solver.Pair;
@@ -27,8 +25,7 @@ import soot.Unit;
 import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 
 public class PathEdgeStore implements
-    IPathEdges<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>>,
-    IBackwardPathEdge<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> {
+    IPathEdges<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> {
   private Map<SootMethod, PerMethodPathEdges> stmtToPathEdges = new HashMap<>();
   private Multimap<Pair<Unit, AccessGraph>, IPathEdge<Unit, AccessGraph>> pausedEdges = HashMultimap
       .create();
@@ -58,7 +55,6 @@ public class PathEdgeStore implements
     PerMethodPathEdges perMethodPathEdges = getOrCreatePerStmt(m);
     perMethodPathEdges.register(pe);
     visitedNodes.add(pe.getTargetNode());
-    connect(pe, prevEdge);
   }
 
 
@@ -161,42 +157,6 @@ public class PathEdgeStore implements
     }
     return perMethodPathEdges;
   }
-
-  public void connect(IPathEdge<Unit, AccessGraph> edge, IPathEdge<Unit, AccessGraph> prevEdge) {
-    precheck();
-    if (direction == Direction.Forward)
-      return;
-    Multimap<IPathEdge<Unit, AccessGraph>, IPathEdge<Unit, AccessGraph>> pathing =
-        getOrCreatePath(edge.getStartNode());
-    pathing.put(edge, prevEdge);
-  }
-
-  private Multimap<IPathEdge<Unit, AccessGraph>, IPathEdge<Unit, AccessGraph>> getOrCreatePath(
-      Pair<Unit, AccessGraph> startNode) {
-    precheck();
-    Multimap<IPathEdge<Unit, AccessGraph>, IPathEdge<Unit, AccessGraph>> multimap =
-        pathFor.get(startNode);
-    if (multimap == null) {
-      multimap = HashMultimap.create();
-      pathFor.put(startNode, multimap);
-    }
-    return multimap;
-  }
-
-
-  public Collection<IPathEdge<Unit, AccessGraph>> getBackwardsAdjacent(
-      Pair<Unit, AccessGraph> spAndD1, IPathEdge<Unit, AccessGraph> edge) {
-    precheck();
-    Multimap<IPathEdge<Unit, AccessGraph>, IPathEdge<Unit, AccessGraph>> pathGraph =
-        pathFor.get(spAndD1);
-    if (pathGraph == null)
-      return Collections.emptySet();
-    Collection<IPathEdge<Unit, AccessGraph>> set = pathGraph.get(edge);
-    if (set == null)
-      return Collections.emptySet();
-    return set;
-  }
-
 
   public Collection<IPathEdge<Unit, AccessGraph>> getAndRemovePauseEdge(
       Pair<Unit, AccessGraph> startPoint) {

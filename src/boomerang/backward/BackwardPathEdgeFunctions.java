@@ -181,8 +181,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
     if (isQueryStartedInsideMethod(calleeEdge, callee)) {
       reachesStartPointOfStartMethod(calleeEdge);
     }
-    context.getBackwardsPathEdges().connect(succEdge, incEdge);
-
     return Collections.singleton(succEdge);
   }
 

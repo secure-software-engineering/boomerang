@@ -32,6 +32,7 @@ import soot.jimple.InvokeExpr;
 import soot.jimple.NewArrayExpr;
 import soot.jimple.NewExpr;
 import soot.jimple.NewMultiArrayExpr;
+import soot.jimple.NullConstant;
 import soot.jimple.ReturnStmt;
 import soot.jimple.StaticFieldRef;
 import soot.jimple.Stmt;
@@ -373,7 +374,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 						}
 						if (ie.getMethod().equals(AliasFinder.ARRAY_COPY)) {
 							for (Value callVal : callArgs) {
-								if (callVal == source.getBase()) {
+								if (callVal.equals(source.getBase())) {
 									// java uses call by value, but fields of
 									// complex objects can be changed (and
 									// tainted), so use this conservative
@@ -407,7 +408,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 
 	private boolean isAllocationSite(Value val) {
 		return (val instanceof StringConstant || val instanceof NewExpr || val instanceof NewArrayExpr
-				|| val instanceof NewMultiArrayExpr);
+				|| val instanceof NewMultiArrayExpr || val instanceof NullConstant);
 	}
 
 	private void allocationSiteReached(IPathEdge<Unit, AccessGraph> pe, AssignStmt as, Value val) {

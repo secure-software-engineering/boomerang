@@ -9,7 +9,7 @@ public class SetBasedFieldGraph implements IFieldGraph {
 	private final Set<WrappedSootField> fields;
 	public SetBasedFieldGraph(Set<WrappedSootField> fields) {
 		this.fields = fields;
-		assert fields.size() > 1;
+//		assert fields.size() > 1;
 	}
 	@Override
 	public Set<IFieldGraph> popFirstField() {
