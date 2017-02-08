@@ -1,8 +1,10 @@
-package test.selfrunning;
+package tests.basic;
 
 import org.junit.Test;
 
-import test.selfrunning.Fieldless.Allocation;
+import test.core.selfrunning.AbstractTest;
+import test.core.selfrunning.AllocatedObject;
+import tests.basic.Fieldless.Allocation;
 
 @SuppressWarnings("unused")
 public class Fieldless extends AbstractTest{
@@ -22,13 +24,16 @@ public class Fieldless extends AbstractTest{
 		Object alias1;
 		if(staticallyUnknown())
 			alias1 = create();
-		else
-			alias1 = create();
+		else{
+			AllocatedObject intermediate = create();
+			alias1 = intermediate;
+		}
 		Object query = alias1;
+		Object query1 = query;
 	}
 	
-	public Object create(){
-		Object alloc1 = new AllocatedObject(){};
+	public AllocatedObject create(){
+		AllocatedObject alloc1 = new AllocatedObject(){};
 		return alloc1;
 	}
 	

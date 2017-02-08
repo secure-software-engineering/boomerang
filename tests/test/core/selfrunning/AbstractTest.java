@@ -1,29 +1,27 @@
-package test.selfrunning;
+package test.core.selfrunning;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.TestName;
 
+import boomerang.AliasFinder;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
 import heros.solver.Pair;
 import soot.ArrayType;
 import soot.Body;
-import soot.Context;
 import soot.G;
 import soot.Local;
-import soot.MethodOrMethodContext;
 import soot.Modifier;
 import soot.PackManager;
 import soot.RefType;
@@ -39,14 +37,15 @@ import soot.jimple.AssignStmt;
 import soot.jimple.Jimple;
 import soot.jimple.JimpleBody;
 import soot.jimple.NewExpr;
+import soot.jimple.infoflow.solver.cfg.InfoflowCFG;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.options.Options;
 
 public class AbstractTest {
 	private JimpleBasedInterproceduralCFG icfg;
-    @Rule public TestName name = new TestName();
+	@Rule
+	public TestName name = new TestName();
 	private SootMethod sootTestMethod;
-
 
 	@After
 	public void performQuery() {
@@ -59,10 +58,11 @@ public class AbstractTest {
 
 			protected void internalTransform(String phaseName, @SuppressWarnings("rawtypes") Map options) {
 				icfg = new JimpleBasedInterproceduralCFG();
-				
+
 				Query q = parseQuery();
 				AliasResults expectedResults = parseExpectedQueryResults();
-				System.out.println(expectedResults);
+				AliasResults results = runQuery(q);
+				compareQuery(q, expectedResults, results);
 			}
 
 		});
@@ -71,23 +71,59 @@ public class AbstractTest {
 		PackManager.v().getPack("cg").apply();
 		PackManager.v().getPack("wjtp").apply();
 	}
+
+	protected void compareQuery(Query q, AliasResults expectedResults, AliasResults results) {
+		Set<Pair<Unit, AccessGraph>> falseNegativeAllocationSites = new HashSet<>(expectedResults.keySet());
+		falseNegativeAllocationSites.removeAll(results.keySet());
+		results.keySet().equals(expectedResults.keySet());
+		Set<Pair<Unit, AccessGraph>> falsePositiveAllocationSites = new HashSet<>(results.keySet());
+		falsePositiveAllocationSites.removeAll(expectedResults.keySet());
+		String answer = "Query: " + q.getAp() + "@" + q.getStmt() + "€" + q.getMethod() + " \n"
+				+ (falseNegativeAllocationSites.isEmpty() ? "" : "\nFN:" + falseNegativeAllocationSites)
+				+ (falsePositiveAllocationSites.isEmpty() ? "" : "\nFP:" + falsePositiveAllocationSites + "\n");
+		if (!falseNegativeAllocationSites.isEmpty()) {
+			throw new RuntimeException("Unsound results for:" + answer);
+		}
+		Set<AccessGraph> aliasVariables = new HashSet<>(results.values());
+		aliasVariables.removeAll(expectedResults.values());
+		HashSet<AccessGraph> missingVariables = new HashSet<>();
+		for(AccessGraph g : aliasVariables){
+			if(g.getBase().toString().contains("alias"))
+				missingVariables.add(g);
+		}
+		if(!missingVariables.isEmpty())
+			throw new RuntimeException("Unsound, missed variables " + missingVariables);
+		if (!falsePositiveAllocationSites.isEmpty())
+			Assert.fail("Imprecise results: " + answer);
+
+	}
+
+	protected AliasResults runQuery(Query q) {
+		AliasFinder aliasFinder = new AliasFinder(new InfoflowCFG(icfg));
+		aliasFinder.startQuery();
+		if (icfg.getSuccsOf(q.getStmt()).size() > 1)
+			throw new RuntimeException(
+					"Query is unambigious. There are multiple successors where the query can be triggered at.");
+		for (Unit u : icfg.getSuccsOf(q.getStmt()))
+			return aliasFinder.findAliasAtStmt(q.getAp(), u);
+		throw new RuntimeException("Unreachable code");
+	}
+
 	private AliasResults parseExpectedQueryResults() {
 		Set<Pair<Unit, AccessGraph>> allocationSiteWithCallStack = parseAllocationSitesWithCallStack();
-		System.out.println(allocationSiteWithCallStack);
 		Set<Local> aliasedVariables = parseAliasedVariables();
-		System.out.println(aliasedVariables);
 		AliasResults expectedResults = associateVariableAliasesToAllocationSites(allocationSiteWithCallStack,
 				aliasedVariables);
-		
+
 		return expectedResults;
 	}
-	
+
 	private AliasResults associateVariableAliasesToAllocationSites(
 			Set<Pair<Unit, AccessGraph>> allocationSiteWithCallStack, Set<Local> aliasedVariables) {
 		AliasResults res = new AliasResults();
-		for(Pair<Unit, AccessGraph> allocatedVariableWithStack : allocationSiteWithCallStack){
-			for(Local l : aliasedVariables){
-				res.put(allocatedVariableWithStack, new AccessGraph(l,l.getType()));
+		for (Pair<Unit, AccessGraph> allocatedVariableWithStack : allocationSiteWithCallStack) {
+			for (Local l : aliasedVariables) {
+				res.put(allocatedVariableWithStack, new AccessGraph(l, l.getType()));
 			}
 		}
 		return res;
@@ -102,7 +138,8 @@ public class AbstractTest {
 			AssignStmt assignStmt = (AssignStmt) u;
 			if (!(assignStmt.getLeftOp() instanceof Local))
 				continue;
-			if (!assignStmt.getLeftOp().toString().contains("alias") && !assignStmt.getLeftOp().toString().contains("query") )
+			if (!assignStmt.getLeftOp().toString().contains("alias")
+					&& !assignStmt.getLeftOp().toString().contains("query"))
 				continue;
 			Local aliasedVar = (Local) assignStmt.getLeftOp();
 			out.add(aliasedVar);
@@ -123,12 +160,12 @@ public class AbstractTest {
 			if (!(u instanceof AssignStmt))
 				continue;
 			AssignStmt as = (AssignStmt) u;
-			
+
 			if (as.getLeftOp() instanceof Local && as.getRightOp() instanceof NewExpr) {
-				if(allocatesObjectOfInterest((NewExpr)as.getRightOp())){
+				if (allocatesObjectOfInterest((NewExpr) as.getRightOp())) {
 					Local local = (Local) as.getLeftOp();
-					AccessGraph accessGraph = new AccessGraph(local, local.getType());
-					out.add(new Pair<Unit, AccessGraph>(as,accessGraph.deriveWithAllocationSite(as)));
+					AccessGraph accessGraph = new AccessGraph(local,((NewExpr) as.getRightOp()).getBaseType());
+					out.add(new Pair<Unit, AccessGraph>(as, accessGraph.deriveWithAllocationSite(as)));
 				}
 			}
 
@@ -137,7 +174,9 @@ public class AbstractTest {
 	}
 
 	private boolean allocatesObjectOfInterest(NewExpr rightOp) {
-		return Scene.v().getFastHierarchy().getSubclassesOf(Scene.v().getSootClass("test.selfrunning.AllocatedObject")).contains(rightOp.getBaseType().getSootClass());
+		return Scene.v().getFastHierarchy()
+				.getSubclassesOf(Scene.v().getSootClass("test.core.selfrunning.AllocatedObject"))
+				.contains(rightOp.getBaseType().getSootClass());
 	}
 
 	private Set<AccessGraph> transitivelyReachableAllocationSite(Unit call, Set<SootMethod> visited) {
@@ -154,9 +193,9 @@ public class AbstractTest {
 				AssignStmt as = (AssignStmt) u;
 
 				if (as.getLeftOp() instanceof Local && as.getRightOp() instanceof NewExpr) {
-					if(allocatesObjectOfInterest((NewExpr)as.getRightOp())){
+					if (allocatesObjectOfInterest((NewExpr) as.getRightOp())) {
 						Local local = (Local) as.getLeftOp();
-						AccessGraph accessGraph = new AccessGraph(local, local.getType());
+						AccessGraph accessGraph = new AccessGraph(local,((NewExpr) as.getRightOp()).getBaseType());
 						out.add(accessGraph.deriveWithAllocationSite(as));
 					}
 				}
@@ -170,7 +209,8 @@ public class AbstractTest {
 
 	private Query parseQuery() {
 		if (!sootTestMethod.hasActiveBody())
-			throw new RuntimeException("The method that contains the query does not have a body" + sootTestMethod.getName());
+			throw new RuntimeException(
+					"The method that contains the query does not have a body" + sootTestMethod.getName());
 		Body activeBody = sootTestMethod.getActiveBody();
 		for (Unit u : activeBody.getUnits()) {
 			if (!(u instanceof AssignStmt))
@@ -183,9 +223,10 @@ public class AbstractTest {
 			Local queryVar = (Local) assignStmt.getLeftOp();
 			return new Query(new AccessGraph(queryVar, queryVar.getType()), assignStmt);
 		}
-		throw new RuntimeException("No variable whose name contains query has been found in " + sootTestMethod.getName());
+		System.out.println(sootTestMethod.getActiveBody());
+		throw new RuntimeException(
+				"No variable whose name contains query has been found in " + sootTestMethod.getName());
 	}
-
 
 	@SuppressWarnings("static-access")
 	private void initializeSootWithEntryPoint(String methodName) {
@@ -225,15 +266,15 @@ public class AbstractTest {
 		} else {
 			Options.v().set_no_bodies_for_excluded(true);
 			Options.v().set_allow_phantom_refs(true);
-//			 Options.v().setPhaseOption("cg", "all-reachable:true");
+			// Options.v().setPhaseOption("cg", "all-reachable:true");
 		}
-		
+
 		Options.v().set_soot_classpath(sootCp);
-//		Options.v().set_main_class(this.getTargetClass());
+		// Options.v().set_main_class(this.getTargetClass());
 		SootClass sootTestCaseClass = Scene.v().forceResolve(getTestCaseClassName(), SootClass.BODIES);
-		for(SootMethod m : sootTestCaseClass.getMethods())
-			if(m.getName().equals(methodName))
-					sootTestMethod = m;
+		for (SootMethod m : sootTestCaseClass.getMethods())
+			if (m.getName().equals(methodName))
+				sootTestMethod = m;
 		Scene.v().addBasicClass(getTargetClass(), SootClass.BODIES);
 		Scene.v().loadNecessaryClasses();
 		SootClass c = Scene.v().forceResolve(getTargetClass(), SootClass.BODIES);
@@ -249,24 +290,24 @@ public class AbstractTest {
 
 	private String getTargetClass() {
 		SootClass sootClass = new SootClass("dummyClass");
-		SootMethod mainMethod = new SootMethod("main",                 
-			    Arrays.asList(new Type[] {ArrayType.v(RefType.v("java.lang.String"), 1)}),
-			    VoidType.v(), Modifier.PUBLIC | Modifier.STATIC);
+		SootMethod mainMethod = new SootMethod("main",
+				Arrays.asList(new Type[] { ArrayType.v(RefType.v("java.lang.String"), 1) }), VoidType.v(),
+				Modifier.PUBLIC | Modifier.STATIC);
 		sootClass.addMethod(mainMethod);
 		JimpleBody body = Jimple.v().newBody(mainMethod);
 		mainMethod.setActiveBody(body);
 		RefType testCaseType = RefType.v(getTestCaseClassName());
-		Local allocatedTestObj = Jimple.v().newLocal("dummyObj",testCaseType );
+		Local allocatedTestObj = Jimple.v().newLocal("dummyObj", testCaseType);
 		body.getLocals().add(allocatedTestObj);
-		body.getUnits().add(Jimple.v().newAssignStmt(allocatedTestObj, 
-		      Jimple.v().newNewExpr(testCaseType)));
-		body.getUnits().add(Jimple.v().newInvokeStmt(Jimple.v().newVirtualInvokeExpr(allocatedTestObj,sootTestMethod.makeRef())));
+		body.getUnits().add(Jimple.v().newAssignStmt(allocatedTestObj, Jimple.v().newNewExpr(testCaseType)));
+		body.getUnits().add(
+				Jimple.v().newInvokeStmt(Jimple.v().newVirtualInvokeExpr(allocatedTestObj, sootTestMethod.makeRef())));
 		Scene.v().addClass(sootClass);
 		return sootClass.toString();
 	}
 
 	private String getTestCaseClassName() {
-		return this.getClass().getName().replace("class ","");
+		return this.getClass().getName().replace("class ", "");
 	}
 
 	protected boolean includeJDK() {

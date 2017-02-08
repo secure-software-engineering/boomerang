@@ -1,4 +1,4 @@
-package test.selfrunning;
+package test.core.selfrunning;
 
 public class AllocatedObject {
 
