@@ -41,7 +41,7 @@ import soot.jimple.infoflow.solver.cfg.InfoflowCFG;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.options.Options;
 
-public class AbstractTest {
+public class AbstractBoomerangTest {
 	private JimpleBasedInterproceduralCFG icfg;
 	@Rule
 	public TestName name = new TestName();
@@ -72,7 +72,9 @@ public class AbstractTest {
 		PackManager.v().getPack("wjtp").apply();
 	}
 
-	protected void compareQuery(Query q, AliasResults expectedResults, AliasResults results) {
+	private void compareQuery(Query q, AliasResults expectedResults, AliasResults results) {
+		System.out.println("Boomerang Results: " +  results);
+		System.out.println("Expected Results: " +  expectedResults);
 		Set<Pair<Unit, AccessGraph>> falseNegativeAllocationSites = new HashSet<>(expectedResults.keySet());
 		falseNegativeAllocationSites.removeAll(results.keySet());
 		results.keySet().equals(expectedResults.keySet());
@@ -98,7 +100,7 @@ public class AbstractTest {
 
 	}
 
-	protected AliasResults runQuery(Query q) {
+	private AliasResults runQuery(Query q) {
 		AliasFinder aliasFinder = new AliasFinder(new InfoflowCFG(icfg));
 		aliasFinder.startQuery();
 		if (icfg.getSuccsOf(q.getStmt()).size() > 1)
@@ -174,9 +176,11 @@ public class AbstractTest {
 	}
 
 	private boolean allocatesObjectOfInterest(NewExpr rightOp) {
-		return Scene.v().getFastHierarchy()
-				.getSubclassesOf(Scene.v().getSootClass("test.core.selfrunning.AllocatedObject"))
-				.contains(rightOp.getBaseType().getSootClass());
+		SootClass allocationClass = Scene.v().getSootClass("test.core.selfrunning.AllocatedObject");
+		SootClass allocatedClass = rightOp.getBaseType().getSootClass();
+		return  allocatedClass.equals(allocationClass) || Scene.v().getFastHierarchy()
+				.getSubclassesOf(allocationClass)
+				.contains(allocatedClass);
 	}
 
 	private Set<AccessGraph> transitivelyReachableAllocationSite(Unit call, Set<SootMethod> visited) {
@@ -212,6 +216,8 @@ public class AbstractTest {
 			throw new RuntimeException(
 					"The method that contains the query does not have a body" + sootTestMethod.getName());
 		Body activeBody = sootTestMethod.getActiveBody();
+
+		System.out.println(sootTestMethod.getActiveBody());
 		for (Unit u : activeBody.getUnits()) {
 			if (!(u instanceof AssignStmt))
 				continue;
@@ -223,7 +229,6 @@ public class AbstractTest {
 			Local queryVar = (Local) assignStmt.getLeftOp();
 			return new Query(new AccessGraph(queryVar, queryVar.getType()), assignStmt);
 		}
-		System.out.println(sootTestMethod.getActiveBody());
 		throw new RuntimeException(
 				"No variable whose name contains query has been found in " + sootTestMethod.getName());
 	}

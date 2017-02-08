@@ -2,12 +2,12 @@ package tests.basic;
 
 import org.junit.Test;
 
-import test.core.selfrunning.AbstractTest;
+import test.core.selfrunning.AbstractBoomerangTest;
 import test.core.selfrunning.AllocatedObject;
 import tests.basic.Fieldless.Allocation;
 
 @SuppressWarnings("unused")
-public class Fieldless extends AbstractTest{
+public class Fieldless extends AbstractBoomerangTest{
 	
 	public class Allocation extends AllocatedObject{
 
