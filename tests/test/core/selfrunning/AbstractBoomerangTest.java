@@ -32,11 +32,14 @@ import soot.SootMethod;
 import soot.Transform;
 import soot.Type;
 import soot.Unit;
+import soot.Value;
 import soot.VoidType;
 import soot.jimple.AssignStmt;
+import soot.jimple.InvokeExpr;
 import soot.jimple.Jimple;
 import soot.jimple.JimpleBody;
 import soot.jimple.NewExpr;
+import soot.jimple.Stmt;
 import soot.jimple.infoflow.solver.cfg.InfoflowCFG;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.options.Options;
@@ -103,12 +106,7 @@ public class AbstractBoomerangTest {
 	private AliasResults runQuery(Query q) {
 		AliasFinder aliasFinder = new AliasFinder(new InfoflowCFG(icfg));
 		aliasFinder.startQuery();
-		if (icfg.getSuccsOf(q.getStmt()).size() > 1)
-			throw new RuntimeException(
-					"Query is unambigious. There are multiple successors where the query can be triggered at.");
-		for (Unit u : icfg.getSuccsOf(q.getStmt()))
-			return aliasFinder.findAliasAtStmt(q.getAp(), u);
-		throw new RuntimeException("Unreachable code");
+		return aliasFinder.findAliasAtStmt(q.getAp(), q.getStmt());
 	}
 
 	private AliasResults parseExpectedQueryResults() {
@@ -218,19 +216,29 @@ public class AbstractBoomerangTest {
 		Body activeBody = sootTestMethod.getActiveBody();
 
 		System.out.println(sootTestMethod.getActiveBody());
+		LinkedList<Query> queries = new LinkedList<>();
 		for (Unit u : activeBody.getUnits()) {
-			if (!(u instanceof AssignStmt))
+			if (!(u instanceof Stmt))
 				continue;
-			AssignStmt assignStmt = (AssignStmt) u;
-			if (!(assignStmt.getLeftOp() instanceof Local))
+			
+			Stmt stmt = (Stmt) u;
+			if (!(stmt.containsInvokeExpr()))
 				continue;
-			if (!assignStmt.getLeftOp().toString().contains("query"))
+			InvokeExpr invokeExpr = stmt.getInvokeExpr();
+			if (!invokeExpr.getMethod().getName().equals("queryFor"))
 				continue;
-			Local queryVar = (Local) assignStmt.getLeftOp();
-			return new Query(new AccessGraph(queryVar, queryVar.getType()), assignStmt);
+			Value param = invokeExpr.getArg(0);
+			if(!(param instanceof Local))
+				continue;
+			Local queryVar = (Local) param;
+			queries.add(new Query(new AccessGraph(queryVar, queryVar.getType()), stmt));
 		}
-		throw new RuntimeException(
+		if(queries.size() == 0)
+			throw new RuntimeException(
 				"No variable whose name contains query has been found in " + sootTestMethod.getName());
+		if(queries.size() > 1)
+			System.err.println("More than one possible query found, might be unambigious, picking query " + queries.getLast());
+		return queries.getLast();
 	}
 
 	@SuppressWarnings("static-access")
@@ -317,5 +325,20 @@ public class AbstractBoomerangTest {
 
 	protected boolean includeJDK() {
 		return false;
+	}
+	
+	/**
+	 * The methods parameter describes the variable that a query is issued for.
+	 */
+	protected void queryFor(Object variable){
+		
+	}
+
+	/**
+	 * This method can be used in test cases to create branching. It is not optimized away.
+	 * @return
+	 */
+	protected boolean staticallyUnknown(){
+		return true;
 	}
 }

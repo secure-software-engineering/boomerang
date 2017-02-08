@@ -13,9 +13,17 @@ public class StrongUpdate extends AbstractBoomerangTest{
 		A b = a;
 		b.field = new AllocatedObject();
 		Object alias = a.field;
-		Object query = alias; 
+		queryFor(alias);
 	}
-	
+	@Test
+	public void strongUpdateWithFieldSwapped(){
+		A a = new A();
+		A b = a;
+		b.field = new Object();
+		a.field = new AllocatedObject();
+		Object alias = a.field;
+		queryFor(alias);
+	}
 	private class A{
 		Object field;
 	}
