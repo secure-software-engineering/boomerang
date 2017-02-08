@@ -11,6 +11,7 @@ import boomerang.forward.ForwardSolver;
 import boomerang.ifdssolver.IPathEdge;
 import soot.Unit;
 import soot.jimple.AssignStmt;
+import soot.jimple.NewExpr;
 
 public class Alloc implements BackwardForwardHandler {
 
@@ -34,6 +35,8 @@ public class Alloc implements BackwardForwardHandler {
     AccessGraph factAtTarget = pathEdge.factAtTarget();
     Unit target = pathEdge.getTarget();
     AccessGraph alloc = factAtTarget.deriveWithAllocationSite(target);
+    if(target instanceof AssignStmt && ((AssignStmt) target).getRightOp() instanceof NewExpr)
+    	alloc = alloc.deriveWithNewLocal(alloc.getBase(), ((NewExpr)((AssignStmt) target).getRightOp()).getBaseType());
     assert alloc.hasAllocationSite() == true;
     // start forward propagation from the path edge target with the allocation site.
     ptsSolver.startPropagationAlongPath(target, alloc, factAtTarget, pathEdge);
