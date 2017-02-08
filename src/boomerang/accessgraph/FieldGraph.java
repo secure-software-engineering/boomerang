@@ -66,7 +66,7 @@ public class FieldGraph implements IFieldGraph{
 	private Loop loopState;
 	private Map<Pair<Integer, Integer>, IntArrayList> shortestPathCache = new HashMap<>();
 
-	static FieldGraph EMPTY_GRAPH = new FieldGraph();
+	static FieldGraph EMPTY_GRAPH = new FieldGraph(){public String toString() {return "EMPTY_GRAPH";};};
 
 	FieldGraph(WrappedSootField[] fields) {
 		assert fields != null && fields.length > 0;

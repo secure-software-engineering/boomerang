@@ -39,7 +39,7 @@ public class AccessGraph {
 	 * The {@link FieldGraph} representing the accesses which yield to the
 	 * allocation site.
 	 */
-	private final IFieldGraph apg;
+	private final IFieldGraph fieldGraph;
 	private static List<IFieldGraph> apgs;
 
 	private int hashCode = 0;
@@ -96,18 +96,20 @@ public class AccessGraph {
 		this(val, t, (f == null || f.length == 0 ? null : new FieldGraph(f)), null);
 	}
 
-	protected AccessGraph(Local value, Type t, IFieldGraph apg, Unit sourceStmt) {
+	protected AccessGraph(Local value, Type t, IFieldGraph fieldGraph, Unit sourceStmt) {
 		this.value = value;
 		this.type = (WrappedSootField.TRACK_TYPE ? t : null);
 		if(apgs == null){
 			apgs = new LinkedList<IFieldGraph>();
 		}
-		int index = apgs.indexOf(apg);
+		if(fieldGraph != null && fieldGraph.equals(FieldGraph.EMPTY_GRAPH))
+			fieldGraph = null;
+		int index = apgs.indexOf(fieldGraph);
 		if(index >= 0){
-			this.apg = apgs.get(index);
+			this.fieldGraph = apgs.get(index);
 		} else{
-			apgs.add(apg);
-			this.apg = apg;
+			apgs.add(fieldGraph);
+			this.fieldGraph = fieldGraph;
 		}
 		this.allocationSite = sourceStmt;
 	}
@@ -137,9 +139,9 @@ public class AccessGraph {
 	 *         <code>null</code>)
 	 */
 	public Collection<WrappedSootField> getFirstField() {
-		if (apg == null)
+		if (fieldGraph == null)
 			return null;
-		return apg.getEntryNode();
+		return fieldGraph.getEntryNode();
 	}
 
 	/**
@@ -150,7 +152,7 @@ public class AccessGraph {
 	 * @return {@link Boolean} whether the field matches or not.
 	 */
 	public boolean firstFieldMustMatch(SootField field) {
-		if (apg == null)
+		if (fieldGraph == null)
 			return false;
 		if(getFirstField().size() > 1)
 			return false;
@@ -174,7 +176,7 @@ public class AccessGraph {
 	 * @return The length of the shortest sequence of field accesses.
 	 */
 	public int getFieldCount() {
-		return (apg == null ? 0 : (getRepresentative() == null ? 0 : getRepresentative().length));
+		return (fieldGraph == null ? 0 : (getRepresentative() == null ? 0 : getRepresentative().length));
 	}
 
 	/**
@@ -185,10 +187,10 @@ public class AccessGraph {
 	 *         originate (the field write statements)
 	 */
 	public WrappedSootField[] getRepresentative() {
-		if (apg == null)
+		if (fieldGraph == null)
 			return null;
 
-		return apg.getFields();
+		return fieldGraph.getFields();
 	}
 
 	@Override
@@ -196,9 +198,9 @@ public class AccessGraph {
 		String str = "";
 		if (value != null)
       str += value.toString();// + "(" + getBaseType() + ")";
-		if (apg != null) {
+		if (fieldGraph != null) {
 			
-			 str += apg.toString();
+			 str += fieldGraph.toString();
 		}
 		if (allocationSite != null) {
       // str += " at " +sourceStmt.toString();
@@ -217,7 +219,7 @@ public class AccessGraph {
 	 * @return The access graph
 	 */
 	public AccessGraph deriveWithNewLocal(Local local, Type type) {
-		return new AccessGraph(local, type, apg, allocationSite);
+		return new AccessGraph(local, type, fieldGraph, allocationSite);
 	}
 
 	/**
@@ -229,7 +231,7 @@ public class AccessGraph {
 	 * @return the access graph derived with the appended fields.
 	 */
 	public AccessGraph appendFields(WrappedSootField[] toAppend) {
-		IFieldGraph newapg = (apg != null ? apg.appendFields(toAppend) : new FieldGraph(toAppend));
+		IFieldGraph newapg = (fieldGraph != null ? fieldGraph.appendFields(toAppend) : new FieldGraph(toAppend));
 		if(newapg.shouldOverApproximate()){
 			newapg = newapg.overapproximation();
 		}
@@ -246,7 +248,7 @@ public class AccessGraph {
 	public AccessGraph appendGraph(IFieldGraph graph) {
 		if (graph == null)
 			return this;
-		IFieldGraph newapg = (apg != null ? apg.append(graph) : graph);
+		IFieldGraph newapg = (fieldGraph != null ? fieldGraph.append(graph) : graph);
 		if(newapg.shouldOverApproximate()){
 			newapg = newapg.overapproximation();
 		}
@@ -321,7 +323,7 @@ public class AccessGraph {
 	 * @return A copy of the current access graph with the field appended
 	 */
 	public AccessGraph prependField(WrappedSootField f) {
-		IFieldGraph newapg = (apg != null ? apg.prependField(f) : new FieldGraph(f));
+		IFieldGraph newapg = (fieldGraph != null ? fieldGraph.prependField(f) : new FieldGraph(f));
 		if(newapg.shouldOverApproximate()){
 			newapg = newapg.overapproximation();
 		}
@@ -368,17 +370,15 @@ public class AccessGraph {
 	 *         first field of the current graph.
 	 */
 	public Set<AccessGraph> popFirstField() {
-		if (apg == null)
+		if (fieldGraph == null)
 			throw new RuntimeException("Try to remove the first field from an access graph which has no field" + this);
 
-		Set<IFieldGraph> newapg = apg.popFirstField();
+		Set<IFieldGraph> newapg = fieldGraph.popFirstField();
 		if (newapg.isEmpty())
 			return Collections.singleton(new AccessGraph(value, type, null, allocationSite));
 		Set<AccessGraph> out = new HashSet<>();
 		for (IFieldGraph a : newapg) {
-			if (a.equals(FieldGraph.EMPTY_GRAPH))
-				out.add(new AccessGraph(value, type, allocationSite));
-			out.add(new AccessGraph(value, type, a, allocationSite));
+				out.add(new AccessGraph(value, type, a, allocationSite));
 		}
 		return out;
 	}
@@ -391,10 +391,10 @@ public class AccessGraph {
 	 * @return Set of graphs without the last access.
 	 */
 	public Set<AccessGraph> popLastField() {
-		if (apg == null)
+		if (fieldGraph == null)
 			throw new RuntimeException("Try to remove the first field from an access graph which has no field" + this);
 
-		Set<IFieldGraph> newapg = apg.popLastField();
+		Set<IFieldGraph> newapg = fieldGraph.popLastField();
 
 		Set<AccessGraph> out = new HashSet<>();
 		if (newapg.isEmpty())
@@ -424,7 +424,7 @@ public class AccessGraph {
 	 * @return The derived access graph
 	 */
 	public AccessGraph deriveWithAllocationSite(Unit stmt) {
-		return new AccessGraph(value, type, apg, stmt);
+		return new AccessGraph(value, type, fieldGraph, stmt);
 	}
 
 	/**
@@ -445,7 +445,7 @@ public class AccessGraph {
 	 * @return The derived access graph
 	 */
 	public AccessGraph deriveWithoutAllocationSite() {
-		return new AccessGraph(value, type,apg, null);
+		return new AccessGraph(value, type,fieldGraph, null);
 	}
 
 	/**
@@ -465,7 +465,7 @@ public class AccessGraph {
 	 * @return The derived access graph.
 	 */
 	public AccessGraph makeStatic() {
-		return new AccessGraph(null, null, apg, allocationSite);
+		return new AccessGraph(null, null, fieldGraph, allocationSite);
 	}
 
 	/**
@@ -483,10 +483,10 @@ public class AccessGraph {
 	 * @return Last field, might be null.
 	 */
 	public Collection<WrappedSootField> getLastField() {
-		if (apg == null)
+		if (fieldGraph == null)
 			return null;
 
-		return apg.getExitNode();
+		return fieldGraph.getExitNode();
 	}
 
 	/**
@@ -495,7 +495,7 @@ public class AccessGraph {
 	 * @return The field graph.
 	 */
 	public IFieldGraph getFieldGraph() {
-		return apg;
+		return fieldGraph;
 	}
 
 	/**
@@ -521,7 +521,7 @@ public class AccessGraph {
 
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((apg == null) ? 0 : apg.hashCode());
+		result = prime * result + ((fieldGraph == null) ? 0 : fieldGraph.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + ((allocationSite == null) ? 0 : allocationSite.hashCode());
@@ -553,10 +553,10 @@ public class AccessGraph {
 				return false;
 		} else if (!allocationSite.equals(other.allocationSite))
 			return false;
-		if (apg == null) {
-			if (other.apg != null)
+		if (fieldGraph == null) {
+			if (other.fieldGraph != null)
 				return false;
-		} else if (!apg.equals(other.apg))
+		} else if (!fieldGraph.equals(other.fieldGraph))
 			return false;
 		assert this.hashCode() == obj.hashCode();
 		return true;
