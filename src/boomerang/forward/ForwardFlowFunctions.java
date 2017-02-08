@@ -8,7 +8,6 @@ import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
-import boomerang.cache.AliasResults;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.pointsofindirection.Write;

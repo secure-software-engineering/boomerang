@@ -8,15 +8,11 @@ import com.google.common.collect.ForwardingMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.FieldGraph;
 import boomerang.accessgraph.WrappedSootField;
 import heros.solver.Pair;
-import soot.Scene;
-import soot.SootField;
-import soot.Type;
 import soot.Unit;
 import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 

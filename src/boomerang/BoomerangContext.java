@@ -15,8 +15,8 @@ import com.google.common.collect.Multimap;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.bidi.PathEdgeStore;
-import boomerang.bidi.Summaries;
 import boomerang.bidi.PathEdgeStore.Direction;
+import boomerang.bidi.Summaries;
 import boomerang.cache.Query;
 import boomerang.cache.ResultCache;
 import boomerang.debug.IBoomerangDebugger;
@@ -40,7 +40,6 @@ import soot.Unit;
 import soot.Value;
 import soot.jimple.ReturnStmt;
 import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
-import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 
 @SuppressWarnings("serial")
 public class BoomerangContext extends LinkedList<SubQueryContext> {
