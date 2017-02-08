@@ -163,6 +163,13 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 							return out;
 						}
 					}
+					//Strong updates of fields
+					if(source.firstFieldMustMatch(field) && base instanceof Local){
+					    AliasFinder dart = new AliasFinder(context);
+					    AliasResults res = dart.findAliasAtStmt(new AccessGraph((Local)base, base.getType()), curr);
+					    if(res.keySet().size() == 1 && res.values().contains(source.dropTail()))
+					    	return Collections.emptySet();
+					}
 				} else if (leftOp instanceof StaticFieldRef && context.trackStaticFields()) {
 					StaticFieldRef sfr = (StaticFieldRef) leftOp;
 					if (source.isStatic() && source.firstFieldMustMatch(sfr.getField())) {
