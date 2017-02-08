@@ -334,11 +334,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
   }
 
   protected void addEndSummary(M m, IPathEdge<N, D> edge) {
-    M methodOf = icfg.getMethodOf(edge.getTarget());
-    Collection<N> startPointsOf = icfg.getStartPointsOf(methodOf);
-    if (!startPointsOf.contains(edge.getStart())) {
-      return;
-    }
+	assert this.direction == Direction.FORWARD && icfg.getStartPointsOf(icfg.getMethodOf(edge.getStart())).contains(edge.getStart());
     debugger.addSummary(direction, m, edge);
     summaries.addEndSummary(m, edge);
   }
