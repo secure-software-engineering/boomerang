@@ -5,11 +5,11 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
@@ -22,6 +22,7 @@ import soot.ArrayType;
 import soot.Body;
 import soot.G;
 import soot.Local;
+import soot.MethodOrMethodContext;
 import soot.Modifier;
 import soot.PackManager;
 import soot.RefType;
@@ -40,27 +41,34 @@ import soot.jimple.Jimple;
 import soot.jimple.JimpleBody;
 import soot.jimple.NewExpr;
 import soot.jimple.Stmt;
+import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 import soot.jimple.infoflow.solver.cfg.InfoflowCFG;
+import soot.jimple.toolkits.callgraph.ReachableMethods;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.options.Options;
+import soot.util.queue.QueueReader;
+import test.core.TestBoomerangOptions;
 
 public class AbstractBoomerangTest {
-	private JimpleBasedInterproceduralCFG icfg;
+	private IInfoflowCFG icfg;
 	@Rule
 	public TestName name = new TestName();
 	private SootMethod sootTestMethod;
 
-	@After
+	@Before
 	public void performQuery() {
 		initializeSootWithEntryPoint(name.getMethodName());
 		analyze(name.getMethodName());
+		
+		//To never execute the @Test method... 
+	    org.junit.Assume.assumeTrue(false);
 	}
 
 	private void analyze(final String methodName) {
 		Transform transform = new Transform("wjtp.ifds", new SceneTransformer() {
 
 			protected void internalTransform(String phaseName, @SuppressWarnings("rawtypes") Map options) {
-				icfg = new JimpleBasedInterproceduralCFG();
+				icfg = new InfoflowCFG(new JimpleBasedInterproceduralCFG());
 
 				Query q = parseQuery();
 				AliasResults expectedResults = parseExpectedQueryResults();
@@ -104,9 +112,10 @@ public class AbstractBoomerangTest {
 	}
 
 	private AliasResults runQuery(Query q) {
-		AliasFinder aliasFinder = new AliasFinder(new InfoflowCFG(icfg));
-		aliasFinder.startQuery();
-		return aliasFinder.findAliasAtStmt(q.getAp(), q.getStmt());
+
+	    AliasFinder boomerang = new AliasFinder(icfg, new TestBoomerangOptions());
+	    boomerang.startQuery();
+		return boomerang.findAliasAtStmt(q.getAp(), q.getStmt());
 	}
 
 	private AliasResults parseExpectedQueryResults() {
@@ -174,11 +183,9 @@ public class AbstractBoomerangTest {
 	}
 
 	private boolean allocatesObjectOfInterest(NewExpr rightOp) {
-		SootClass allocationClass = Scene.v().getSootClass("test.core.selfrunning.AllocatedObject");
-		SootClass allocatedClass = rightOp.getBaseType().getSootClass();
-		return  allocatedClass.equals(allocationClass) || Scene.v().getFastHierarchy()
-				.getSubclassesOf(allocationClass)
-				.contains(allocatedClass);
+		RefType typeOfInterest = Scene.v().getSootClass("test.core.selfrunning.AllocatedObject").getType();
+		RefType allocatedType = rightOp.getBaseType();
+		return  Scene.v().getFastHierarchy().canStoreType(allocatedType,typeOfInterest);
 	}
 
 	private Set<AccessGraph> transitivelyReachableAllocationSite(Unit call, Set<SootMethod> visited) {
@@ -285,9 +292,13 @@ public class AbstractBoomerangTest {
 		Options.v().set_soot_classpath(sootCp);
 		// Options.v().set_main_class(this.getTargetClass());
 		SootClass sootTestCaseClass = Scene.v().forceResolve(getTestCaseClassName(), SootClass.BODIES);
-		for (SootMethod m : sootTestCaseClass.getMethods())
+		
+		for (SootMethod m : sootTestCaseClass.getMethods()){
 			if (m.getName().equals(methodName))
 				sootTestMethod = m;
+		}
+		if(sootTestMethod == null)
+			throw new RuntimeException("The method with name " + methodName +" was not found in the Soot Scene.");
 		Scene.v().addBasicClass(getTargetClass(), SootClass.BODIES);
 		Scene.v().loadNecessaryClasses();
 		SootClass c = Scene.v().forceResolve(getTargetClass(), SootClass.BODIES);
@@ -310,6 +321,7 @@ public class AbstractBoomerangTest {
 		JimpleBody body = Jimple.v().newBody(mainMethod);
 		mainMethod.setActiveBody(body);
 		RefType testCaseType = RefType.v(getTestCaseClassName());
+		System.out.println(getTestCaseClassName());
 		Local allocatedTestObj = Jimple.v().newLocal("dummyObj", testCaseType);
 		body.getLocals().add(allocatedTestObj);
 		body.getUnits().add(Jimple.v().newAssignStmt(allocatedTestObj, Jimple.v().newNewExpr(testCaseType)));
@@ -329,7 +341,9 @@ public class AbstractBoomerangTest {
 	
 	/**
 	 * The methods parameter describes the variable that a query is issued for.
+	 * Note: We misuse the @Deprecated annotation to highlight the method in the Code.
 	 */
+	@Deprecated
 	protected void queryFor(Object variable){
 		
 	}

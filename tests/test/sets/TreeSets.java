@@ -1,20 +1,20 @@
 package test.sets;
 
-import java.util.HashSet;
+
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.junit.Test;
 
 import test.core.selfrunning.AbstractBoomerangTest;
 import test.core.selfrunning.AllocatedObject;
 
-public class HashSets extends AbstractBoomerangTest{
+public class TreeSets extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieve(){
-		HashSet<Object> set = new HashSet<>();
+		Set<Object> set = new TreeSet<Object>();
 		AllocatedObject alias = new AllocatedObject();
-		AllocatedObject alias3 = new AllocatedObject();
 		set.add(alias);
-		set.add(alias3);
 		Object alias2 = null;
 		for(Object o : set)
 			alias2 = o;

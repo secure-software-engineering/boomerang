@@ -12,7 +12,7 @@ public class Fieldless extends AbstractBoomerangTest {
 	}
 
 	@Test
-	public void simpleAssignents() {
+	public void simpleAssignment1() {
 		Object alloc1 = new Allocation();
 		Object alias1 = alloc1;
 		Object query = alias1;
@@ -20,18 +20,13 @@ public class Fieldless extends AbstractBoomerangTest {
 	}
 
 	@Test
-	public void branchedObjectCreation() {
-		Object alias1;
-		if (staticallyUnknown())
-			alias1 = create();
-		else {
-			AllocatedObject intermediate = create();
-			alias1 = intermediate;
-		}
-		Object query = alias1;
-		queryFor(query);
+	public void simpleAssignment2(){
+	    Object alias1 = new AllocatedObject(), b, c, alias2, alias3;
+	    alias2 = alias1;
+	    c = new Object();
+	    alias3 = alias1;
+	    queryFor(alias3);
 	}
-
 	@Test
 	public void branchWithOverwrite() {
 		Object alias1 = new Object();
