@@ -19,7 +19,7 @@ public interface PathEdgeFunctions<N, D, M> {
 	public Collection<? extends IPathEdge<N,D>> callFunction(IPathEdge<N,D> prevEdge, M callee, N calleeSp);
 	public Collection<? extends IPathEdge<N,D>> balancedReturnFunction(IPathEdge<N,D> prevEdge, N returnSite, M callee, IPathEdge<N,D> incomingEdge);
 	public Collection<? extends IPathEdge<N,D>> unbalancedReturnFunction(IPathEdge<N,D> prevEdge, N callSite, N returnSite, M callee);
-	public Collection<? extends IPathEdge<N,D>> call2ReturnFunction(IPathEdge<N,D> prevEdge, N returnSite, M callee, N calleeSP);
+	public Collection<? extends IPathEdge<N,D>> call2ReturnFunction(IPathEdge<N,D> prevEdge, N returnSite, Collection<M> callees);
 	public Collection<? extends IPathEdge<N, D>> getEdgesOnHold(IPathEdge<N, D> initialSelfLoop,IPathEdge<N, D> edgeEnteringCallee);
 	public void cleanup();
 	public Collection<? extends IPathEdge<N, D>> summaryCallback(M methodThatNeedsSummary,IPathEdge<N, D> edge);

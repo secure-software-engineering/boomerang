@@ -1,5 +1,8 @@
 package boomerang.forward;
 
+import java.util.Collection;
+import java.util.Set;
+
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
@@ -30,6 +33,13 @@ public abstract class AbstractFlowFunctions {
 	protected boolean isFirstFieldUsedTransitivelyInMethod(AccessGraph source, final SootMethod callee) {
         for(WrappedSootField wrappedField :  source.getFirstField()){
       	  if(context.icfg.isStaticFieldUsed(callee, wrappedField.getField()))
+      		  return true;
+        }
+		return false;
+	}
+	protected boolean isFirstFieldUsedTransitivelyInMethod(AccessGraph source,  Collection<SootMethod> callees) {
+        for(SootMethod callee:  callees){
+      	  if(isFirstFieldUsedTransitivelyInMethod(source,callee))
       		  return true;
         }
 		return false;

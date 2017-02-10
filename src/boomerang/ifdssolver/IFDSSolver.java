@@ -139,25 +139,25 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
           }
         }
 
+       
+      }
+    }
         // line 17-19 of Naeem/Lhotak/Rodriguez
         // process intra-procedural flows along call-to-return flow functions
         for (N returnSiteN : returnSiteNs) {
           Collection<? extends IPathEdge<N, D>> nextEdges =
-              pathEdgeFunctions.call2ReturnFunction(incEdge, returnSiteN, sCalledProcN, sP);
+          pathEdgeFunctions.call2ReturnFunction(incEdge, returnSiteN, callees);
           for (IPathEdge<N, D> nextEdge : nextEdges) {
             propagate(nextEdge, incEdge, PropagationType.Call2Return, null);
           }
         }
-      }
-    }
-
     // If there is no callee or the callee has no active body
     if (callees.isEmpty()) {
       // line 17-19 of Naeem/Lhotak/Rodriguez
       // process intra-procedural flows along call-to-return flow functions
       for (N returnSiteN : returnSiteNs) {
         Collection<? extends IPathEdge<N, D>> nextEdges =
-            pathEdgeFunctions.call2ReturnFunction(incEdge, returnSiteN, null, null);
+            pathEdgeFunctions.call2ReturnFunction(incEdge, returnSiteN, callees);
 
         for (IPathEdge<N, D> nextEdge : nextEdges) {
           propagate(nextEdge, incEdge, PropagationType.Call2Return, null);
@@ -252,7 +252,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
       IPathEdge<N, D> incEdge) {
     boolean hasAlreadyProcessed = pathEdges.hasAlreadyProcessed(edge);
     registerEdge(edge, prevEdge);
-
+    assert pathEdges.hasAlreadyProcessed(edge);
     if (!hasAlreadyProcessed) {
       propagationCount++;
       scheduleEdgeProcessing(edge);
@@ -334,7 +334,6 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
   }
 
   protected void addEndSummary(M m, IPathEdge<N, D> edge) {
-	assert this.direction == Direction.FORWARD && icfg.getStartPointsOf(icfg.getMethodOf(edge.getStart())).contains(edge.getStart());
     debugger.addSummary(direction, m, edge);
     summaries.addEndSummary(m, edge);
   }

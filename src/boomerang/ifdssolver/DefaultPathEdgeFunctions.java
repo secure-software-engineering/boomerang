@@ -106,9 +106,9 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
 
   @Override
   public Collection<? extends IPathEdge<N, D>> call2ReturnFunction(IPathEdge<N, D> prevEdge,
-      N returnSite, M callee, N calleeSP) {
+      N returnSite, Collection<M> callees) {
     FlowFunction<D> callToReturnFlowFunction =
-        flowFunctions.getCallToReturnFlowFunction(prevEdge, returnSite, callee, calleeSP);
+        flowFunctions.getCallToReturnFlowFunction(prevEdge, returnSite, callees);
     // logger.trace("Call to return: CS:{} D1:{} D2: {} D3's{}", callSite,
     // d1,prevTargetVal,computeCallToReturnFlowFunction(callToReturnFlowFunction, d1,
     // prevTargetVal));
