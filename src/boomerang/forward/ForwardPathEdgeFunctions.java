@@ -106,11 +106,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
       return Collections.emptySet();
     }
 
-    if (context.getSubQuery() == null || context.getSubQuery().getStmt().equals(callSite)) {
-      onPathendReached(prevEdge);
-      return Collections.emptySet();
-    }
-
     return super.callFunction(prevEdge, callee, calleeSp);
   };
 
