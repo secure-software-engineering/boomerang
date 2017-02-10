@@ -1,5 +1,6 @@
 package boomerang.backward;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -341,12 +342,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 
 	@Override
 	public FlowFunction<AccessGraph> getCallToReturnFlowFunction(final IPathEdge<Unit, AccessGraph> edge,
-			Unit returnSite, final SootMethod callee, final Unit calleeSp) {
-		if (callee != null) {
-			final Local[] paramLocals = new Local[callee.getParameterCount()];
-			for (int i = 0; i < callee.getParameterCount(); i++)
-				paramLocals[i] = callee.getActiveBody().getParameterLocal(i);
-		}
+			Unit returnSite, final Collection<SootMethod> callees) {
 		context.getSubQuery().addAsVisitedBackwardMethod(context.icfg.getMethodOf(edge.getTarget()));
 		final Unit callSite = edge.getTarget();
 		return new FlowFunction<AccessGraph>() {
@@ -355,11 +351,10 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 				boolean sourceIsKilled = false;
 
 				if (context.trackStaticFields() && source.isStatic()) {
-					if (callee == null) {
+					if (callees.isEmpty()) {
 						return Collections.singleton(source);
-
 					}
-					boolean staticFieldUsed = isFirstFieldUsedTransitivelyInMethod(source, callee);
+					boolean staticFieldUsed = isFirstFieldUsedTransitivelyInMethod(source, callees);
 					if (!staticFieldUsed) {
 						return Collections.singleton(source);
 					} else {

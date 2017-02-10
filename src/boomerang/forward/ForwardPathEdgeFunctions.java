@@ -120,8 +120,8 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 
   @Override
   public Collection<? extends IPathEdge<Unit, AccessGraph>> call2ReturnFunction(
-      IPathEdge<Unit, AccessGraph> prevEdge, Unit returnSite, SootMethod callee, Unit calleeSP) {
-    return super.call2ReturnFunction(prevEdge, returnSite, callee, calleeSP);
+      IPathEdge<Unit, AccessGraph> prevEdge, Unit returnSite, Collection<SootMethod> callees) {
+    return super.call2ReturnFunction(prevEdge, returnSite, callees);
   }
 
 

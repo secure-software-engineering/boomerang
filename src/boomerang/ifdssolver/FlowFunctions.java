@@ -10,6 +10,8 @@
  ******************************************************************************/
 package boomerang.ifdssolver;
 
+import java.util.Collection;
+
 import heros.FlowFunction;
 import soot.SootMethod;
 import soot.Unit;
@@ -103,5 +105,5 @@ public interface FlowFunctions<N, D, M> {
 	 *            exceptional flow, this may actually be the start of an
 	 *            exception handler.
 	 */
-	public FlowFunction<D> getCallToReturnFlowFunction(IPathEdge<N,D> edge, N returnSite,M calleeMethod, N startPointOfCall);
+	public FlowFunction<D> getCallToReturnFlowFunction(IPathEdge<N,D> edge, N returnSite,Collection<M> callees);
 }

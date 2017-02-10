@@ -410,16 +410,14 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
 
   @Override
   public FlowFunction<AccessGraph> getCallToReturnFlowFunction(
-      final IPathEdge<Unit, AccessGraph> edge, Unit returnSite, final SootMethod callee,
-      Unit calleeSp) {
+      final IPathEdge<Unit, AccessGraph> edge, Unit returnSite, final Collection<SootMethod> callees) {
     final Unit callSite = edge.getTarget();
     return new FlowFunction<AccessGraph>() {
       @Override
       public Set<AccessGraph> computeTargets(AccessGraph source) {
 
         if (context.trackStaticFields() && source.isStatic()) {
-          if (callee == null
-              || !isFirstFieldUsedTransitivelyInMethod(source, callee)) {
+          if (!isFirstFieldUsedTransitivelyInMethod(source, callees)) {
             return Collections.singleton(source);
           } else {
             return Collections.emptySet();
@@ -434,12 +432,6 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
             return Collections.emptySet();
           }
         }
-
-        // if(callee !=null && !context.icfg.methodReadsValue(callee, source.getBase())){
-        // return Collections.singleton(source);
-        // }
-
-
 
         Stmt is = (Stmt) callSite;
         if (is.containsInvokeExpr()) {
@@ -469,7 +461,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
           for (int i = 0; i < ie.getArgCount(); i++) {
             Value arg = ie.getArg(i);
             if (source.getBase() == arg) {
-              if (callee != null) {
+              if (!callees.isEmpty()) {
                 sourceIsKilled = true;
               }
             }
@@ -477,7 +469,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
           if (ie instanceof InstanceInvokeExpr) {
             InstanceInvokeExpr iie = (InstanceInvokeExpr) ie;
             if (iie.getBase().equals(source.getBase())) {
-              if (callee != null) {
+              if (!callees.isEmpty()) {
                 sourceIsKilled = true;
               }
             }
