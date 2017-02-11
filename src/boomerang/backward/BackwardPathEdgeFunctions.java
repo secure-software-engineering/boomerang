@@ -87,7 +87,7 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
   private void addMeetingPoints(Set<IPathEdge<Unit, AccessGraph>> fwEdges,
       IPathEdge<Unit, AccessGraph> bwEdge) {
     Meeting meetingPoint = new Meeting(fwEdges, bwEdge);
-    if (context.getSubQuery() != null) {
+    if (context.addToDirectlyProcessed(meetingPoint)) {
       context.getSubQuery().add(meetingPoint);
     }
   }
@@ -167,7 +167,7 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
             initialSelfLoop.factAtTarget());
     performMeetCheckOnEnter(initialSelfLoop, prevEdge);
     Call handler = new Call(initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(), prevEdge, callee);
-    if (handler.isValid(context) && context.getSubQuery() != null)
+    if (handler.isValid(context) && context.addToDirectlyProcessed(handler))
       context.getSubQuery().add(handler);
 
     return Collections.singleton(initialSelfLoop);
