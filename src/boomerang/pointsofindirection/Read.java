@@ -117,8 +117,7 @@ public class Read implements BackwardBackwardHandler {
     this.icfg = context.icfg;
     AccessGraph original = edge.factAtTarget();
     AliasFinder dart = new AliasFinder(context);
-    AliasResults res = dart.findAliasAtStmt(new AccessGraph(ifrBase, ifrBase.getType()), curr,
-        new ReadContextRequester(backwardsSolver));
+    AliasResults res = dart.findAliasAtStmt(new AccessGraph(ifrBase, ifrBase.getType()), curr);
 
     Set<AccessGraph> iterate =
         AliasResults.appendField(res.mayAliasSet(),
