@@ -34,7 +34,6 @@ public class PathEdgeStore implements
   private Multimap<Pair<Unit, AccessGraph>, Unit> simplePath = HashMultimap.create();
   private Set<Pair<Unit, AccessGraph>> visitedNodes = new HashSet<>();
   private BoomerangContext context;
-  private Direction direction;
 
   public enum Direction {
     Forward, Backward
@@ -43,9 +42,8 @@ public class PathEdgeStore implements
   private static Logger logger = LoggerFactory.getLogger(PathEdgeStore.class);
   private static boolean DEBUG = false;//logger.isDebugEnabled();
 
-  public PathEdgeStore(BoomerangContext c, Direction dir) {
+  public PathEdgeStore(BoomerangContext c) {
     this.context = c;
-    this.direction = dir;
   }
 
   public void register(IPathEdge<Unit, AccessGraph> pe) {
@@ -92,14 +90,6 @@ public class PathEdgeStore implements
       System.out.println(m + " ::: " + perMethodPathEdges.size());
     }
 
-  }
-
-
-  public void pauseEdge(Pair<Unit, AccessGraph> pair, IPathEdge<Unit, AccessGraph> edge) {
-    precheck();
-    if (direction == Direction.Backward)
-      return;
-    pausedEdges.put(pair, edge);
   }
 
 

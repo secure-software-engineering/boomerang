@@ -68,7 +68,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
     if (pathEdge.factAtSource().hasAllocationSite())
       return;
 
-    context.getForwardPathEdges().pauseEdge(pathEdge.getStartNode(), pathEdge);
   }
 
 

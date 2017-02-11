@@ -113,8 +113,8 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 
 		FW_SUMMARIES = new Summaries(this);
 		BW_SUMMARIES = new Summaries(this);
-		BW_PATHEDGES = new PathEdgeStore(this, Direction.Backward);
-		FW_PATHEDGES = new PathEdgeStore(this, Direction.Forward);
+		BW_PATHEDGES = new PathEdgeStore(this);
+		FW_PATHEDGES = new PathEdgeStore(this);
 		querycache = new ResultCache();
 	}
 

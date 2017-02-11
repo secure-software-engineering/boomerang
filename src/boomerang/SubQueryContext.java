@@ -7,15 +7,12 @@ import java.util.Set;
 
 import boomerang.accessgraph.AccessGraph;
 import boomerang.bidi.Incomings;
-import boomerang.bidi.PathEdgeStore;
-import boomerang.bidi.PathEdgeStore.Direction;
 import boomerang.cache.Query;
 import boomerang.forward.ForwardSolver;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.pointsofindirection.Alloc;
 import boomerang.pointsofindirection.BackwardParameterTurnHandler;
 import boomerang.pointsofindirection.Call;
-import boomerang.pointsofindirection.ForwardPointOfIndirection;
 import boomerang.pointsofindirection.Meeting;
 import boomerang.pointsofindirection.PointOfIndirection;
 import boomerang.pointsofindirection.Read;
@@ -29,28 +26,12 @@ import soot.Unit;
 public class SubQueryContext {
 	private Query query;
 	private Incomings incomings = new Incomings();
-	private Set<PointOfIndirection> directProcessedPOI = new HashSet<>();
-	private BoomerangContext context;
-	private PathEdgeStore FW_PATHEDGES;
-	private PathEdgeStore BW_PATHEDGES;
 	private Set<SootMethod> backwardVisitedMethods = new HashSet<>();
 	private LinkedList<PointOfIndirection> worklist = new LinkedList<>();
-    private ForwardSolver forwardSolver;
+	private ForwardSolver forwardSolver;
 
 	SubQueryContext(Query q, BoomerangContext c, SubQueryContext parent) {
 		this.query = q;
-		this.context = c;
-
-		FW_PATHEDGES = new PathEdgeStore(c, Direction.Forward);
-		BW_PATHEDGES = new PathEdgeStore(c, Direction.Backward);
-	}
-
-	public PathEdgeStore getFwEdges() {
-		return FW_PATHEDGES;
-	}
-
-	public PathEdgeStore getBwEdges() {
-		return BW_PATHEDGES;
 	}
 
 	/**
@@ -114,14 +95,10 @@ public class SubQueryContext {
 		return incomings.incoming(startStmtAndFact, callee);
 	}
 
-  void cleanup() {
-    incomings.clear();
-    incomings = null;
-    BW_PATHEDGES.clear();
-    BW_PATHEDGES = null;
-    FW_PATHEDGES.clear();
-    FW_PATHEDGES = null;
-  }
+	void cleanup() {
+		incomings.clear();
+		incomings = null;
+	}
 
 	/**
 	 * Adds a {@link PointOfIndirection} to the worklist. Beforehand a check is
@@ -213,12 +190,12 @@ public class SubQueryContext {
 		return out;
 	}
 
-  public ForwardSolver getCurrentForwardSolver() {
-    return forwardSolver;
-  }
+	public ForwardSolver getCurrentForwardSolver() {
+		return forwardSolver;
+	}
 
-  public void setCurrentForwardSolver(ForwardSolver solver) {
-    this.forwardSolver = solver;
+	public void setCurrentForwardSolver(ForwardSolver solver) {
+		this.forwardSolver = solver;
 	}
 
 	@Override
@@ -249,8 +226,8 @@ public class SubQueryContext {
 	public boolean visitedBackwardMethod(SootMethod m) {
 		return backwardVisitedMethods.contains(m);
 	}
-	
-	public void addAsVisitedBackwardMethod(SootMethod m){
+
+	public void addAsVisitedBackwardMethod(SootMethod m) {
 		backwardVisitedMethods.add(m);
 	}
 }
