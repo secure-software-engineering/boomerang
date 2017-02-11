@@ -60,8 +60,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 
 	public IBoomerangDebugger debugger;
 
-	private Set<Query> recursiveQueries = new HashSet<>();
-
 
 	/**
 	 * The inter-procedural backward control flow graph to be used.
@@ -131,7 +129,7 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 	}
 
 	public boolean isValidAccessPath(AccessGraph a) {
-		return true;
+	      return true;
 	}
 
 	public boolean isParameterOrThisValue(Unit stmtInMethod, Local local) {

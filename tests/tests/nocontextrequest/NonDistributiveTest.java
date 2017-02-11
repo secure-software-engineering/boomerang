@@ -22,9 +22,7 @@ public class NonDistributiveTest extends AliasTest {
       public ArrayList<MethodQueries> queryAndResults() {
         ArrayList<MethodQueries> res = new ArrayList<>();
         res.add(inMethod("<cases.NonDistributive: void outer()>").askForLocalAtStmt(11, "x",
-            andExpect(7, "x", "b1[f]", "b2[f]", "$r0[f]", "$r1"),
-            // happens due to non-distributivity:
-            andExpect(4, "x", "b2[f]", "$r0[f]")));
+            andExpect(7, "x", "b1[f]", "b2[f]", "$r0[f]", "$r1")));
 
         return res;
       }
