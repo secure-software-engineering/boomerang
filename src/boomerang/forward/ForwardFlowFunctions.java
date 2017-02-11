@@ -1,5 +1,6 @@
 package boomerang.forward;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -256,7 +257,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
         assert source != null;
         Set<AccessGraph> out = new HashSet<>();
         Stmt is = (Stmt) callSite;
-        source = source.deriveWithoutAllocationSite();
+        source = source.hasAllocationSite() ? source.deriveWithoutAllocationSite() : source;
         if (context.trackStaticFields() && source.isStatic()) {
           if (callee != null
               && isFirstFieldUsedTransitivelyInMethod(source, callee)) {

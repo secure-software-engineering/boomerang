@@ -19,14 +19,12 @@ public class Call implements BackwardBackwardHandler, PointOfIndirection {
 
 	private final AccessGraph factInsideCall;
 	private final Unit returnSiteOfCall;
-	private final IPathEdge<Unit, AccessGraph> prevEdge;
 	private final SootMethod method;
 
-	public Call(AccessGraph factInsideCall, Unit returnSiteOfCall, IPathEdge<Unit, AccessGraph> prevEdge,
+	public Call(AccessGraph factInsideCall, Unit returnSiteOfCall,
 			SootMethod method) {
 		this.factInsideCall = factInsideCall;
 		this.returnSiteOfCall = returnSiteOfCall;
-		this.prevEdge = prevEdge;
 		this.method = method;
 	}
 
@@ -47,7 +45,7 @@ public class Call implements BackwardBackwardHandler, PointOfIndirection {
 					}
 					IPathEdge<Unit, AccessGraph> newEdge = new BackwardEdge(null, factInsideCall, returnSiteOfCall, ap);
 					context.debugger.indirectFlowEdgeAtCall(factInsideCall, returnSiteOfCall, ap, returnSiteOfCall);
-					backwardsSolver.propagate(newEdge, prevEdge, PropagationType.Normal, null);
+					backwardsSolver.propagate(newEdge, PropagationType.Normal);
 				}
 				backwardsSolver.awaitExecution();
 			}

@@ -48,7 +48,7 @@ public class PathEdgeStore implements
     this.direction = dir;
   }
 
-  public void register(IPathEdge<Unit, AccessGraph> pe, IPathEdge<Unit, AccessGraph> prevEdge) {
+  public void register(IPathEdge<Unit, AccessGraph> pe) {
     precheck();
     Unit target = pe.getTarget();
     SootMethod m = context.icfg.getMethodOf(target);

@@ -116,7 +116,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
           // create new caller-side jump functions to the return sites
           // because we have observed a potentially new incoming edge into <sP,d3>
           if (endSumm.isEmpty()) {
-            propagate(nextCallEdge, incEdge, PropagationType.CallEnter, null); // line 15
+            propagate(nextCallEdge, PropagationType.CallEnter); // line 15
           } else {
 
             for (IPathEdge<N, D> summaryEdge : endSumm) {
@@ -132,7 +132,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
                   // If we have not changed anything in the callee, we do not need the facts
                   // from there. Even if we change something: If we don't need the concrete
                   // path, we can skip the callee in the predecessor chain
-                  propagate(nextEdge, summaryEdge, PropagationType.BalancedReturn, incEdge);
+                  propagate(nextEdge, PropagationType.BalancedReturn);
                 }
               }
             }
@@ -142,15 +142,15 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
        
       }
     }
-        // line 17-19 of Naeem/Lhotak/Rodriguez
-        // process intra-procedural flows along call-to-return flow functions
-        for (N returnSiteN : returnSiteNs) {
-          Collection<? extends IPathEdge<N, D>> nextEdges =
-          pathEdgeFunctions.call2ReturnFunction(incEdge, returnSiteN, callees);
-          for (IPathEdge<N, D> nextEdge : nextEdges) {
-            propagate(nextEdge, incEdge, PropagationType.Call2Return, null);
-          }
-        }
+    // line 17-19 of Naeem/Lhotak/Rodriguez
+    // process intra-procedural flows along call-to-return flow functions
+    for (N returnSiteN : returnSiteNs) {
+      Collection<? extends IPathEdge<N, D>> nextEdges =
+      pathEdgeFunctions.call2ReturnFunction(incEdge, returnSiteN, callees);
+      for (IPathEdge<N, D> nextEdge : nextEdges) {
+        propagate(nextEdge, PropagationType.Call2Return);
+      }
+    }
     // If there is no callee or the callee has no active body
     if (callees.isEmpty()) {
       // line 17-19 of Naeem/Lhotak/Rodriguez
@@ -160,7 +160,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
             pathEdgeFunctions.call2ReturnFunction(incEdge, returnSiteN, callees);
 
         for (IPathEdge<N, D> nextEdge : nextEdges) {
-          propagate(nextEdge, incEdge, PropagationType.Call2Return, null);
+          propagate(nextEdge, PropagationType.Call2Return);
         }
       }
     }
@@ -188,7 +188,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
         pathEdgeFunctions.summaryCallback(methodThatNeedsSummary, summaryEdge);
 
     for (IPathEdge<N, D> nextEdge : appendToSummary) {
-      propagate(nextEdge, summaryEdge, PropagationType.BalancedReturn, null);
+      propagate(nextEdge, PropagationType.BalancedReturn);
     }
     // logger.trace("Processing exit of {} with {}", methodThatNeedsSummary, edge);
 
@@ -200,7 +200,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
                 inc);
 
         for (IPathEdge<N, D> nextEdge : nextEdges) {
-          propagate(nextEdge, summaryEdge, PropagationType.BalancedReturn, inc);
+          propagate(nextEdge, PropagationType.BalancedReturn);
         }
       }
     }
@@ -215,7 +215,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
               pathEdgeFunctions.unbalancedReturnFunction(summaryEdge, c, retSiteC,
                   methodThatNeedsSummary);
           for (IPathEdge<N, D> nextEdge : nextEdges) {
-            propagate(nextEdge, summaryEdge, PropagationType.UnbalancedReturn, null);
+            propagate(nextEdge, PropagationType.UnbalancedReturn);
           }
         }
       }
@@ -243,15 +243,14 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
     for (N m : succsOf) {
       Collection<? extends IPathEdge<N, D>> nextEdges = pathEdgeFunctions.normalFunction(edge, m);
       for (IPathEdge<N, D> nextEdge : nextEdges) {
-        propagate(nextEdge, edge, PropagationType.Normal, null);
+        propagate(nextEdge, PropagationType.Normal);
       }
     }
   }
 
-  public boolean propagate(IPathEdge<N, D> edge, IPathEdge<N, D> prevEdge, PropagationType t,
-      IPathEdge<N, D> incEdge) {
+  public boolean propagate(IPathEdge<N, D> edge,PropagationType t) {
     boolean hasAlreadyProcessed = pathEdges.hasAlreadyProcessed(edge);
-    registerEdge(edge, prevEdge);
+    registerEdge(edge);
     assert pathEdges.hasAlreadyProcessed(edge);
     if (!hasAlreadyProcessed) {
       propagationCount++;
@@ -261,9 +260,9 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
     return hasAlreadyProcessed;
   }
 
-  public void registerEdge(IPathEdge<N, D> edge, IPathEdge<N, D> prevEdge) {
+  public void registerEdge(IPathEdge<N, D> edge) {
     onRegister(edge);
-    pathEdges.register(edge, prevEdge);
+    pathEdges.register(edge);
   }
 
   public abstract void onRegister(IPathEdge<N, D> edge);

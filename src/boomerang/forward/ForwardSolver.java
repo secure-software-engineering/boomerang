@@ -48,7 +48,7 @@ public class ForwardSolver extends
     for (Unit succStmt : icfg.getSuccsOf(stmt)) {
       PathEdge<Unit, AccessGraph> pathEdge = new PathEdge<Unit, AccessGraph>(stmt, d1, succStmt, d2);
       edgeFunctions.addToFwBwEdge(pathEdge.getStartNode(), bwedge);
-      propagate(pathEdge, pathEdge, PropagationType.Normal, null);
+      propagate(pathEdge, PropagationType.Normal);
     }
 
     type = "alloc" + stmt + " " + d2 + " € " + context.icfg.getMethodOf(stmt);
@@ -67,7 +67,7 @@ public class ForwardSolver extends
   public void onMeet(final IPathEdge<Unit, AccessGraph> pathEdge,
       final IPathEdge<Unit, AccessGraph> bwedge) {
     edgeFunctions.addToFwBwEdge(pathEdge.getStartNode(), bwedge);
-    pathEdges.register(pathEdge, pathEdge);
+    pathEdges.register(pathEdge);
     scheduleEdgeProcessing(pathEdge);
     type = "meet@" + pathEdge;
     awaitExecution();

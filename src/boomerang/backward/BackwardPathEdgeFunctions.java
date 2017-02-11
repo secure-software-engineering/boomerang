@@ -128,7 +128,7 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
         initialSelfLoop.getTarget(),
             initialSelfLoop.factAtTarget());
     performMeetCheckOnEnter(initialSelfLoop, prevEdge);
-    Call handler = new Call(initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(), prevEdge, callee);
+    Call handler = new Call(initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(), callee);
     if (handler.isValid(context) && context.addToDirectlyProcessed(handler))
       context.getSubQuery().add(handler);
 

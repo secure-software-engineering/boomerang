@@ -19,7 +19,7 @@ public class Unbalanced implements BackwardBackwardHandler {
   @Override
   public void execute(BackwardSolver pSolver, BoomerangContext context) {
 	  context.debugger.onProcessUnbalancedReturnPOI(this);
-    pSolver.propagate(pathEdge, pathEdge, PropagationType.BalancedReturn, null);
+    pSolver.propagate(pathEdge, PropagationType.BalancedReturn);
     pSolver.awaitExecution();
   }
 
