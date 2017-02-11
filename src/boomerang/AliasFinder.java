@@ -222,7 +222,6 @@ public class AliasFinder {
 
 		if (cache.isProcessing(q)) {
 			context.debugger.onCurrentlyProcessingRecursiveQuery(q);
-			context.setRecursive(q);
 			return new AliasResults();
 		}
 		cache.start(q);
@@ -230,9 +229,6 @@ public class AliasFinder {
 		context.push(new SubQueryContext(q, context, (context.getSubQuery() != null ? context.getSubQuery() : null)));
 		context.debugger.startQuery(q);
 		AliasResults res = fixpointIteration();
-		if (context.isRecursive(q)) {
-			res = addStars(res);
-		}
 		cache.setResults(q, res);
 		sanityCheck(cache.getResults(q), stmt);
 		context.debugger.finishedQuery(q, res);
@@ -258,25 +254,6 @@ public class AliasFinder {
 				context.debugger.onAliasQueryFinished(q, res);
 		}
 		return res;
-	}
-
-	private AliasResults addStars(AliasResults res) {
-		AliasResults withStar = new AliasResults();
-
-		for (Entry<Pair<Unit, AccessGraph>, AccessGraph> e : res.entries()) {
-			AccessGraph g = e.getValue();
-			withStar.put(e.getKey(), g);
-			for (AccessGraph alias : res.mayAliasSet()) {
-				if (alias.getFieldCount() == 0) {
-					withStar.put(e.getKey(), g.deriveWithNewLocal(alias.getBase(), alias.getBaseType()));
-				}
-			}
-
-			if (g.getFieldCount() > 0) {
-				withStar.put(e.getKey(), g.appendGraph(g.getFieldGraph()));
-			}
-		}
-		return withStar;
 	}
 
 	/**

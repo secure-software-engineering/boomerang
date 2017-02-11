@@ -300,14 +300,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		return FW_PATHEDGES;
 	}
 
-	public void setRecursive(Query q) {
-		recursiveQueries.add(q);
-	}
-
-	public boolean isRecursive(Query q) {
-		return recursiveQueries.contains(q);
-	}
-
 	public boolean trackStaticFields() {
 		return this.trackStaticFields;
 	}
