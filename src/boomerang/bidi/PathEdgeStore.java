@@ -3,7 +3,6 @@ package boomerang.bidi;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -27,12 +26,6 @@ import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 public class PathEdgeStore implements
     IPathEdges<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> {
   private Map<SootMethod, PerMethodPathEdges> stmtToPathEdges = new HashMap<>();
-  private Multimap<Pair<Unit, AccessGraph>, IPathEdge<Unit, AccessGraph>> pausedEdges = HashMultimap
-      .create();
-  private Map<Pair<Unit, AccessGraph>, Multimap<IPathEdge<Unit, AccessGraph>, IPathEdge<Unit, AccessGraph>>> pathFor =
-      new HashMap<>();
-  private Multimap<Pair<Unit, AccessGraph>, Unit> simplePath = HashMultimap.create();
-  private Set<Pair<Unit, AccessGraph>> visitedNodes = new HashSet<>();
   private BoomerangContext context;
 
   public enum Direction {
@@ -52,7 +45,6 @@ public class PathEdgeStore implements
     SootMethod m = context.icfg.getMethodOf(target);
     PerMethodPathEdges perMethodPathEdges = getOrCreatePerStmt(m);
     perMethodPathEdges.register(pe);
-    visitedNodes.add(pe.getTargetNode());
   }
 
 
@@ -102,11 +94,7 @@ public class PathEdgeStore implements
   }
 
   public void clear() {
-    pausedEdges.clear();
     stmtToPathEdges.clear();
-    visitedNodes.clear();
-    pathFor.clear();
-    simplePath.clear();
   }
 
   public void addMeetableEdge(IPathEdge<Unit, AccessGraph> pathEdge) {
