@@ -98,18 +98,19 @@ public class AccessGraph {
 	protected AccessGraph(Local value, Type t, IFieldGraph fieldGraph, Unit sourceStmt) {
 		this.value = value;
 		this.type = (WrappedSootField.TRACK_TYPE ? t : null);
-		if(apgs == null){
-			apgs = new LinkedList<IFieldGraph>();
-		}
+//		if(apgs == null){
+//			apgs = new LinkedList<IFieldGraph>();
+//		}
 		if(fieldGraph != null && fieldGraph.equals(FieldGraph.EMPTY_GRAPH))
 			fieldGraph = null;
-		int index = apgs.indexOf(fieldGraph);
-		if(index >= 0){
-			this.fieldGraph = apgs.get(index);
-		} else{
-			apgs.add(fieldGraph);
+//		int index = apgs.indexOf(fieldGraph);
+//		if(index >= 0){
+//			this.fieldGraph = apgs.get(index);
+//		} else{
+//			apgs.add(fieldGraph);
+//			System.out.println("APG" + apgs.size());
 			this.fieldGraph = fieldGraph;
-		}
+//		}
 		this.allocationSite = sourceStmt;
 	}
 
@@ -159,9 +160,7 @@ public class AccessGraph {
 			return f.getField().equals(field);
 		throw new RuntimeException("Unreachable Code");
 	}
-
 	
-
 	private boolean firstFirstFieldMayMatch(SootField field) {
 		for(WrappedSootField f: getFirstField())
 			if(f.getField().equals(field))
