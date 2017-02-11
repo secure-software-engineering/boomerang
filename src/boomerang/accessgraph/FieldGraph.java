@@ -547,14 +547,7 @@ public class FieldGraph implements IFieldGraph{
 	public boolean shouldOverApproximate() {
 		if(graph == null)
 			return false;
-		int counter = 0;
-		for(IntCursor i : graph.getAllOutEdgeDegrees()){
-			if(i.value >= 2)
-				counter++;
-			if(counter > 1)
-				return true;
-		}
-		return false;
+		return hasLoops();
 	}
 
 	@Override
@@ -567,6 +560,8 @@ public class FieldGraph implements IFieldGraph{
 		for (int a : graph.getVertices().toIntArray()) {
 			fields.add(intToField(a));
 		}
+		fields.add(intToField(entryNode));
+		fields.add(intToField(targetNode));
 		return fields;
 	}
 
