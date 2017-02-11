@@ -32,7 +32,6 @@ public class BackwardSolver extends
     for (Unit s : icfg.getSuccsOf(stmt)) {
       PathEdge<Unit, AccessGraph> edge = new PathEdge<Unit, AccessGraph>(null, d1, s, d1);
       debugger.backwardStart(Direction.BACKWARD, stmt, d1, s);
-      checkForMeetingPoints(edge, stmt);
       propagate(edge, prevEdge, PropagationType.Normal, null);
     }
     awaitExecution();
@@ -52,11 +51,6 @@ public class BackwardSolver extends
     }
   }
 
-  private void checkForMeetingPoints(IPathEdge<Unit, AccessGraph> edge, Unit prevStmt) {
-    boomerang.backward.BackwardPathEdgeFunctions func =
-        (boomerang.backward.BackwardPathEdgeFunctions) this.pathEdgeFunctions;
-    func.performMeetCheck(prevStmt, edge);
-  }
 
   @Override
   public void onRegister(IPathEdge<Unit, AccessGraph> edge) {

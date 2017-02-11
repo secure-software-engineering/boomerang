@@ -84,44 +84,11 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
   }
 
 
-  private void addMeetingPoints(Set<IPathEdge<Unit, AccessGraph>> fwEdges,
-      IPathEdge<Unit, AccessGraph> bwEdge) {
-    Meeting meetingPoint = new Meeting(fwEdges, bwEdge);
-    if (context.addToDirectlyProcessed(meetingPoint)) {
-      context.getSubQuery().add(meetingPoint);
-    }
-  }
-
-
   @Override
   protected Collection<? extends IPathEdge<Unit, AccessGraph>> normalFunctionExtendor(
       IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
     return Collections.singleton(succEdge);
   }
-
-  /**
-   * Performs a meet check, thus checks whether the backward path edge at the provided statement
-   * "meets" (i.e. exploded super graph nodes are equal) a forward edge. If so, a meeting point is
-   * added.
-   * 
-   * @param statement The statement to be checked
-   * @param bwPathEdge The path edge providing the data flow fact to be checked.
-   * @return
-   */
-  boolean performMeetCheck(Unit statement, IPathEdge<Unit, AccessGraph> bwPathEdge) {
-    boolean isMeetPoint = isMeetableStmt(statement);
-    if (isMeetPoint) {
-      Set<IPathEdge<Unit, AccessGraph>> meetingEdges =
-          context.getForwardPathEdges().getAndRemoveMeetableEdges(new Pair<Unit, AccessGraph>(statement,
-              bwPathEdge.factAtTarget()));
-      if (meetingEdges.isEmpty())
-        return false;
-      addMeetingPoints(meetingEdges, bwPathEdge);
-      return true;
-    }
-    return false;
-  }
-
 
   private void performMeetCheckOnEnter(IPathEdge<Unit, AccessGraph> initialSelfLoopEdge,
       IPathEdge<Unit, AccessGraph> callerEdge) {
@@ -149,11 +116,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
     if (context.getSubQuery() != null) {
       context.getSubQuery().add(meetingPoint);
     }
-  }
-
-
-  private boolean isMeetableStmt(Unit target) {
-    return context.getForwardPathEdges().hasMeetableEdges(target);
   }
 
   @Override
@@ -187,7 +149,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
   @Override
   protected Collection<? extends IPathEdge<Unit, AccessGraph>> call2ReturnFunctionExtendor(
       IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
-    performMeetCheck(prevEdge.getTarget(), succEdge);
 
     return Collections.singleton(succEdge);
   }
