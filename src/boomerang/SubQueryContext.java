@@ -213,21 +213,6 @@ public class SubQueryContext {
 		return out;
 	}
 
-	/**
-	 * Forward POI ({@link ForwardPointOfIndirection}) are special and treated
-	 * specially, as they are directly processed and NOT put to a worklist. But
-	 * still they are added to the global set of processed POI, as they also
-	 * should never be computed twice.
-	 * 
-	 * @param poi
-	 *            The {@link ForwardPointOfIndirection}
-	 * @return <code>true</code> or <code>false</code> depending whether the POI
-	 *         has been added.
-	 */
-	public boolean addToDirectlyProcessed(ForwardPointOfIndirection poi) {
-		return directProcessedPOI.add(poi);
-	}
-
   public ForwardSolver getCurrentForwardSolver() {
     return forwardSolver;
   }

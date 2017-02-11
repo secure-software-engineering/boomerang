@@ -261,7 +261,7 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 	 * @return <code>true</code> or <code>false</code> depending whether the POI
 	 *         has been added.
 	 */
-	public boolean addToDirectlyProcessed(ForwardPointOfIndirection poi) {
+	public boolean addToDirectlyProcessed(PointOfIndirection poi) {
 		return directProcessedPOI.add(poi);
 	}
 	public boolean isOutOfBudget() {

@@ -233,7 +233,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
       SootField field, Local rightLocal, HashSet<AccessGraph> out,
       IPathEdge<Unit, AccessGraph> edge) {
     Write write = new Write(curr, lBase, field, rightLocal, source, edge);
-    if (context.getSubQuery().addToDirectlyProcessed(write)) {
+    if (context.addToDirectlyProcessed(write)) {
       Set<AccessGraph> aliases = write.process(context);
       out.addAll(aliases);
     }

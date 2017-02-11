@@ -265,7 +265,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
       return out;
     Return resHandler = new Return(callSite, d);
 
-    if (resHandler.isValid(context) && context.getSubQuery().addToDirectlyProcessed(resHandler)) {
+    if (resHandler.isValid(context) && context.addToDirectlyProcessed(resHandler)) {
       Set<AccessGraph> aliases = resHandler.process(context);
       for (AccessGraph alias : aliases) {
         if (isOverridenByCall(alias, callSite)) {
@@ -277,6 +277,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
                 succEdge.getTarget(), alias);
         out.add(succAliasEdge);
         context.debugger.indirectFlowEdgeAtReturn(d, callSite, alias, succEdge.getTarget());
+        context.addToDirectlyProcessed(new Return(callSite,alias));
       }
     }
 
@@ -334,7 +335,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
       return out;
     Return resHandler = new Return(callSite, d2);
 
-    if (resHandler.isValid(context) && context.getSubQuery().addToDirectlyProcessed(resHandler)) {
+    if (resHandler.isValid(context) && context.addToDirectlyProcessed(resHandler)) {
       Set<AccessGraph> aliases = resHandler.process(context);
       for (AccessGraph alias : aliases) {
         if (isOverridenByCall(alias, callSite))
@@ -346,6 +347,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
                 succEdge.getTarget(), alias);
         out.add(succAliasEdge);
         context.debugger.indirectFlowEdgeAtReturn(d2, callSite, alias, succEdge.getTarget());
+        context.addToDirectlyProcessed(new Return(callSite,alias));
       }
     }
 
