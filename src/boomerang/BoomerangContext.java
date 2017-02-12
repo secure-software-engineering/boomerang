@@ -20,6 +20,7 @@ import boomerang.bidi.Summaries;
 import boomerang.cache.Query;
 import boomerang.cache.ResultCache;
 import boomerang.debug.IBoomerangDebugger;
+import boomerang.debug.JSONOutputDebugger;
 import boomerang.forward.ForwardFlowFunctions;
 import boomerang.forward.ForwardSolver;
 import boomerang.ifdssolver.IFDSSolver;
@@ -105,6 +106,8 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		this.icfg = icfg;
 		this.bwicfg = bwicfg;
 		this.debugger = options.getDebugger();
+		if(debugger instanceof JSONOutputDebugger)
+			System.err.println("WARNING: Using JSON output slows down performance");
 		this.debugger.setContext(this);
 		this.budgetInMilliSeconds = options.getTimeBudget();
 		WrappedSootField.TRACK_TYPE = options.getTrackType();
