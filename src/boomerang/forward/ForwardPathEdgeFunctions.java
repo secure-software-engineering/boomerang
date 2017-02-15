@@ -120,7 +120,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		// Unbalanced return only occurs when the start statement of the path
 		// edge is not the first
 		// statement of the method, i.e. a NopStmt
-		if (currEdge.getStart() instanceof NopStmt) {
+		if (!currEdge.factAtSource().hasAllocationSite()) {
 			return Collections.emptySet();
 		}
 		// Retrieve the backward edges associated with the forward edge

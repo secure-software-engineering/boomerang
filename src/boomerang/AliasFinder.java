@@ -366,7 +366,6 @@ public class AliasFinder {
 
 		BackwardProblem problem = new BackwardProblem(context);
 		BackwardSolver backwardsolver = new BackwardSolver(problem, context);
-		context.addSolver(backwardsolver);
 		backwardsolver.startPropagation(accessPath, stmt);
 		while (!context.getSubQuery().isEmpty()) {
 			if (context.isOutOfBudget()) {
@@ -379,11 +378,10 @@ public class AliasFinder {
 			}
 			
 		}
-		if (Thread.interrupted()) {
-			context.forceTerminate();
-			return new AliasResults();
-		}
-		context.removeSolver(backwardsolver);
+		System.out.println("BW " + backwardsolver.propagationCount);
+		System.out.println("FW " + forwardProps);
+		forwardProps = 0;
+		backwardsolver.cleanup();
 		AliasResults res = new AliasResults();
 		res.putAll(context.getForwardPathEdges().getResultAtStmtContainingValue(stmt, accessPath));
 
@@ -395,7 +393,7 @@ public class AliasFinder {
 		if (poi instanceof BackwardForwardHandler) {
 			ForwardSolver solver = createNewForwardSolver();
 			((BackwardForwardHandler) poi).execute(solver, context);
-			context.removeSolver(solver);
+			solver.cleanup();
 		} else if (poi instanceof BackwardBackwardHandler) {
 			((BackwardBackwardHandler) poi).execute(backwardsolver, context);
 		} else {
@@ -407,8 +405,6 @@ public class AliasFinder {
 	private ForwardSolver createNewForwardSolver() {
 		ForwardProblem forwardProblem = new ForwardProblem(context);
 		ForwardSolver solver = new ForwardSolver(forwardProblem, context);
-		context.addSolver(solver);
-    context.setCurrentForwardSolver(solver);
 		return solver;
 	}
 

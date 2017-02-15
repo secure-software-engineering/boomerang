@@ -205,18 +205,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		assert !isIgnoredMethod(m1) : "The path edge resides in a method which should be ignored " + m1.toString();
 	}
 
-	@SuppressWarnings("rawtypes")
-	public void addSolver(IFDSSolver backwardsolver) {
-		this.solvers.add(backwardsolver);
-	}
-
-	@SuppressWarnings("rawtypes")
-	public void removeSolver(IFDSSolver solver) {
-		solver.cleanup();
-		this.solvers.remove(solver);
-	}
-
-
 	public boolean isReturnValue(SootMethod method, Local base) {
 		Collection<Unit> endPointsOf = icfg.getEndPointsOf(method);
 
@@ -305,16 +293,8 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		return this.trackStaticFields;
 	}
 
-	public void setCurrentForwardSolver(ForwardSolver solver) {
-		getSubQuery().setCurrentForwardSolver(solver);
-	}
-
-	public ForwardSolver getCurrentForwardSolver() {
-		return getSubQuery().getCurrentForwardSolver();
-	}
-
 	public boolean isProcessedPOI(PointOfIndirection poi) {
-		return (poi instanceof Call && processedPOIs.contains(poi));
+		return processedPOIs.contains(poi);
 	}
 
 	public void addProcessedPOI(PointOfIndirection poi) {
