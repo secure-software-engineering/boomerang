@@ -13,7 +13,7 @@ public class CallPOITest extends AbstractBoomerangTest {
 	private class B{
 		C c;
 	}
-	private class C extends AllocatedObject{
+	private class C implements AllocatedObject{
 		
 	}
 	

@@ -7,7 +7,7 @@ import test.core.selfrunning.AllocatedObject;
 
 public class Fieldless extends AbstractBoomerangTest {
 
-	public class Allocation extends AllocatedObject {
+	public class Allocation implements AllocatedObject {
 
 	}
 
@@ -21,7 +21,7 @@ public class Fieldless extends AbstractBoomerangTest {
 
 	@Test
 	public void simpleAssignment2(){
-	    Object alias1 = new AllocatedObject(), b, c, alias2, alias3;
+	    Object alias1 = new AllocatedObject(){}, b, c, alias2, alias3;
 	    alias2 = alias1;
 	    c = new Object();
 	    alias3 = alias1;

@@ -59,9 +59,9 @@ public class AbstractBoomerangTest {
 	public void performQuery() {
 		initializeSootWithEntryPoint(name.getMethodName());
 		analyze(name.getMethodName());
-		
-		//To never execute the @Test method... 
-	    org.junit.Assume.assumeTrue(false);
+
+		// To never execute the @Test method...
+		org.junit.Assume.assumeTrue(false);
 	}
 
 	private void analyze(final String methodName) {
@@ -84,9 +84,9 @@ public class AbstractBoomerangTest {
 	}
 
 	private void compareQuery(Query q, AliasResults expectedResults, AliasResults results) {
-		System.out.println("Boomerang Allocations Sites: " +  results.keySet());
-		System.out.println("Boomerang Results: " +  results);
-		System.out.println("Expected Results: " +  expectedResults);
+		System.out.println("Boomerang Allocations Sites: " + results.keySet());
+		System.out.println("Boomerang Results: " + results);
+		System.out.println("Expected Results: " + expectedResults);
 		Set<Pair<Unit, AccessGraph>> falseNegativeAllocationSites = new HashSet<>(expectedResults.keySet());
 		falseNegativeAllocationSites.removeAll(results.keySet());
 		results.keySet().equals(expectedResults.keySet());
@@ -98,14 +98,19 @@ public class AbstractBoomerangTest {
 		if (!falseNegativeAllocationSites.isEmpty()) {
 			throw new RuntimeException("Unsound results for:" + answer);
 		}
-		Set<AccessGraph> aliasVariables = new HashSet<>(results.values());
-		aliasVariables.removeAll(expectedResults.values());
-		HashSet<AccessGraph> missingVariables = new HashSet<>();
-		for(AccessGraph g : aliasVariables){
-			if(g.getBase().toString().contains("alias"))
+		Set<String> aliasVariables = new HashSet<>();
+		for (AccessGraph g : results.values()) {
+			aliasVariables.add(g.toString());
+		}
+		for (AccessGraph remove : expectedResults.values())
+			aliasVariables.remove(remove.toString());
+		HashSet<String> missingVariables = new HashSet<>();
+
+		for (String g : aliasVariables) {
+			if (g.contains("alias"))
 				missingVariables.add(g);
 		}
-		if(!missingVariables.isEmpty())
+		if (!missingVariables.isEmpty())
 			throw new RuntimeException("Unsound, missed variables " + missingVariables);
 		if (!falsePositiveAllocationSites.isEmpty())
 			Assert.fail("Imprecise results: " + answer);
@@ -114,8 +119,8 @@ public class AbstractBoomerangTest {
 
 	private AliasResults runQuery(Query q) {
 
-	    AliasFinder boomerang = new AliasFinder(icfg, new TestBoomerangOptions());
-	    boomerang.startQuery();
+		AliasFinder boomerang = new AliasFinder(icfg, new TestBoomerangOptions());
+		boomerang.startQuery();
 		return boomerang.findAliasAtStmt(q.getAp(), q.getStmt());
 	}
 
@@ -175,7 +180,7 @@ public class AbstractBoomerangTest {
 			if (as.getLeftOp() instanceof Local && as.getRightOp() instanceof NewExpr) {
 				if (allocatesObjectOfInterest((NewExpr) as.getRightOp())) {
 					Local local = (Local) as.getLeftOp();
-					AccessGraph accessGraph = new AccessGraph(local,((NewExpr) as.getRightOp()).getBaseType());
+					AccessGraph accessGraph = new AccessGraph(local, ((NewExpr) as.getRightOp()).getBaseType());
 					out.add(new Pair<Unit, AccessGraph>(as, accessGraph.deriveWithAllocationSite(as)));
 				}
 			}
@@ -185,9 +190,9 @@ public class AbstractBoomerangTest {
 	}
 
 	private boolean allocatesObjectOfInterest(NewExpr rightOp) {
-		RefType typeOfInterest = Scene.v().getSootClass("test.core.selfrunning.AllocatedObject").getType();
+		SootClass interfaceType = Scene.v().getSootClass("test.core.selfrunning.AllocatedObject");
 		RefType allocatedType = rightOp.getBaseType();
-		return  Scene.v().getOrMakeFastHierarchy().canStoreType(allocatedType,typeOfInterest);
+		return Scene.v().getActiveHierarchy().getImplementersOf(interfaceType).contains(allocatedType.getSootClass());
 	}
 
 	private Set<AccessGraph> transitivelyReachableAllocationSite(Unit call, Set<SootMethod> visited) {
@@ -206,7 +211,7 @@ public class AbstractBoomerangTest {
 				if (as.getLeftOp() instanceof Local && as.getRightOp() instanceof NewExpr) {
 					if (allocatesObjectOfInterest((NewExpr) as.getRightOp())) {
 						Local local = (Local) as.getLeftOp();
-						AccessGraph accessGraph = new AccessGraph(local,((NewExpr) as.getRightOp()).getBaseType());
+						AccessGraph accessGraph = new AccessGraph(local, ((NewExpr) as.getRightOp()).getBaseType());
 						out.add(accessGraph.deriveWithAllocationSite(as));
 					}
 				}
@@ -229,7 +234,7 @@ public class AbstractBoomerangTest {
 		for (Unit u : activeBody.getUnits()) {
 			if (!(u instanceof Stmt))
 				continue;
-			
+
 			Stmt stmt = (Stmt) u;
 			if (!(stmt.containsInvokeExpr()))
 				continue;
@@ -237,16 +242,17 @@ public class AbstractBoomerangTest {
 			if (!invokeExpr.getMethod().getName().equals("queryFor"))
 				continue;
 			Value param = invokeExpr.getArg(0);
-			if(!(param instanceof Local))
+			if (!(param instanceof Local))
 				continue;
 			Local queryVar = (Local) param;
 			queries.add(new Query(new AccessGraph(queryVar, queryVar.getType()), stmt));
 		}
-		if(queries.size() == 0)
+		if (queries.size() == 0)
 			throw new RuntimeException(
-				"No variable whose name contains query has been found in " + sootTestMethod.getName());
-		if(queries.size() > 1)
-			System.err.println("More than one possible query found, might be unambigious, picking query " + queries.getLast());
+					"No variable whose name contains query has been found in " + sootTestMethod.getName());
+		if (queries.size() > 1)
+			System.err.println(
+					"More than one possible query found, might be unambigious, picking query " + queries.getLast());
 		return queries.getLast();
 	}
 
@@ -294,13 +300,13 @@ public class AbstractBoomerangTest {
 		Options.v().set_soot_classpath(sootCp);
 		// Options.v().set_main_class(this.getTargetClass());
 		SootClass sootTestCaseClass = Scene.v().forceResolve(getTestCaseClassName(), SootClass.BODIES);
-		
-		for (SootMethod m : sootTestCaseClass.getMethods()){
+
+		for (SootMethod m : sootTestCaseClass.getMethods()) {
 			if (m.getName().equals(methodName))
 				sootTestMethod = m;
 		}
-		if(sootTestMethod == null)
-			throw new RuntimeException("The method with name " + methodName +" was not found in the Soot Scene.");
+		if (sootTestMethod == null)
+			throw new RuntimeException("The method with name " + methodName + " was not found in the Soot Scene.");
 		Scene.v().addBasicClass(getTargetClass(), SootClass.BODIES);
 		Scene.v().loadNecessaryClasses();
 		SootClass c = Scene.v().forceResolve(getTargetClass(), SootClass.BODIES);
@@ -340,21 +346,24 @@ public class AbstractBoomerangTest {
 	protected boolean includeJDK() {
 		return false;
 	}
-	
+
 	/**
 	 * The methods parameter describes the variable that a query is issued for.
-	 * Note: We misuse the @Deprecated annotation to highlight the method in the Code.
+	 * Note: We misuse the @Deprecated annotation to highlight the method in the
+	 * Code.
 	 */
 	@Deprecated
-	protected void queryFor(Object variable){
-		
+	protected void queryFor(Object variable) {
+
 	}
 
 	/**
-	 * This method can be used in test cases to create branching. It is not optimized away.
+	 * This method can be used in test cases to create branching. It is not
+	 * optimized away.
+	 * 
 	 * @return
 	 */
-	protected boolean staticallyUnknown(){
+	protected boolean staticallyUnknown() {
 		return true;
 	}
 }

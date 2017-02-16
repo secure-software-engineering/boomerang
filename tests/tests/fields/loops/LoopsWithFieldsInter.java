@@ -33,18 +33,15 @@ public class LoopsWithFieldsInter extends AbstractBoomerangTest{
 		return x == null ? x.left  : null;
 	}
 	private Node rightOf(Node x) {
-		// TODO Auto-generated method stub
 		return x == null ? x.right  : null;
 	}
 	private TreeNode leftOf(TreeNode x) {
 		return x == null ? x.left  : null;
 	}
 	private TreeNode rightOf(TreeNode x) {
-		// TODO Auto-generated method stub
 		return x == null ? x.left  : null;
 	}
 	private TreeNode parentOf(TreeNode x) {
-		// TODO Auto-generated method stub
 		return x == null ? x.parent  : null;
 	}
 	@Test
@@ -73,12 +70,12 @@ public class LoopsWithFieldsInter extends AbstractBoomerangTest{
 		TreeNode h = t;
 		queryFor(h);
 	}
-	private class Node extends AllocatedObject{
+	private class Node implements AllocatedObject{
 		Node left = new Node();
 		Node right = new Node();
 	}
 
-	private class TreeNode extends AllocatedObject{
+	private class TreeNode implements AllocatedObject{
 		TreeNode left = new TreeNode();
 		TreeNode right = new TreeNode();
 		TreeNode parent = new TreeNode();

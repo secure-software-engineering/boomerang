@@ -1,5 +1,5 @@
 package test.core.selfrunning;
 
-public class AllocatedObject {
+public interface AllocatedObject {
 
 }

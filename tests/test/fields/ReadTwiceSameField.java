@@ -8,14 +8,24 @@ import test.core.selfrunning.AllocatedObject;
 public class ReadTwiceSameField extends AbstractBoomerangTest {
 	@Test
 	public void recursiveTest() {
-		Alloc a = new Alloc();
-		Alloc c = a.d;
-		Alloc y = c.d;
-		queryFor(y);
+		Container a = new Container();
+		Container c = a.d;
+		Container alias = c.d;
+		queryFor(alias);
 	}
 	
-	private class Alloc extends AllocatedObject{
-		Alloc d = new Alloc();
+	private class Container{
+		Container d;
+		Container(){
+			if(staticallyUnknown())
+				d = new Alloc();
+			else 
+				d = null;
+		}
+		
+	}
+	private class Alloc extends Container implements AllocatedObject{
+		
 	}
 	 
 }

@@ -9,7 +9,7 @@ public class ReturnPOITest extends AbstractBoomerangTest {
 	private class A{
 		B b;
 	}
-	private class B extends AllocatedObject{
+	private class B implements AllocatedObject{
 	}
 	
 	

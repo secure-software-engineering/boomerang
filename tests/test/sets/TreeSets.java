@@ -13,7 +13,7 @@ public class TreeSets extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieve(){
 		Set<Object> set = new TreeSet<Object>();
-		AllocatedObject alias = new AllocatedObject();
+		AllocatedObject alias = new AllocatedObject(){};
 		set.add(alias);
 		Object alias2 = null;
 		for(Object o : set)

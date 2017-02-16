@@ -11,8 +11,8 @@ public class HashMaps extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieve(){
 		HashSet<Object> set = new HashSet<>();
-		AllocatedObject alias = new AllocatedObject();
-		AllocatedObject alias3 = new AllocatedObject();
+		AllocatedObject alias = new AllocatedObject(){};
+		AllocatedObject alias3 = new AllocatedObject(){};
 		set.add(alias);
 		set.add(alias3);
 		Object alias2 = null;

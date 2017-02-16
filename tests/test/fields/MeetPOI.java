@@ -32,7 +32,7 @@ public class MeetPOI extends AbstractBoomerangTest {
 		C c;
 	}
 
-	public class C extends AllocatedObject {
+	public class C implements AllocatedObject {
 		String g;
 	}
 }

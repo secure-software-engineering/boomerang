@@ -7,7 +7,7 @@ import test.core.selfrunning.AllocatedObject;
 
 public class ReadPOITest extends AbstractBoomerangTest {
 	private class A{
-		AllocatedObject b;
+		Alloc b;
 	}
 	
 	
@@ -15,8 +15,9 @@ public class ReadPOITest extends AbstractBoomerangTest {
 	public void indirectAllocationSite(){
 		A a = new A();
 		A e = a;
-		e.b = new AllocatedObject();
-		AllocatedObject query = a.b;
+		e.b = new Alloc();
+		Alloc query = a.b;
 		queryFor(query);
 	}
+	private class Alloc implements AllocatedObject{};
 }

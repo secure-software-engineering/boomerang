@@ -11,7 +11,7 @@ public class IntraproceduralStrongUpdate extends AbstractBoomerangTest{
 		A a = new A();
 		a.field = new Object();
 		A b = a;
-		b.field = new AllocatedObject();
+		b.field = new AllocatedObject(){};
 		Object alias = a.field;
 		queryFor(alias);
 	}
@@ -20,7 +20,7 @@ public class IntraproceduralStrongUpdate extends AbstractBoomerangTest{
 		A a = new A();
 		A b = a;
 		b.field = new Object();
-		a.field = new AllocatedObject();
+		a.field = new AllocatedObject(){};
 		Object alias = a.field;
 		queryFor(alias);
 	}

@@ -13,7 +13,7 @@ public class LinkedLists extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieveWithIterator(){
 		List<Object> set = new LinkedList<Object>();
-		AllocatedObject alias = new AllocatedObject();
+		AllocatedObject alias = new AllocatedObject(){};
 		set.add(alias);
 		Object alias2 = null;
 		for(Object o : set)
@@ -25,7 +25,7 @@ public class LinkedLists extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieveByIndex1(){
 		List<Object> list = new LinkedList<Object>();
-		AllocatedObject alias = new AllocatedObject();
+		AllocatedObject alias = new AllocatedObject(){};
 		list.add(alias);
 		Object ir = list.get(0);
 		Object query2 = ir;
@@ -34,7 +34,7 @@ public class LinkedLists extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieveByIndex2(){
 		List<Object> list = new LinkedList<Object>();
-		AllocatedObject alias = new AllocatedObject();
+		AllocatedObject alias = new AllocatedObject(){};
 		list.add(alias);
 		Object ir = list.get(1);
 		Object query2 = ir;

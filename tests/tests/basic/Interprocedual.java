@@ -9,14 +9,14 @@ public class Interprocedual extends AbstractBoomerangTest {
 
 	@Test
 	public void identityTest() {
-		AllocatedObject alias1 = new AllocatedObject();
+		AllocatedObject alias1 = new AllocatedObject(){};
 		AllocatedObject alias2 = identity(alias1);
 		queryFor(alias2);
 	}
 
 	@Test
 	public void summaryReuseTest1() {
-		AllocatedObject alias1 = new AllocatedObject(), alias2, alias3, alias4;
+		AllocatedObject alias1 = new AllocatedObject(){}, alias2, alias3, alias4;
 		alias2 = identity(alias1);
 		alias3 = identity(alias2);
 		alias4 = alias1;
@@ -25,7 +25,7 @@ public class Interprocedual extends AbstractBoomerangTest {
 
 	@Test
 	public void summaryReuseTest2() {
-		AllocatedObject alias1 = new AllocatedObject(), alias2, alias3, alias4;
+		AllocatedObject alias1 = new AllocatedObject(){}, alias2, alias3, alias4;
 		alias2 = identity(alias1);
 		alias3 = identity(alias2);
 		alias4 = alias1;
@@ -34,7 +34,7 @@ public class Interprocedual extends AbstractBoomerangTest {
 
 	@Test
 	public void summaryReuseTest3() {
-		AllocatedObject alias1 = new AllocatedObject(), alias2, alias3, alias4;
+		AllocatedObject alias1 = new AllocatedObject(){}, alias2, alias3, alias4;
 		alias2 = identity(alias1);
 		alias3 = identity(alias2);
 		alias4 = alias1;
@@ -42,9 +42,9 @@ public class Interprocedual extends AbstractBoomerangTest {
 	}
 	@Test
 	public void interLoop() {
-		AllocatedObject alias = new AllocatedObject();
+		AllocatedObject alias = new AllocatedObject(){};
 		AllocatedObject aliased2;
-		Object aliased = new AllocatedObject(), notAlias = new Object();
+		Object aliased = new AllocatedObject(){}, notAlias = new Object();
 		for (int i = 0; i < 20; i++) {
 			aliased = identity(alias);
 		}

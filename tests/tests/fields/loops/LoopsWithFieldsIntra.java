@@ -7,6 +7,29 @@ import test.core.selfrunning.AllocatedObject;
 
 public class LoopsWithFieldsIntra extends AbstractBoomerangTest{
 	@Test
+	public void oneFields() {
+		Node x = new Node();
+		Node p = null;
+		while(staticallyUnknown()){
+			if(staticallyUnknown()){
+				x.left = p;
+				
+			}else if(staticallyUnknown()){
+				x.right = p;
+			}
+			p = x;
+		}
+		Node t;
+		if(staticallyUnknown()){
+			t = x.left;
+			
+		}else{
+			t = x.right;
+		}
+		Node h = t;
+		queryFor(h);
+	}
+	@Test
 	public void twoFields() {
 		Node x = new Node();
 		Node p = null;
@@ -14,7 +37,7 @@ public class LoopsWithFieldsIntra extends AbstractBoomerangTest{
 			if(staticallyUnknown()){
 				x.left.right = p;
 				
-			}else{
+			}else if(staticallyUnknown()){
 				x.right.left = p;
 			}
 			p = x;
@@ -55,12 +78,12 @@ public class LoopsWithFieldsIntra extends AbstractBoomerangTest{
 		TreeNode h = t;
 		queryFor(h);
 	}
-	private class Node extends AllocatedObject{
+	private class Node implements AllocatedObject{
 		Node left = new Node();
 		Node right = new Node();
 	}
 
-	private class TreeNode extends AllocatedObject{
+	private class TreeNode implements AllocatedObject{
 		TreeNode left = new TreeNode();
 		TreeNode right = new TreeNode();
 		TreeNode parent = new TreeNode();
