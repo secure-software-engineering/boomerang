@@ -201,7 +201,7 @@ class AliasWorklistEntry extends IWorklistEntry {
               if (dartcontext.isOutOfBudget()) {
                 throw new BoomerangTimeoutException();
               }
-              Set<AccessGraph> preAliases = getRecursiveResults(callerContext, inCallerContext);
+              Collection<AccessGraph> preAliases = getRecursiveResults(callerContext, inCallerContext);
 
               Set<AccessGraph> aliasWithField =
                   AliasResults.appendField(preAliases, lastField, dartcontext);

@@ -2,6 +2,7 @@ package boomerang.cache;
 
 import heros.solver.Pair;
 
+import java.util.Collection;
 import java.util.Set;
 
 import boomerang.BoomerangTimeoutException;
@@ -51,7 +52,7 @@ public class ResultCache {
 
 	public class WithContextRequesterQueryCache extends CachedWorkinglist<Pair<Query,AliasResults>,AliasResults>{}
 	public class NoContextRequesterQueryCache extends CachedWorkinglist<Query,AliasResults>{}
-	public class RecursiveQueryCache extends CachedWorkinglist<Query,Set<AccessGraph>>{}
+	public class RecursiveQueryCache extends CachedWorkinglist<Query,Collection<AccessGraph>>{}
 	
   /**
    * Completely clears the cache.

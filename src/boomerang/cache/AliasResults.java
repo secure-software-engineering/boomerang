@@ -100,8 +100,8 @@ public class AliasResults extends ForwardingMultimap<Pair<Unit, AccessGraph>, Ac
 	 * 
 	 * @return The set of aliasing access graphs
 	 */
-	public Set<AccessGraph> mayAliasSet() {
-		return new HashSet<>(this.values());
+	public Collection<AccessGraph> mayAliasSet() {
+		return this.values();
 	}
 
 	/**

@@ -38,7 +38,7 @@ public class Return implements ForwardPointOfIndirection {
 	    
 	    for (AccessGraph withOutLastField : withOutLastFields) {
 	      AliasFinder dart = new AliasFinder(context);
-	      Set<AccessGraph> irRes = dart.findAliasAtStmtRec(withOutLastField, callSite);
+	      Collection<AccessGraph> irRes = dart.findAliasAtStmtRec(withOutLastField, callSite);
 	      newAliases.addAll(AliasResults.appendField(irRes, lastField, context));
 	    }
     }

@@ -36,7 +36,7 @@ public class Call implements BackwardBackwardHandler, PointOfIndirection {
 			Set<AccessGraph> prefixes = factInsideCall.popLastField();
 			for (AccessGraph prefix : prefixes) {
 				AliasFinder dart = new AliasFinder(context);
-				Set<AccessGraph> aliases = dart.findAliasAtStmtRec(prefix, returnSiteOfCall);
+				Collection<AccessGraph> aliases = dart.findAliasAtStmtRec(prefix, returnSiteOfCall);
 				aliases = AliasResults.appendField(aliases, lastField, context);
 				for (AccessGraph ap : aliases) {
 

@@ -282,7 +282,7 @@ public class AliasFinder {
 	 *            The statement at which the query is triggered.
 	 * @return Set of access graph which alias to a at stmt.
 	 */
-	public Set<AccessGraph> findAliasAtStmtRec(AccessGraph a, Unit stmt) {
+	public Collection<AccessGraph> findAliasAtStmtRec(AccessGraph a, Unit stmt) {
 		Query query = new Query(a, stmt, context.icfg.getMethodOf(stmt));
 		RecursiveQueryCache cache = context.querycache.recursiveQueryCache();
 		if (cache.isDone(query))
@@ -290,9 +290,11 @@ public class AliasFinder {
 		if (cache.isProcessing(query))
 			return Collections.emptySet();
 		cache.start(query);
-		Set<AccessGraph> out = findAliasAtStmtRec(a, stmt, new NoContextRequester());
-		cache.setResults(query, new HashSet<>(out));
-		return out;
+		Collection<AccessGraph> originalOut = findAliasAtStmtRec(a, stmt, new NoContextRequester());
+		cache.setResults(query, originalOut);
+		for (AccessGraph symmetricAlias : originalOut)
+			cache.setResults(new Query(symmetricAlias, stmt, context.icfg.getMethodOf(stmt)), originalOut);
+		return originalOut;
 	}
 
 	/**
@@ -310,14 +312,14 @@ public class AliasFinder {
 	 *            Provides the context under which the query is to be evaluted.
 	 * @return Set of access graph which alias to a at stmt.
 	 */
-	public Set<AccessGraph> findAliasAtStmtRec(AccessGraph a, Unit stmt, IContextRequester requester) {
+	public Collection<AccessGraph> findAliasAtStmtRec(AccessGraph a, Unit stmt, IContextRequester requester) {
 		if (context.isOutOfBudget()) {
 			throw new BoomerangTimeoutException();
 		}
 		AccessGraph askFor = new AccessGraph(a.getBase(), a.getBaseType());
 		if (!context.isValidQuery(askFor, stmt))
 			return Collections.emptySet();
-		Set<AccessGraph> prevAliases = internalFindAliasAtStmt(new Query(askFor, stmt, context.icfg.getMethodOf(stmt)),
+		Collection<AccessGraph> prevAliases = internalFindAliasAtStmt(new Query(askFor, stmt, context.icfg.getMethodOf(stmt)),
 				requester).mayAliasSet();
 		if (a.getFieldCount() < 1) {
 			return prevAliases;
@@ -327,7 +329,7 @@ public class AliasFinder {
 		Set<AccessGraph> out = new HashSet<>();
 
 		out.addAll(AliasResults.appendFields(prevAliases, nodes, context));
-		Set<AccessGraph> changeSet = prevAliases;
+		Collection<AccessGraph> changeSet = prevAliases;
 		for (int i = 0; i < nodes.length; i++) {
 			Set<AccessGraph> withFieldsSet = AliasResults.appendField(changeSet, nodes[i], context);
       if (i != nodes.length) {

@@ -72,7 +72,7 @@ class ParamAllocWorklistEntry extends IWorklistEntry {
             for(WrappedSootField lastField : t.getLastField()){
 	            Set<AccessGraph> withoutLastfields = t.popLastField();
 	            for (AccessGraph withoutLastfield : withoutLastfields) {
-	              Set<AccessGraph> rec = getRecursiveResults(callSiteContext, withoutLastfield);
+	              Collection<AccessGraph> rec = getRecursiveResults(callSiteContext, withoutLastfield);
 	              toSearch = AliasResults.appendField(rec, lastField, dartcontext);
 	            }
             }

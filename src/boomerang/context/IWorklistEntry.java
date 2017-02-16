@@ -17,7 +17,7 @@ abstract class IWorklistEntry {
     this.dartcontext = context;
   }
 
-  protected Set<AccessGraph> getRecursiveResults(final Context callerContext,
+  protected Collection<AccessGraph> getRecursiveResults(final Context callerContext,
       AccessGraph inCallerContext) {
 
     Unit callerCallSite = callerContext.getStmt();
@@ -25,7 +25,7 @@ abstract class IWorklistEntry {
     if (dartcontext.isOutOfBudget()) {
       throw new BoomerangTimeoutException();
     }
-    Set<AccessGraph> preAliases =
+    Collection<AccessGraph> preAliases =
         dart.findAliasAtStmtRec(inCallerContext, callerCallSite, new IContextRequester() {
           @Override
           public Context initialContext(Unit stmt) {
