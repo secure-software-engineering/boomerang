@@ -33,7 +33,9 @@ public class WrappedSootField {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((field == null) ? 0 : field.hashCode());
+    if(TRACK_TYPE){
     result = prime * result + ((type == null) ? 0 : type.hashCode());
+    }
     result = prime * result + ((stmt == null) ? 0 : stmt.hashCode());
     return result;
   }
@@ -52,12 +54,13 @@ public class WrappedSootField {
         return false;
     } else if (!field.equals(other.field))
       return false;
+    if(TRACK_TYPE){
     if (type == null) {
       if (other.type != null)
         return false;
     } else if (!type.equals(other.type))
       return false;
-
+    }
     if (stmt == null) {
       if (other.stmt != null)
         return false;
@@ -71,8 +74,6 @@ public class WrappedSootField {
   }
 
   public Type getType() {
-    if (!TRACK_TYPE)
-      throw new RuntimeException("Miss configured");
     return type;
   }
 }

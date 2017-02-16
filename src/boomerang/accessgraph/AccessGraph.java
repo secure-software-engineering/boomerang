@@ -262,6 +262,8 @@ public class AccessGraph {
 	   * @return <code>true</code> if the field can be appended.
 	   */
 	  public boolean canAppend(WrappedSootField firstField) {
+		 if(!WrappedSootField.TRACK_TYPE)
+			 return true;
 	    if (firstField.getField().equals(AliasFinder.ARRAY_FIELD))
 	      return true;
 	    SootField field = firstField.getField();
@@ -296,6 +298,8 @@ public class AccessGraph {
 	   * @return <code>true</code> if the field can be appended.
 	   */
 	  public boolean canPrepend(WrappedSootField newFirstField) {
+		  if(!WrappedSootField.TRACK_TYPE)
+				 return true;
 	    SootField newFirst = newFirstField.getField();
 	    if (newFirst.equals(AliasFinder.ARRAY_FIELD))
 	      return true;
@@ -522,6 +526,7 @@ public class AccessGraph {
 		int result = 1;
 		result = prime * result + ((fieldGraph == null) ? 0 : fieldGraph.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		if(WrappedSootField.TRACK_TYPE)
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + ((allocationSite == null) ? 0 : allocationSite.hashCode());
 		this.hashCode = result;
@@ -542,11 +547,13 @@ public class AccessGraph {
 				return false;
 		} else if (!value.equals(other.value))
 			return false;
+		if(WrappedSootField.TRACK_TYPE){
 		if (type == null) {
 			if (other.type != null)
 				return false;
 		} else if (!type.equals(other.type))
 			return false;
+		}
 		if (allocationSite == null) {
 			if (other.allocationSite != null)
 				return false;

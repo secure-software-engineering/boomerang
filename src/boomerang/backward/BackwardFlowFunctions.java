@@ -443,6 +443,8 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 	}
 
 	private boolean queryTypeMatch(Type allocationSiteType) {
+		if(!WrappedSootField.TRACK_TYPE)
+			return true;
 		for (Type t : context.getSubQuery().getType())
 			if (Scene.v().getOrMakeFastHierarchy().canStoreType(allocationSiteType, t))
 				return true;
