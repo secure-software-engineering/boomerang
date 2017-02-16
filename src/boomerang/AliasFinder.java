@@ -378,9 +378,6 @@ public class AliasFinder {
 			}
 			
 		}
-		System.out.println("BW " + backwardsolver.propagationCount);
-		System.out.println("FW " + forwardProps);
-		forwardProps = 0;
 		backwardsolver.cleanup();
 		AliasResults res = new AliasResults();
 		res.putAll(context.getForwardPathEdges().getResultAtStmtContainingValue(stmt, accessPath));

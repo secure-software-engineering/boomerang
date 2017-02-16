@@ -71,7 +71,7 @@ public class AbstractBoomerangTest {
 				icfg = new InfoflowCFG(new JimpleBasedInterproceduralCFG());
 
 				Query q = parseQuery();
-				AliasResults expectedResults = parseExpectedQueryResults();
+				AliasResults expectedResults = parseExpectedQueryResults(q);
 				AliasResults results = runQuery(q);
 				compareQuery(q, expectedResults, results);
 			}
@@ -84,6 +84,7 @@ public class AbstractBoomerangTest {
 	}
 
 	private void compareQuery(Query q, AliasResults expectedResults, AliasResults results) {
+		System.out.println("Boomerang Allocations Sites: " +  results.keySet());
 		System.out.println("Boomerang Results: " +  results);
 		System.out.println("Expected Results: " +  expectedResults);
 		Set<Pair<Unit, AccessGraph>> falseNegativeAllocationSites = new HashSet<>(expectedResults.keySet());
@@ -118,9 +119,10 @@ public class AbstractBoomerangTest {
 		return boomerang.findAliasAtStmt(q.getAp(), q.getStmt());
 	}
 
-	private AliasResults parseExpectedQueryResults() {
+	private AliasResults parseExpectedQueryResults(Query q) {
 		Set<Pair<Unit, AccessGraph>> allocationSiteWithCallStack = parseAllocationSitesWithCallStack();
 		Set<Local> aliasedVariables = parseAliasedVariables();
+		aliasedVariables.add(q.getAp().getBase());
 		AliasResults expectedResults = associateVariableAliasesToAllocationSites(allocationSiteWithCallStack,
 				aliasedVariables);
 
@@ -185,7 +187,7 @@ public class AbstractBoomerangTest {
 	private boolean allocatesObjectOfInterest(NewExpr rightOp) {
 		RefType typeOfInterest = Scene.v().getSootClass("test.core.selfrunning.AllocatedObject").getType();
 		RefType allocatedType = rightOp.getBaseType();
-		return  Scene.v().getFastHierarchy().canStoreType(allocatedType,typeOfInterest);
+		return  Scene.v().getOrMakeFastHierarchy().canStoreType(allocatedType,typeOfInterest);
 	}
 
 	private Set<AccessGraph> transitivelyReachableAllocationSite(Unit call, Set<SootMethod> visited) {

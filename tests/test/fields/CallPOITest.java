@@ -7,7 +7,8 @@ import test.core.selfrunning.AllocatedObject;
 
 public class CallPOITest extends AbstractBoomerangTest {
 	private class A{
-		B b;
+		//TODO Test fails if we remove "= null" here.
+		B b = null;
 	}
 	private class B{
 		C c;
