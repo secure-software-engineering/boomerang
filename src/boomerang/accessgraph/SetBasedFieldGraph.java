@@ -1,15 +1,57 @@
 package boomerang.accessgraph;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
+
+import soot.Scene;
+import soot.SootField;
+import soot.Type;
 
 public class SetBasedFieldGraph implements IFieldGraph {
 
-	private final Set<WrappedSootField> fields;
+	private Set<WrappedSootField> fields;
+	private static Set<WrappedSootField> allFields;
 	public SetBasedFieldGraph(Set<WrappedSootField> fields) {
-		this.fields = fields;
+		if(allFields == null)
+			allFields = new HashSet<>();
+		allFields.addAll(fields);
+		this.fields = minimize(allFields);
 //		assert fields.size() > 1;
+	}
+	
+	private Set<WrappedSootField> minimize(Set<WrappedSootField> fields) {
+		Map<SootField, Type> fieldsWithTypes = new HashMap<>();
+		for (WrappedSootField f : fields) {
+			SootField unwrappedField = f.getField();
+			if (!fieldsWithTypes.containsKey(f.getField()))
+				fieldsWithTypes.put(unwrappedField, unwrappedField.getType());
+			else {
+				Type a = fieldsWithTypes.get(unwrappedField);
+				Type b = f.getType();
+				Type commonSuperClass = superType(a, b);
+				fieldsWithTypes.put(unwrappedField, commonSuperClass);
+			}
+		}
+		Set<WrappedSootField> out = new HashSet<>();
+		for (Entry<SootField, Type> e : fieldsWithTypes.entrySet())
+			out.add(new WrappedSootField(e.getKey(), e.getValue(), null));
+		return out;
+	}
+
+	private Type superType(Type a, Type b) {
+		if(a.equals(b))
+			return a;
+		if (Scene.v().getOrMakeFastHierarchy().canStoreType(a, b)) {
+			return b;
+		} else if (Scene.v().getOrMakeFastHierarchy().canStoreType(b, a)) {
+			return a;
+		}
+		return a;
+//		throw new RuntimeException("Type mismatch?" + a +" and " + b);
 	}
 	@Override
 	public Set<IFieldGraph> popFirstField() {
@@ -66,7 +108,8 @@ public class SetBasedFieldGraph implements IFieldGraph {
 
 	@Override
 	public IFieldGraph overapproximation() {
-		throw new RuntimeException("Cannot overapproximate the approxmiation anymore");
+		return this;
+//		throw new RuntimeException("Cannot overapproximate the approxmiation anymore");
 	}
 	
 	public String toString(){
@@ -91,7 +134,7 @@ public class SetBasedFieldGraph implements IFieldGraph {
 		if (fields == null) {
 			if (other.fields != null)
 				return false;
-		} else if (!fields.equals(other.fields))
+		} else if (fields.size() != other.fields.size() || !fields.equals(other.fields))
 			return false;
 		return true;
 	}

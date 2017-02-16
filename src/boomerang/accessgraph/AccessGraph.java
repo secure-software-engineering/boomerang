@@ -109,6 +109,7 @@ public class AccessGraph {
 //		} else{
 //			apgs.add(fieldGraph);
 //			System.out.println("APG" + apgs.size());
+//			System.out.println(fieldGraph);
 			this.fieldGraph = fieldGraph;
 //		}
 		this.allocationSite = sourceStmt;
@@ -140,7 +141,7 @@ public class AccessGraph {
 	 */
 	public Collection<WrappedSootField> getFirstField() {
 		if (fieldGraph == null)
-			return null;
+			return Collections.emptySet();
 		return fieldGraph.getEntryNode();
 	}
 
@@ -154,14 +155,14 @@ public class AccessGraph {
 	public boolean firstFieldMustMatch(SootField field) {
 		if (fieldGraph == null)
 			return false;
-		if(getFirstField().size() > 1)
+		if(fieldGraph instanceof SetBasedFieldGraph)
 			return false;
 		for(WrappedSootField f: getFirstField())
 			return f.getField().equals(field);
 		throw new RuntimeException("Unreachable Code");
 	}
 	
-	private boolean firstFirstFieldMayMatch(SootField field) {
+	public boolean firstFirstFieldMayMatch(SootField field) {
 		for(WrappedSootField f: getFirstField())
 			if(f.getField().equals(field))
 				return true;
@@ -201,7 +202,7 @@ public class AccessGraph {
 			 str += fieldGraph.toString();
 		}
 		if (allocationSite != null) {
-      // str += " at " +sourceStmt.toString();
+			str += " at " +allocationSite.toString();
 		}
 		return str;
 	}
@@ -452,7 +453,7 @@ public class AccessGraph {
 	 * @return The derived access graph
 	 */
 	public AccessGraph dropTail() {
-		return new AccessGraph(value, type, null, null);
+		return new AccessGraph(value, type, null, allocationSite);
 	}
 
 	/**
@@ -495,7 +496,7 @@ public class AccessGraph {
 	public IFieldGraph getFieldGraph() {
 		return fieldGraph;
 	}
-
+	
 	/**
 	 * The type of the current access graph. (Type of the last field access or
 	 * of the base value, if it has no field accesses bound to it.)
@@ -558,5 +559,15 @@ public class AccessGraph {
 			return false;
 		assert this.hashCode() == obj.hashCode();
 		return true;
+	}
+
+	public boolean hasSetBasedFieldGraph() {
+		// TODO Auto-generated method stub
+		return fieldGraph instanceof SetBasedFieldGraph;
+	}
+
+	public AccessGraph overApproximate() {
+		// TODO Auto-generated method stub
+		return new AccessGraph(value, type, fieldGraph == null ? null : fieldGraph.overapproximation(), allocationSite);
 	}
 }
