@@ -8,13 +8,13 @@ import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
-import boomerang.backward.BackwardEdge;
 import boomerang.backward.BackwardSolver;
 import boomerang.cache.AliasResults;
 import boomerang.context.Context;
 import boomerang.context.IContextRequester;
 import boomerang.ifdssolver.IFDSSolver.PropagationType;
 import boomerang.ifdssolver.IPathEdge;
+import boomerang.ifdssolver.PathEdge;
 import soot.Local;
 import soot.SootField;
 import soot.Unit;
@@ -22,76 +22,6 @@ import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 
 public class Read implements BackwardBackwardHandler {
 
-  public class ReadContext implements Context {
-
-    private IPathEdge<Unit, AccessGraph> contextEdge;
-
-    public ReadContext(IPathEdge<Unit, AccessGraph> edge) {
-      contextEdge = edge;
-    }
-
-    @Override
-    public Unit getStmt() {
-      return contextEdge.getTarget();
-    }
-
-    @Override
-    public int hashCode() {
-      final int prime = 31;
-      int result = 1;
-      result = prime * result + ((contextEdge == null) ? 0 : contextEdge.hashCode());
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj)
-        return true;
-      if (obj == null)
-        return false;
-      if (getClass() != obj.getClass())
-        return false;
-      ReadContext other = (ReadContext) obj;
-      if (contextEdge == null) {
-        if (other.contextEdge != null)
-          return false;
-      } else if (!contextEdge.equals(other.contextEdge))
-        return false;
-      return true;
-    }
-
-
-  }
-
-  public class ReadContextRequester implements IContextRequester {
-
-    private BackwardSolver backwardsSolver;
-
-    public ReadContextRequester(BackwardSolver backwardsSolver) {
-      this.backwardsSolver = backwardsSolver;
-    }
-
-    @Override
-    public Collection<Context> getCallSiteOf(Context child) {
-      if(!(child instanceof ReadContext)){
-        throw new RuntimeException("Wrong type!");
-      }
-      ReadContext rc = (ReadContext) child;
-      Set<? extends IPathEdge<Unit, AccessGraph>> incoming = backwardsSolver.incoming(rc.contextEdge.getStartNode(), icfg.getMethodOf(rc.contextEdge.getTarget()));
-      Set<Context> res = new HashSet<>();
-      for(IPathEdge<Unit, AccessGraph> inc : incoming){
-        res.add(new ReadContext(inc));
-      }
-      return res;
-    }
-
-    @Override
-    public Context initialContext(Unit stmt) {
-      ReadContext c = new ReadContext(edge);
-      return c;
-    }
-
-  }
 
   private IPathEdge<Unit, AccessGraph> edge;
   private Unit succ;
@@ -134,7 +64,7 @@ public class Read implements BackwardBackwardHandler {
         continue;
       }
       IPathEdge<Unit, AccessGraph> newEdge =
-          new BackwardEdge(edge.getStart(), edge.factAtSource(), succ, ap);
+          new PathEdge<>(edge.getStart(), edge.factAtSource(), succ, ap);
       context.debugger.indirectFlowEdgeAtRead(source,curr,ap, succ);
       backwardsSolver.propagate(newEdge, PropagationType.Normal);
     }

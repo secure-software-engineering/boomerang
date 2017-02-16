@@ -7,11 +7,11 @@ import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
-import boomerang.backward.BackwardEdge;
 import boomerang.backward.BackwardSolver;
 import boomerang.cache.AliasResults;
 import boomerang.ifdssolver.IFDSSolver.PropagationType;
 import boomerang.ifdssolver.IPathEdge;
+import boomerang.ifdssolver.PathEdge;
 import soot.SootMethod;
 import soot.Unit;
 
@@ -43,7 +43,7 @@ public class Call implements BackwardBackwardHandler, PointOfIndirection {
 					if (ap.equals(factInsideCall)) {
 						continue;
 					}
-					IPathEdge<Unit, AccessGraph> newEdge = new BackwardEdge(null, factInsideCall, returnSiteOfCall, ap);
+					IPathEdge<Unit, AccessGraph> newEdge = new PathEdge<Unit,AccessGraph>(null, factInsideCall, returnSiteOfCall, ap);
 					context.debugger.indirectFlowEdgeAtCall(factInsideCall, returnSiteOfCall, ap, returnSiteOfCall);
 					backwardsSolver.propagate(newEdge, PropagationType.Normal);
 				}
