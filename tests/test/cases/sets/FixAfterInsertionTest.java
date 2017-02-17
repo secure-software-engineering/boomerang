@@ -1,4 +1,4 @@
-package test.sets;
+package test.cases.sets;
 
 import static test.core.utils.Helper.andExpectNonEmpty;
 import static test.core.utils.Helper.inMethod;

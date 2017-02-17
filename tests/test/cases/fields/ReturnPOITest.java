@@ -1,4 +1,4 @@
-package test.fields;
+package test.cases.fields;
 
 import org.junit.Test;
 

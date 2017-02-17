@@ -1,4 +1,4 @@
-package test.fields;
+package test.cases.fields;
 
 import org.junit.Test;
 
@@ -16,7 +16,12 @@ public class CallPOITest extends AbstractBoomerangTest {
 	private class C implements AllocatedObject{
 		
 	}
-	
+
+	private void allocation(A a) {
+		B intermediate = a.b;
+		C d = new C();
+		intermediate.c = d;
+	}
 	
 	@Test
 	public void indirectAllocationSite(){
@@ -26,10 +31,17 @@ public class CallPOITest extends AbstractBoomerangTest {
 		queryFor(alias);
 	}
 
+	@Test
+	public void indirectAllocationSiteViaParameter(){
+		A a = new A();
+		C alloc = new C();
+		allocation(a,alloc);
+		C alias = a.b.c;
+		queryFor(alias);
+	}
 
-	private void allocation(A a) {
+	private void allocation(A a, C d) {
 		B intermediate = a.b;
-		C d = new C();
 		intermediate.c = d;
 	}
 }

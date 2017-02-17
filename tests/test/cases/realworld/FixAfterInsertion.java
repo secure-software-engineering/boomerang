@@ -1,4 +1,4 @@
-package test.realworld;
+package test.cases.realworld;
 
 import java.util.Map;
 

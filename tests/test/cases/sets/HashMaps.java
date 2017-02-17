@@ -1,4 +1,4 @@
-package test.sets;
+package test.cases.sets;
 
 import java.util.HashSet;
 
@@ -7,7 +7,7 @@ import org.junit.Test;
 import test.core.selfrunning.AbstractBoomerangTest;
 import test.core.selfrunning.AllocatedObject;
 
-public class HashSets extends AbstractBoomerangTest{
+public class HashMaps extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieve(){
 		HashSet<Object> set = new HashSet<>();

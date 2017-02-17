@@ -1,4 +1,4 @@
-package test.sets;
+package test.cases.sets;
 
 
 import java.util.LinkedList;

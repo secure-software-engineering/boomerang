@@ -9,5 +9,6 @@ public class TestBoomerangOptions extends BoomerangOptions {
   public TestBoomerangOptions() {
 //	  this.setDebugger(new TestDebugger());
 //    this.setDebugger(new JSONOutputDebugger(new File("html/data.js")));
+    this.setTrackType(true);
   }
 }

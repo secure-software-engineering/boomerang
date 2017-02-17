@@ -1,4 +1,4 @@
-package tests.fields.loops;
+package test.cases.fields.loops;
 
 import org.junit.Test;
 

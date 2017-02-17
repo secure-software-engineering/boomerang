@@ -1,4 +1,4 @@
-package tests.basic;
+package test.cases.basic;
 
 import org.junit.Test;
 

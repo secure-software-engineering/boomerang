@@ -1,9 +1,9 @@
-package test.realworld;
+package test.cases.realworld;
 
 import org.junit.Test;
 
+import test.cases.realworld.FixAfterInsertion.Entry;
 import test.core.selfrunning.AbstractBoomerangTest;
-import test.realworld.FixAfterInsertion.Entry;
 
 public class FixAfterInsertionTest  extends AbstractBoomerangTest{
 
