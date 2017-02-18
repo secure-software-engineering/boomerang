@@ -3,11 +3,9 @@ package boomerang.debug;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +36,6 @@ import boomerang.pointsofindirection.Write;
 import heros.solver.Pair;
 import soot.SootMethod;
 import soot.Unit;
-import soot.Value;
 import soot.jimple.AssignStmt;
 import soot.jimple.InstanceFieldRef;
 import soot.jimple.InstanceInvokeExpr;
@@ -72,7 +69,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	@Override
 	public void normalFlow(Direction dir, Unit start, AccessGraph startFact, Unit target, AccessGraph targetFact) {
 		ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(start));
-		cfg.addEdge(new ESGEdge(new ESGNode(start,startFact,dir,context.getSubQuery()),new ESGNode(target,targetFact,dir,context.getSubQuery()),"normalFlow"));
+		cfg.addEdge(new ESGEdge(new ESGNode(start,startFact,dir),new ESGNode(target,targetFact,dir),"normalFlow"));
 	}
 	private ExplodedSuperGraph generateCFG(SootMethod sootMethod) {
 		ExplodedSuperGraph cfg = methodToCfg.get(sootMethod);
@@ -87,46 +84,46 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	public void callFlow(Direction dir, Unit start, AccessGraph startFact, Unit target,
 			AccessGraph targetFact) {
 		ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(start));
-		ESGNode callSiteNode = new ESGNode(start,startFact,dir,context.getSubQuery());
-		cfg.addEdge(new ESGEdge(callSiteNode,new CalleeESGNode(target,targetFact,dir,context.getSubQuery(),callSiteNode),"callFlow"));
+		ESGNode callSiteNode = new ESGNode(start,startFact,dir);
+		cfg.addEdge(new ESGEdge(callSiteNode,new CalleeESGNode(target,targetFact,dir,callSiteNode),"callFlow"));
 	}
 
 	@Override
 	public void callToReturn(Direction dir, Unit start, AccessGraph startFact, Unit target, AccessGraph targetFact) {
 		ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(start));
-		cfg.addEdge(new ESGEdge(new ESGNode(start,startFact,dir,context.getSubQuery()),new ESGNode(target,targetFact,dir,context.getSubQuery()),"call2ReturnFlow"));
+		cfg.addEdge(new ESGEdge(new ESGNode(start,startFact,dir),new ESGNode(target,targetFact,dir),"call2ReturnFlow"));
 	}
 
 	@Override
 	public void returnFlow(Direction dir, Unit start, AccessGraph startFact, Unit target, AccessGraph targetFact) {
 		ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(target));
-		ESGNode nodeInMethod = new ESGNode(target,targetFact,dir,context.getSubQuery());
-		cfg.addEdge(new ESGEdge(new CalleeESGNode(start,startFact,dir,context.getSubQuery(),nodeInMethod),nodeInMethod,"returnFlow"));
+		ESGNode nodeInMethod = new ESGNode(target,targetFact,dir);
+		cfg.addEdge(new ESGEdge(new CalleeESGNode(start,startFact,dir,nodeInMethod),nodeInMethod,"returnFlow"));
 	}
 
 	@Override
 	public void indirectFlowEdgeAtRead(AccessGraph startFact, Unit start, AccessGraph targetFact, Unit target) {
 		ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(start));
-		ESGNode callSiteNode = new ESGNode(start,startFact,Direction.BACKWARD,context.getSubQuery());
-		cfg.addEdge(new ESGEdge(callSiteNode,new ESGNode(target,targetFact,Direction.BACKWARD,context.getSubQuery()),"indirectReadFlow"));
+		ESGNode callSiteNode = new ESGNode(start,startFact,Direction.BACKWARD);
+		cfg.addEdge(new ESGEdge(callSiteNode,new ESGNode(target,targetFact,Direction.BACKWARD),"indirectReadFlow"));
 	}
 	@Override
 	public void indirectFlowEdgeAtWrite(AccessGraph startFact, Unit start, AccessGraph targetFact, Unit target) {
 		ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(start));
-		ESGNode callSiteNode = new ESGNode(start,startFact,Direction.FORWARD,context.getSubQuery());
-		cfg.addEdge(new ESGEdge(callSiteNode,new ESGNode(target,targetFact,Direction.FORWARD,context.getSubQuery()),"indirectWriteFlow"));
+		ESGNode callSiteNode = new ESGNode(start,startFact,Direction.FORWARD);
+		cfg.addEdge(new ESGEdge(callSiteNode,new ESGNode(target,targetFact,Direction.FORWARD),"indirectWriteFlow"));
 	}
 	@Override
 	public void indirectFlowEdgeAtReturn(AccessGraph startFact, Unit start, AccessGraph targetFact, Unit target) {
 		ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(start));
-		ESGNode callSiteNode = new ESGNode(start,startFact,Direction.FORWARD,context.getSubQuery());
-		cfg.addEdge(new ESGEdge(callSiteNode,new ESGNode(target,targetFact,Direction.FORWARD,context.getSubQuery()),"indirectReturnFlow"));	
+		ESGNode callSiteNode = new ESGNode(start,startFact,Direction.FORWARD);
+		cfg.addEdge(new ESGEdge(callSiteNode,new ESGNode(target,targetFact,Direction.FORWARD),"indirectReturnFlow"));	
 	}
 	@Override
 	public void indirectFlowEdgeAtCall(AccessGraph startFact, Unit start, AccessGraph targetFact, Unit target) {
 		ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(start));
-		ESGNode callSiteNode = new ESGNode(start,startFact,Direction.BACKWARD,context.getSubQuery());
-		cfg.addEdge(new ESGEdge(callSiteNode,new ESGNode(target,targetFact,Direction.BACKWARD,context.getSubQuery()),"indirectCallFlow"));
+		ESGNode callSiteNode = new ESGNode(start,startFact,Direction.BACKWARD);
+		cfg.addEdge(new ESGEdge(callSiteNode,new ESGNode(target,targetFact,Direction.BACKWARD),"indirectCallFlow"));
 	}
 
 	@Override
@@ -257,8 +254,8 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 
 		private ESGNode linkedNode;
 
-		CalleeESGNode(Unit u, AccessGraph a, Direction dir, SubQueryContext q, ESGNode linkedNode) {
-			super(u, a, dir, q);
+		CalleeESGNode(Unit u, AccessGraph a, Direction dir, ESGNode linkedNode) {
+			super(u, a, dir);
 			this.linkedNode = linkedNode;
 		}
 
@@ -289,16 +286,18 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 
 		
 	}
-	private class ESGNode {
+	private static class ESGNode {
 		private Unit u;
 		private AccessGraph a;
-		private SubQueryContext subquery;
 		private Direction dir;
-		ESGNode(Unit u, AccessGraph a, Direction dir, SubQueryContext q){
+		private static int esgNodeCounter = 0;
+		ESGNode(Unit u, AccessGraph a, Direction dir){
 			this.u = u;
 			this.a = a;
 			this.dir = dir;
-			this.subquery = q;
+			esgNodeCounter++;
+			if(esgNodeCounter % 1000 == 0)
+				System.err.println("Warning: Using JSONOutputDebugger, might slow down performance.");
 		}
 		@Override
 		public int hashCode() {
@@ -306,7 +305,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 			int result = 1;
 			result = prime * result + ((a == null) ? 0 : a.hashCode());
 			result = prime * result + ((dir == null) ? 0 : dir.hashCode());
-			result = prime * result + ((subquery == null) ? 0 : subquery.hashCode());
 			result = prime * result + ((u == null) ? 0 : u.hashCode());
 			
 			return result;
@@ -329,11 +327,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 				if (other.u != null)
 					return false;
 			} else if (!u.equals(other.u))
-				return false;
-			if (subquery == null) {
-				if (other.subquery != null)
-					return false;
-			} else if (!subquery.equals(other.subquery))
 				return false;
 			if (dir == null) {
 				if (other.dir != null)
@@ -482,7 +475,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 				}
 				
 				nodeObj.put("position", pos);
-				String classes = "esgNode method"+id(method)+" sq"+id(node.subquery)+" " +node.dir;
+				String classes = "esgNode method"+id(method)+"  " +node.dir;
 
 				JSONObject additionalData = new JSONObject();
 				additionalData.put("id", "n"+id(node));
@@ -520,7 +513,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 				dataEntry.put("directed", "true");
 				dataEntry.put("direction", edge.start.dir.toString());
 				nodeObj.put("data", dataEntry);
-				nodeObj.put("classes", "esgEdge method"+id(method)+" sq"+id(edge.start.subquery)+" " +edge.start.dir +" "+ edge.type);
+				nodeObj.put("classes", "esgEdge method"+id(method)+" " +edge.start.dir +" "+ edge.type);
 				nodeObj.put("group", "edges");
 				data.add(nodeObj);
 			}

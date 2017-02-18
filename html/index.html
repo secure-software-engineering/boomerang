@@ -260,8 +260,8 @@ function renderMethodIn(methodId, methodDiv){
           return;
         cy = cytoscape({
           container: methodDiv,
-          zoomingEnabled: false,
-          userZoomingEnabled: false,
+          zoomingEnabled: true,
+          userZoomingEnabled: true,
           panningEnabled: true,
           userPanningEnabled: true,
           layout: {
@@ -409,7 +409,8 @@ function renderMethodWithESG(methodId, methodDiv){
                 template: "#name#",
                 on:{
                   onItemClick: function(el){
-                    renderMethodWithESG(el,$("div[id=main]"));
+                    activeMethod = el;
+                    renderMethodWithESG(el,$("div[id=methodGraph]"));
                   }
                 },
                 data:event.cyTarget.data().callees}).show();
@@ -435,6 +436,15 @@ function renderMethodWithESG(methodId, methodDiv){
             var tgt = event.cyTarget;
               if(tgt.hasClass("hidden"))
                 return;
+              global = tgt;
+              cy.elements().breadthFirstSearch( {
+                root: tgt,
+                directed: true, 
+                visit: function(i, depth, v){
+                  console.log(arguments);
+                  addClassWhileOver(tgt,v,"highlight")
+              }
+            });
             var stmtId = tgt.data().stmtId;
             var elements = cy.$("node[stmtId="+stmtId+"]");
             addClassWhileOver(tgt,elements,"bold");
