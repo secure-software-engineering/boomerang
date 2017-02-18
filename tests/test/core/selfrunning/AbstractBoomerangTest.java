@@ -15,8 +15,11 @@ import org.junit.rules.TestName;
 
 import boomerang.AliasFinder;
 import boomerang.accessgraph.AccessGraph;
+import boomerang.accessgraph.SetBasedFieldGraph;
+import boomerang.accessgraph.WrappedSootField;
 import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
+import boomerang.preanalysis.PreparationTransformer;
 import heros.solver.Pair;
 import soot.ArrayType;
 import soot.Body;
@@ -57,6 +60,8 @@ public class AbstractBoomerangTest {
 
 	@Before
 	public void performQuery() {
+		WrappedSootField.TRACK_TYPE = true;
+		
 		initializeSootWithEntryPoint(name.getMethodName());
 		analyze(name.getMethodName());
 
@@ -78,6 +83,9 @@ public class AbstractBoomerangTest {
 
 		});
 
+//	    PreparationTransformer preparationTransformer = new PreparationTransformer();
+//	    PackManager.v().getPack("wjtp")
+//	        .add(new Transform("wjtp.preparationTransform", preparationTransformer));
 		PackManager.v().getPack("wjtp").add(transform);
 		PackManager.v().getPack("cg").apply();
 		PackManager.v().getPack("wjtp").apply();
@@ -89,7 +97,6 @@ public class AbstractBoomerangTest {
 		System.out.println("Expected Results: " + expectedResults);
 		Set<Pair<Unit, AccessGraph>> falseNegativeAllocationSites = new HashSet<>(expectedResults.keySet());
 		falseNegativeAllocationSites.removeAll(results.keySet());
-		results.keySet().equals(expectedResults.keySet());
 		Set<Pair<Unit, AccessGraph>> falsePositiveAllocationSites = new HashSet<>(results.keySet());
 		falsePositiveAllocationSites.removeAll(expectedResults.keySet());
 		String answer = "Query: " + q.getAp() + "@" + q.getStmt() + "€" + q.getMethod() + " \n"
@@ -107,7 +114,7 @@ public class AbstractBoomerangTest {
 		HashSet<String> missingVariables = new HashSet<>();
 
 		for (String g : aliasVariables) {
-			if (g.contains("alias"))
+			if (g.contains("alias") && !g.contains("**"))
 				missingVariables.add(g);
 		}
 		if (!missingVariables.isEmpty())
@@ -191,6 +198,8 @@ public class AbstractBoomerangTest {
 
 	private boolean allocatesObjectOfInterest(NewExpr rightOp) {
 		SootClass interfaceType = Scene.v().getSootClass("test.core.selfrunning.AllocatedObject");
+		if(!interfaceType.isInterface())
+			return false;
 		RefType allocatedType = rightOp.getBaseType();
 		return Scene.v().getActiveHierarchy().getImplementersOf(interfaceType).contains(allocatedType.getSootClass());
 	}

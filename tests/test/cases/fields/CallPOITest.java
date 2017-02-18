@@ -7,10 +7,10 @@ import test.core.selfrunning.AllocatedObject;
 
 public class CallPOITest extends AbstractBoomerangTest {
 	private class A{
-		//TODO Test fails if we remove "= null" here.
-		B b = null;
+		B b = new B();
 	}
 	private class B{
+		//TODO Test fails if we remove "= null" here.
 		C c;
 	}
 	private class C implements AllocatedObject{
@@ -40,6 +40,15 @@ public class CallPOITest extends AbstractBoomerangTest {
 		queryFor(alias);
 	}
 
+	@Test
+	public void indirectAllocationSiteViaParameterAliased(){
+		A a = new A();
+		C alloc = new C();
+		A b = a;
+		allocation(a,alloc);
+		C alias = b.b.c;
+		queryFor(alias);
+	}
 	private void allocation(A a, C d) {
 		B intermediate = a.b;
 		intermediate.c = d;

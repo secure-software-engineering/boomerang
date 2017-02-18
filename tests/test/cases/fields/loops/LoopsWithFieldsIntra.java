@@ -45,13 +45,46 @@ public class LoopsWithFieldsIntra extends AbstractBoomerangTest{
 		Node t;
 		if(staticallyUnknown()){
 			t = x.left.right;
-			
 		}else{
 			t = x.right.left;
 		}
 		Node h = t;
 		queryFor(h);
 	}
+
+	@Test
+	public void oneFieldSimpleLoop() {
+		Node x = new Node();
+		while(staticallyUnknown()){
+			x.left = x;
+		}
+		Node h = x.left;
+		queryFor(h);
+	}
+
+	@Test
+	public void twoFieldSimpleLoop() {
+		Node x = new Node();
+		while(staticallyUnknown()){
+			x.left.right = x;
+		}
+		Node h = x.left.right;
+		queryFor(h);
+	}
+	@Test
+	public void twoFieldSimpleLoopWithBranched() {
+		Node x = new Node();
+		while(staticallyUnknown()){
+			if(staticallyUnknown()){
+				x.left.right = x;
+			}else{
+				x.right.left = null;	
+			}
+		}
+		Node h = x.left.right;
+		queryFor(h);
+	}
+	
 	@Test
 	public void threeFields() {
 		TreeNode x = new TreeNode();

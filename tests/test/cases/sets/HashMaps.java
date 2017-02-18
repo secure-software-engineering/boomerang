@@ -1,5 +1,6 @@
 package test.cases.sets;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 import org.junit.Test;
@@ -10,13 +11,12 @@ import test.core.selfrunning.AllocatedObject;
 public class HashMaps extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieve(){
-		HashSet<Object> set = new HashSet<>();
+		HashMap<Object,Object> set = new HashMap<>();
 		AllocatedObject alias = new AllocatedObject(){};
 		AllocatedObject alias3 = new AllocatedObject(){};
-		set.add(alias);
-		set.add(alias3);
+		set.put(alias,alias3);
 		Object alias2 = null;
-		for(Object o : set)
+		for(Object o : set.values())
 			alias2 = o;
 		Object ir = alias2;
 		Object query2 = ir;
