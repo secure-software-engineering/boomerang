@@ -6,20 +6,10 @@ import boomerang.debug.IBoomerangDebugger;
 import boomerang.debug.NullBoomerangDebugger;
 
 public class BoomerangOptions {
-  private boolean trackType = true;
   private boolean trackStaticField = true;
   private boolean trackStatementsInFields = false;
   private long timeBudget = TimeUnit.SECONDS.toMillis(100);
   private IBoomerangDebugger debugger = new NullBoomerangDebugger();
-
-  /**
-   * Enables/Disables tracking of types in the access graph. This also includes the types within
-   * the fields of the access graph.
-   * @param enabled
-   */
-  public void setTrackType(boolean enabled) {
-    this.trackType = enabled;
-  }
 
   /**
    * Set the time budget in milliseconds each query is allowed to consume.
@@ -61,10 +51,6 @@ public class BoomerangOptions {
 
   public long getTimeBudget() {
     return timeBudget;
-  }
-
-  public boolean getTrackType() {
-    return trackType;
   }
 
   public boolean getTrackStaticFields() {

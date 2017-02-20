@@ -110,7 +110,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 			System.err.println("WARNING: Using JSON output slows down performance");
 		this.debugger.setContext(this);
 		this.budgetInMilliSeconds = options.getTimeBudget();
-		WrappedSootField.TRACK_TYPE = options.getTrackType();
 		WrappedSootField.TRACK_STMT = options.getTrackStatementsInFields();
 		this.trackStaticFields = options.getTrackStaticFields();
 
