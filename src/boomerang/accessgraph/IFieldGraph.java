@@ -3,7 +3,7 @@ package boomerang.accessgraph;
 import java.util.Collection;
 import java.util.Set;
 
-interface IFieldGraph {
+public interface IFieldGraph {
 	Set<IFieldGraph> popFirstField();
 	Set<IFieldGraph> popLastField();
 	Collection<WrappedSootField> getEntryNode();
@@ -14,4 +14,5 @@ interface IFieldGraph {
 	Collection<WrappedSootField> getExitNode();
 	boolean shouldOverApproximate();
 	IFieldGraph overapproximation();
+	IFieldGraph noType();
 }

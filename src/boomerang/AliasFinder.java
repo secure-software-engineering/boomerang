@@ -3,13 +3,13 @@ package boomerang;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.base.Stopwatch;
 import com.sun.istack.internal.Nullable;
 
 import boomerang.accessgraph.AccessGraph;
+import boomerang.accessgraph.SetBasedFieldGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.backward.BackwardProblem;
 import boomerang.backward.BackwardSolver;
@@ -84,8 +84,8 @@ public class AliasFinder {
 
 	public AliasFinder(IInfoflowCFG cfg, BackwardsInfoflowCFG bwcfg, BoomerangOptions options) {
 		this.context = new BoomerangContext(cfg, bwcfg, options);
-    if (DEBUG)
-      context.debugger = new BoomerangDebugger();
+		if (DEBUG)
+			context.debugger = new BoomerangDebugger();
 	}
 	/**
 	 * Constructs an AliasFinder with the provided context. The context carries
@@ -96,8 +96,8 @@ public class AliasFinder {
 	 */
 	public AliasFinder(BoomerangContext context) {
 		this.context = context;
-    if (DEBUG)
-      context.debugger = new BoomerangDebugger();
+		if (DEBUG)
+			context.debugger = new BoomerangDebugger();
 	}
 
 	/**
@@ -240,7 +240,7 @@ public class AliasFinder {
 	}
 
 	public AliasResults findAliasAtStmt(AccessGraph ap, Unit stmt, IContextRequester req) {
-		
+
 		AliasResults res = null;
 		Query q = new Query(ap, stmt, context.icfg.getMethodOf(stmt));
 		try {
@@ -290,8 +290,8 @@ public class AliasFinder {
 		AccessGraph askFor = new AccessGraph(a.getBase(), a.getBaseType());
 		if (!context.isValidQuery(askFor, stmt))
 			return Collections.emptySet();
-		Collection<AccessGraph> prevAliases = internalFindAliasAtStmt(new Query(askFor, stmt, context.icfg.getMethodOf(stmt)),
-				requester).mayAliasSet();
+		Collection<AccessGraph> prevAliases = internalFindAliasAtStmt(
+				new Query(askFor, stmt, context.icfg.getMethodOf(stmt)), requester).mayAliasSet();
 		if (a.getFieldCount() < 1) {
 			return prevAliases;
 		}
@@ -303,7 +303,7 @@ public class AliasFinder {
 		Collection<AccessGraph> changeSet = prevAliases;
 		for (int i = 0; i < nodes.length; i++) {
 			Set<AccessGraph> withFieldsSet = AliasResults.appendField(changeSet, nodes[i], context);
-      if (i != nodes.length) {
+			if (i != nodes.length) {
 				WrappedSootField[] subFields = new WrappedSootField[i + 1];
 				System.arraycopy(nodes, 0, subFields, 0, i + 1);
 				AccessGraph original = new AccessGraph(a.getBase(), a.getBaseType(), subFields);
@@ -345,11 +345,11 @@ public class AliasFinder {
 				throw new BoomerangTimeoutException();
 			}
 			PointOfIndirection first = context.getSubQuery().removeFirst();
-			if(!context.isProcessedPOI(first)){
+			 if(!context.isProcessedPOI(first)){
 				processPOI(first, backwardsolver);
-				context.addProcessedPOI(first);
-			}
-			
+			 context.addProcessedPOI(first);
+			 }
+
 		}
 		backwardsolver.cleanup();
 		AliasResults res = new AliasResults();
@@ -415,20 +415,22 @@ public class AliasFinder {
 				throw new BoomerangTimeoutException();
 			}
 			boolean accessesField = false;
-			for(WrappedSootField wrappedField : a.getFirstField()){
-				accessesField = accessesField || context.icfg.accessesField(context.icfg.getMethodOf(stmt), wrappedField.getField());
+			for (WrappedSootField wrappedField : a.getFirstField()) {
+				accessesField = accessesField
+						|| context.icfg.accessesField(context.icfg.getMethodOf(stmt), wrappedField.getField());
 			}
 			if (!accessesField)
 				res.add(a);
 			else
-				res.addAll(
-						internalFindAliasAtStmt(new Query(a, stmt, context.icfg.getMethodOf(stmt)), requestor)
-								.mayAliasSet());
+				res.addAll(internalFindAliasAtStmt(new Query(a, stmt, context.icfg.getMethodOf(stmt)), requestor)
+						.mayAliasSet());
 		}
 		return res;
 	}
 
 	public void startQuery() {
 		context.startTime = Stopwatch.createStarted();
+		if (SetBasedFieldGraph.allFields != null)
+			SetBasedFieldGraph.allFields.clear();
 	}
 }

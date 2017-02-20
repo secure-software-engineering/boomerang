@@ -39,15 +39,16 @@ public abstract class AbstractPathEdgeFunctions extends
   }
 
   private void assertAccessPath(AccessGraph a) {
+	  assert a.isStatic() || a.getBase() != null;
     if (!WrappedSootField.TRACK_TYPE)
       return;
-    Type type = a.getBaseType();
-    Local l = a.getBase();
-    if (l == null)
-      return;
-    Type local = l.getType();
-    assert type == null || Scene.v().getOrMakeFastHierarchy().canStoreType(local, type)
-        || Scene.v().getOrMakeFastHierarchy().canStoreType(type, local);
+//    Type type = a.getBaseType();
+//    Local l = a.getBase();
+//    if (l == null)
+//      return;
+//    Type local = l.getType();
+//    assert type == null || Scene.v().getOrMakeFastHierarchy().canStoreType(local, type)
+//        || Scene.v().getOrMakeFastHierarchy().canStoreType(type, local);
   }
 
   @Override

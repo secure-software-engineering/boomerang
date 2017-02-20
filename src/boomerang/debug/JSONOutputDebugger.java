@@ -151,6 +151,8 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	@Override
 	public void finishedQuery(Query q, AliasResults res) {
 		queries.put(new Subquery(context.getSubQuery(),0),res);
+		writeToFile();
+		System.out.println("HERe");
 	}
 
 	@Override
@@ -217,6 +219,9 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 
 	@Override
 	public void onAliasQueryFinished(Query q, AliasResults res) {
+		writeToFile();
+	}
+	private void writeToFile() {
 		try (FileWriter file = new FileWriter(jsonFile)) {
 			List<String> stringList = new LinkedList<String>();
 			List<String> methods = new LinkedList<String>();
@@ -233,8 +238,10 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 			file.write( "var subQueries = [");
 			stringList = new LinkedList<String>();
 			for(Subquery c :subQueries){
+				if(queries.get(c) != null){
 				c.setResults(queries.get(c));
 				stringList.add(c.toJSONString());
+				}
 			}
 			for(SubqueryEdge c :subQueryEdges){
 				stringList.add(c.toJSONString());

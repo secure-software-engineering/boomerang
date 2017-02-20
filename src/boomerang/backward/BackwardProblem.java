@@ -61,8 +61,6 @@ public class BackwardProblem
   @Override
   public void onSolverAddIncoming(SootMethod callee, Pair<Unit, AccessGraph> d3,
       IPathEdge<Unit, AccessGraph> pe) {
-    if (context.getSubQuery() != null)
-      context.getSubQuery().addBackwardIncoming(callee, d3, pe);
   }
 
   @Override

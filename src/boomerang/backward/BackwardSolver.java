@@ -4,6 +4,7 @@ import boomerang.BoomerangContext;
 import boomerang.BoomerangTimeoutException;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.bidi.Incomings;
+import boomerang.bidi.PathEdgeStore;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IFDSSolver;
 import boomerang.ifdssolver.IPathEdge;
@@ -21,9 +22,10 @@ public class BackwardSolver extends
   public BackwardSolver(BackwardProblem tabulationProblem, BoomerangContext context) {
     super(tabulationProblem, context.debugger);
     this.context = context;
+//    this.pathEdges =new PathEdgeStore(context);
     this.pathEdges = context.getBackwardsPathEdges();
     this.summaries = context.BW_SUMMARIES;
-    this.incomings = new Incomings();
+    this.incomings = context.backwardIncomings;
   }
 
 

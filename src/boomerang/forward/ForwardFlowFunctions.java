@@ -186,7 +186,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
           SootField field = fr.getField();
 
 
-          if (source.baseAndFirstFieldMatches(base, field)) {
+          if (source.baseMatches(base) && source.firstFirstFieldMayMatch(field)) {
             // e = a.f && source == a.f.*
             // replace in source
             if (leftOp instanceof Local && !source.baseMatches(leftOp)) {
@@ -201,7 +201,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
           }
         } else if (rightOp instanceof ArrayRef) {
           ArrayRef arrayRef = (ArrayRef) rightOp;
-          if (source.baseAndFirstFieldMatches(arrayRef.getBase(), AliasFinder.ARRAY_FIELD)) {
+          if (source.baseMatches(arrayRef.getBase()) && source.firstFirstFieldMayMatch(AliasFinder.ARRAY_FIELD)) {
 
             Set<AccessGraph> withoutFirstField = source.popFirstField();
             for (AccessGraph a : withoutFirstField) {

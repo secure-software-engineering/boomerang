@@ -14,15 +14,27 @@ import soot.Type;
 public class SetBasedFieldGraph implements IFieldGraph {
 
 	private Set<WrappedSootField> fields;
-	private static Set<WrappedSootField> allFields;
+	public static Set<WrappedSootField> allFields;
+
 	public SetBasedFieldGraph(Set<WrappedSootField> fields) {
-		if(allFields == null)
-			allFields = new HashSet<>();
-		allFields.addAll(fields);
-		this.fields = minimize(allFields);
-//		assert fields.size() > 1;
+		this(fields, true);
 	}
-	
+
+	public SetBasedFieldGraph(Set<WrappedSootField> fields, boolean type) {
+		if (!type) {
+			this.fields = new HashSet<>();
+			for (WrappedSootField f : fields) {
+				this.fields.add(new WrappedSootField(f.getField(), null, null));
+			}
+		} else {
+			if (allFields == null)
+				allFields = new HashSet<>();
+			allFields.addAll(fields);
+			this.fields = minimize(allFields);
+		}
+		// assert fields.size() > 1;
+	}
+
 	private Set<WrappedSootField> minimize(Set<WrappedSootField> fields) {
 		Map<SootField, Type> fieldsWithTypes = new HashMap<>();
 		for (WrappedSootField f : fields) {
@@ -43,7 +55,7 @@ public class SetBasedFieldGraph implements IFieldGraph {
 	}
 
 	private Type superType(Type a, Type b) {
-		if(a.equals(b))
+		if (a.equals(b))
 			return a;
 		if (Scene.v().getOrMakeFastHierarchy().canStoreType(a, b)) {
 			return b;
@@ -51,7 +63,7 @@ public class SetBasedFieldGraph implements IFieldGraph {
 			return a;
 		}
 		return a;
-//		throw new RuntimeException("Type mismatch?" + a +" and " + b);
+		// throw new RuntimeException("Type mismatch?" + a +" and " + b);
 	}
 	@Override
 	public Set<IFieldGraph> popFirstField() {
@@ -79,7 +91,7 @@ public class SetBasedFieldGraph implements IFieldGraph {
 	@Override
 	public IFieldGraph appendFields(WrappedSootField[] toAppend) {
 		Set<WrappedSootField> overapprox = new HashSet<>(fields);
-		for(WrappedSootField f: toAppend)
+		for (WrappedSootField f : toAppend)
 			overapprox.add(f);
 		return new SetBasedFieldGraph(overapprox);
 	}
@@ -109,11 +121,12 @@ public class SetBasedFieldGraph implements IFieldGraph {
 	@Override
 	public IFieldGraph overapproximation() {
 		return this;
-//		throw new RuntimeException("Cannot overapproximate the approxmiation anymore");
+		// throw new RuntimeException("Cannot overapproximate the approxmiation
+		// anymore");
 	}
-	
-	public String toString(){
-		return " **"+ fields.toString() + "**";
+
+	public String toString() {
+		return " **" + fields.toString() + "**";
 	}
 	@Override
 	public int hashCode() {
@@ -137,6 +150,11 @@ public class SetBasedFieldGraph implements IFieldGraph {
 		} else if (fields.size() != other.fields.size() || !fields.equals(other.fields))
 			return false;
 		return true;
+	}
+
+	@Override
+	public IFieldGraph noType() {
+		return new SetBasedFieldGraph(fields,false);
 	}
 
 }

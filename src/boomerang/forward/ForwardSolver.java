@@ -28,7 +28,7 @@ public class ForwardSolver extends
     this.pathEdges = context.getForwardPathEdges();
     this.summaries = context.FW_SUMMARIES;
     this.context = context;
-    this.incomings = new Incomings();
+    this.incomings = context.forwardIncomings;
   }
 
 
@@ -47,7 +47,6 @@ public class ForwardSolver extends
       final IPathEdge<Unit, AccessGraph> bwedge) {
     for (Unit succStmt : icfg.getSuccsOf(stmt)) {
       PathEdge<Unit, AccessGraph> pathEdge = new PathEdge<Unit, AccessGraph>(stmt, d1, succStmt, d2);
-      edgeFunctions.addToFwBwEdge(pathEdge.getStartNode(), bwedge);
       propagate(pathEdge, PropagationType.Normal);
     }
 
@@ -64,11 +63,9 @@ public class ForwardSolver extends
    * @param pathEdge The forward path edge to be scheduled in the worklist.
    * @param bwedge The backward path edge along which the forward propagation will be done.
    */
-  public void onMeet(final IPathEdge<Unit, AccessGraph> pathEdge,
-      final IPathEdge<Unit, AccessGraph> bwedge) {
-    edgeFunctions.addToFwBwEdge(pathEdge.getStartNode(), bwedge);
-    pathEdges.register(pathEdge);
-    scheduleEdgeProcessing(pathEdge);
+  public void onMeet(final IPathEdge<Unit, AccessGraph> pathEdge) {
+//    pathEdges.register(pathEdge);
+    processExit(pathEdge);
     type = "meet@" + pathEdge;
     awaitExecution();
   }

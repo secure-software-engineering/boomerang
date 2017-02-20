@@ -17,7 +17,7 @@ import com.google.common.collect.Multimap;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.ifdssolver.IPathEdge;
 
-class PerStatementPathEdges {
+class PerStatementAndFactPathEdges {
   private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> forwardPathEdges = HashMultimap
       .create();
   private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> reversePathEdges = HashMultimap

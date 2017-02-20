@@ -47,7 +47,7 @@ public class Incomings implements IIncomings<Unit, SootMethod, AccessGraph> {
 
 	@Override
 	public void clear() {		
-		methodToInc.clear();
-		methodToInc = null;
+//		methodToInc.clear();
+//		methodToInc = null;
 	}
 }

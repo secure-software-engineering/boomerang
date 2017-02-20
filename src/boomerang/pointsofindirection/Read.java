@@ -1,17 +1,14 @@
 package boomerang.pointsofindirection;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Set;
 
 import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
+import boomerang.accessgraph.IFieldGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.backward.BackwardSolver;
 import boomerang.cache.AliasResults;
-import boomerang.context.Context;
-import boomerang.context.IContextRequester;
 import boomerang.ifdssolver.IFDSSolver.PropagationType;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
@@ -30,6 +27,7 @@ public class Read implements BackwardBackwardHandler {
   private SootField ifrField;
   private Unit curr;
   private IInfoflowCFG icfg;
+private IFieldGraph sourceFieldGraph;
 
   public Read(IPathEdge<Unit, AccessGraph> edge, Local base, SootField field, Unit succ,
       AccessGraph source) {
@@ -39,6 +37,7 @@ public class Read implements BackwardBackwardHandler {
     this.ifrBase = base;
     this.succ = succ;
     this.source = source;
+    this.sourceFieldGraph = source.getFieldGraph();
   }
 
   @Override
@@ -78,7 +77,7 @@ public class Read implements BackwardBackwardHandler {
     final int prime = 31;
     int result = 1;
     result = prime * result + ((curr == null) ? 0 : curr.hashCode());
-    result = prime * result + ((source == null) ? 0 : source.hashCode());
+    result = prime * result + ((sourceFieldGraph == null) ? 0 : sourceFieldGraph.hashCode());
     result = prime * result + ((succ == null) ? 0 : succ.hashCode());
     return result;
   }
@@ -97,10 +96,10 @@ public class Read implements BackwardBackwardHandler {
         return false;
     } else if (!curr.equals(other.curr))
       return false;
-    if (source == null) {
-      if (other.source != null)
+    if (sourceFieldGraph == null) {
+      if (other.sourceFieldGraph != null)
         return false;
-    } else if (!source.equals(other.source))
+    } else if (!sourceFieldGraph.equals(other.sourceFieldGraph))
       return false;
     if (succ == null) {
       if (other.succ != null)
@@ -117,6 +116,6 @@ public class Read implements BackwardBackwardHandler {
 
   @Override
   public Unit getStmt() {
-    return edge.getTarget();
+    return curr;
   }
 }

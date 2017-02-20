@@ -2,54 +2,32 @@ package boomerang.forward;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
-import boomerang.backward.BackwardFlowFunctions;
-import boomerang.cache.Query;
-import boomerang.cache.ResultCache.NoContextRequesterQueryCache;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
 import boomerang.pointsofindirection.Return;
-import boomerang.pointsofindirection.Unbalanced;
-import heros.FlowFunction;
 import heros.solver.Pair;
 import soot.SootMethod;
 import soot.Unit;
 import soot.jimple.AssignStmt;
-import soot.jimple.NopStmt;
 
 class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
-
-	private Set<Pair<SootMethod, AccessGraph>> unrestrictedMethodsAndDp = new HashSet<>();
-	private HashSet<IPathEdge<Unit, AccessGraph>> matchingAllocationIncomingEdge;
-	private Multimap<Pair<Unit, AccessGraph>, IPathEdge<Unit, AccessGraph>> fwToBwEdge = HashMultimap.create();
 
 	ForwardPathEdgeFunctions(FlowFunctions<Unit, AccessGraph, SootMethod> flowFunctions, BoomerangContext c) {
 		super(flowFunctions, c, Direction.FORWARD);
 	}
 
-	private boolean isActivePath(Unit target, Pair<Unit, AccessGraph> fwedge) {
+	private boolean isActivePath(Unit target) {
 		SootMethod m = context.icfg.getMethodOf(target);
-		if (unrestrictedMethodsAndDp
-				.contains(new Pair<SootMethod, AccessGraph>(m, fwedge.getO2()))) {
-			return true;
-		}
-		return context.getSubQuery().visitedBackwardMethod(m);
+		return context.visitedBackwardMethod(m);
 	}
 
-	void addToFwBwEdge(Pair<Unit, AccessGraph> node, IPathEdge<Unit, AccessGraph> edge) {
-		this.fwToBwEdge.put(node, edge);
-	}
 
 	/**
 	 * Whenever the forward analysis reaches the end of a path (that is, the
@@ -91,7 +69,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	public Collection<? extends IPathEdge<Unit, AccessGraph>> callFunction(IPathEdge<Unit, AccessGraph> prevEdge,
 			SootMethod callee, Unit calleeSp) {
 		Unit callSite = prevEdge.getTarget();
-		if (!isActivePath(callSite, prevEdge.getStartNode())) {
+		if (!isActivePath(callSite)) {
 			// The call is done in the appropriate call2Return furnction
 			// onPathendReached(parentedEdge);
 			return Collections.emptySet();
@@ -123,80 +101,16 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		if (!currEdge.factAtSource().hasAllocationSite()) {
 			return Collections.emptySet();
 		}
-		// Retrieve the backward edges associated with the forward edge
-		Collection<IPathEdge<Unit, AccessGraph>> collection = fwToBwEdge.get(currEdge.getStartNode());
-		if (collection == null)
-			return Collections.emptySet();
-
-		matchingAllocationIncomingEdge = new HashSet<>();
-		for (IPathEdge<Unit, AccessGraph> currBwEdge : collection) {
-			if (context.getSubQuery() == null)
-				return Collections.emptySet();
-			// Retrieve the incoming set for the backward edges, to know, where
-			// the forward analysis can
-			// return to in an unbalanced manner (forward analysis follows
-			// backward analysis, hence it
-			// also should do so at returns.)
-			Collection<IPathEdge<Unit, AccessGraph>> incomingMap = context.getSubQuery()
-					.backwardIncoming(currBwEdge.getStartNode(), callee);
-
-			if (incomingMap == null)
-				return Collections.emptySet();
-			// check that parentsolver has callSite in incomingMap, Otherwise we
-			// do not need to return;
-			for (IPathEdge<Unit, AccessGraph> inc : incomingMap) {
-				Unit callSiteOfAlloc = inc.getTarget();
-				if (callSiteOfAlloc.equals(callSite)) {
-					matchingAllocationIncomingEdge.add(inc);
-				}
-			}
-		}
-		// There was no incoming in the ASolver for the appropriate callSite.
-		if (matchingAllocationIncomingEdge == null || matchingAllocationIncomingEdge.isEmpty()) {
-			return Collections.emptySet();
-		}
+		context.addAsVisitedBackwardMethod(callee);
 		return super.unbalancedReturnFunction(currEdge, callSite, returnSite, callee);
 
 	}
-
-	private Collection<IPathEdge<Unit, AccessGraph>> onUnbalancedReturnWithNoSourceStmt(
-			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge, Unit callSite,
-			Unit returnSite) {
-		AccessGraph d1 = succEdge.factAtSource();
-
-		Unit exitStmt = prevEdge.getTarget();
-
-		SootMethod callee = context.bwicfg.getMethodOf(exitStmt);
-		BackwardFlowFunctions allocAnalysisFlowFunctions = new BackwardFlowFunctions(context);
-		assert context.bwicfg.isCallStmt(callSite);
-		NoContextRequesterQueryCache cache = context.querycache.contextlessQueryCache();
-		List<Unit> succsOf = context.bwicfg.getSuccsOf(callSite);
-		for (Unit allocRetSiteC : succsOf) {
-			FlowFunction<AccessGraph> returnFlowFunction = allocAnalysisFlowFunctions.getReturnFlowFunction(null,
-					callSite, callee, allocRetSiteC);
-			Set<AccessGraph> computeTargets = returnFlowFunction.computeTargets(d1);
-
-			assert computeTargets.size() <= 1;
-			for (AccessGraph ap : computeTargets) {
-				for (IPathEdge<Unit, AccessGraph> p : this.matchingAllocationIncomingEdge) {
-					PathEdge<Unit, AccessGraph> toContinue = new PathEdge<Unit, AccessGraph>(p.getStart(),
-							p.factAtSource(), allocRetSiteC, ap);
-					Query query = new Query(ap, callSite);
-					if (!cache.isProcessing(query)) {
-						context.getSubQuery().add(new Unbalanced(toContinue));
-					}
-				}
-			}
-		}
-
-		return Collections.emptySet();
-	};
 
 	@Override
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> normalFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
 		assert prevEdge.getStartNode().equals(succEdge.getStartNode());
-		if (!isActivePath(succEdge.getTarget(), succEdge.getStartNode())) {
+		if (!isActivePath(succEdge.getTarget())) {
 			onPathendReached(succEdge);
 			return Collections.emptySet();
 		}
@@ -207,8 +121,9 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> call2ReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
 		assert prevEdge.getStartNode().equals(succEdge.getStartNode());
-		if (!isActivePath(succEdge.getTarget(), succEdge.getStartNode())) {
+		if (!isActivePath(succEdge.getTarget())) {
 			onPathendReached(succEdge);
+			
 			return Collections.emptySet();
 		}
 		sanitize(Collections.singleton(succEdge));
@@ -225,19 +140,15 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		AccessGraph d1 = prevEdge.factAtSource();
 		Unit exitStmt = prevEdge.getTarget();
 		SootMethod callee = context.bwicfg.getMethodOf(exitStmt);
+		HashSet<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
 		if (d1.hasAllocationSite()) {
-			HashSet<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
 			out.add(succEdge);
 			if (succEdge.factAtTarget().getFieldCount() > 0) {
 				out.addAll(createAliasEdges(callSite, succEdge, callee));
 			}
-			wrappWithMatchingIncoming(out);
 			return out;
 		}
 		assert d1.isStatic() || context.isParameterOrThisValue(exitStmt, d1.getBase());
-		Collection<IPathEdge<Unit, AccessGraph>> out = onUnbalancedReturnWithNoSourceStmt(prevEdge, succEdge, callSite,
-				returnSite);
-		wrappWithMatchingIncoming(out);
 		sanitize(out);
 		return out;
 	}
@@ -263,7 +174,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 						succEdge.getTarget(), alias);
 				out.add(succAliasEdge);
 				context.debugger.indirectFlowEdgeAtReturn(d, callSite, alias, succEdge.getTarget());
-				context.addToDirectlyProcessed(new Return(callSite, alias));
+//				context.addToDirectlyProcessed(new Return(callSite, alias));
 			}
 		}
 
@@ -284,18 +195,13 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		return false;
 	}
 
-	private void wrappWithMatchingIncoming(Collection<IPathEdge<Unit, AccessGraph>> succEdges) {
-		for (IPathEdge<Unit, AccessGraph> succEdge : succEdges) {
-			this.fwToBwEdge.putAll(succEdge.getStartNode(), this.matchingAllocationIncomingEdge);
-		}
-	}
 
 	@Override
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> balancedReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge,
 			IPathEdge<Unit, AccessGraph> incEdge) {
 
-		if (!isActivePath(succEdge.getTarget(), succEdge.getStartNode())) {
+		if (!isActivePath(succEdge.getTarget())) {
 			onPathendReached(succEdge);
 			return Collections.emptySet();
 		}
@@ -332,7 +238,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 						succEdge.getTarget(), alias);
 				out.add(succAliasEdge);
 				context.debugger.indirectFlowEdgeAtReturn(d2, callSite, alias, succEdge.getTarget());
-				context.addToDirectlyProcessed(new Return(callSite, alias));
+//				context.addToDirectlyProcessed(new Return(callSite, alias));
 			}
 		}
 
@@ -354,32 +260,10 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> callFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> initialSelfLoopEdge,
 			SootMethod callee) {
-		this.unrestrictedMethodsAndDp
-				.add(new Pair<SootMethod, AccessGraph>(callee, initialSelfLoopEdge.factAtSource()));
 
 		sanitize(Collections.singleton(initialSelfLoopEdge));
+		context.addAsVisitedBackwardMethod(callee);
 		return Collections.singleton(initialSelfLoopEdge);
-	}
-
-	@Override
-	public Collection<IPathEdge<Unit, AccessGraph>> getEdgesOnHold(IPathEdge<Unit, AccessGraph> initialSelfLoop,
-			IPathEdge<Unit, AccessGraph> edgeEnteringCallee) {
-		SootMethod callee = context.icfg.getMethodOf(initialSelfLoop.getStart());
-		this.unrestrictedMethodsAndDp.add(new Pair<SootMethod, AccessGraph>(callee, initialSelfLoop.factAtSource()));
-		return getPausedEdges(initialSelfLoop.getStartNode());
-	}
-
-	public void cleanup() {
-		super.cleanup();
-		if (this.matchingAllocationIncomingEdge != null) {
-			this.matchingAllocationIncomingEdge.clear();
-			this.matchingAllocationIncomingEdge = null;
-		}
-		this.unrestrictedMethodsAndDp.clear();
-		this.unrestrictedMethodsAndDp = null;
-		this.fwToBwEdge.clear();
-		this.fwToBwEdge = null;
-
 	}
 
 	@Override

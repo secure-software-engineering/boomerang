@@ -14,16 +14,15 @@ import com.google.common.collect.Multimap;
 
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
+import boomerang.bidi.Incomings;
 import boomerang.bidi.PathEdgeStore;
-import boomerang.bidi.PathEdgeStore.Direction;
 import boomerang.bidi.Summaries;
-import boomerang.cache.Query;
 import boomerang.cache.ResultCache;
 import boomerang.debug.IBoomerangDebugger;
 import boomerang.debug.JSONOutputDebugger;
 import boomerang.forward.ForwardFlowFunctions;
-import boomerang.forward.ForwardSolver;
 import boomerang.ifdssolver.IFDSSolver;
+import boomerang.ifdssolver.IIncomings;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.ISummaries;
 import boomerang.mock.DefaultBackwardDataFlowMocker;
@@ -31,7 +30,6 @@ import boomerang.mock.DefaultForwardDataFlowMocker;
 import boomerang.mock.DefaultNativeCallHandler;
 import boomerang.mock.MockedDataFlow;
 import boomerang.mock.NativeCallHandler;
-import boomerang.pointsofindirection.Call;
 import boomerang.pointsofindirection.ForwardPointOfIndirection;
 import boomerang.pointsofindirection.PointOfIndirection;
 import heros.solver.Pair;
@@ -97,7 +95,7 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 	private PathEdgeStore BW_PATHEDGES;
 	private PathEdgeStore FW_PATHEDGES;
 	private Set<PointOfIndirection> processedPOIs = new HashSet<>();
-
+	private Set<SootMethod> backwardVisitedMethods = new HashSet<>();
 	public BoomerangContext(IInfoflowCFG icfg, IInfoflowCFG bwicfg) {
 		this(icfg, bwicfg, new BoomerangOptions());
 	}
@@ -238,6 +236,8 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		return true;
 	};
 	private Set<PointOfIndirection> directProcessedPOI = new HashSet<>();
+	public IIncomings<Unit, SootMethod, AccessGraph> forwardIncomings = new Incomings();
+	public IIncomings<Unit, SootMethod, AccessGraph> backwardIncomings = new Incomings();
 	/**
 	 * Forward POI ({@link ForwardPointOfIndirection}) are special and treated
 	 * specially, as they are directly processed and NOT put to a worklist. But
@@ -296,7 +296,15 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		return processedPOIs.contains(poi);
 	}
 
-	public void addProcessedPOI(PointOfIndirection poi) {
-		processedPOIs.add(poi);
+	public boolean addProcessedPOI(PointOfIndirection poi) {
+		return processedPOIs.add(poi);
+	}
+
+	public boolean visitedBackwardMethod(SootMethod m) {
+		return backwardVisitedMethods.contains(m);
+	}
+
+	public void addAsVisitedBackwardMethod(SootMethod m) {
+		backwardVisitedMethods.add(m);
 	}
 }

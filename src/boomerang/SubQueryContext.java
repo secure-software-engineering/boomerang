@@ -1,8 +1,10 @@
 package boomerang;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import boomerang.accessgraph.AccessGraph;
@@ -26,7 +28,6 @@ import soot.Unit;
 public class SubQueryContext {
 	private Query query;
 	private Incomings incomings = new Incomings();
-	private Set<SootMethod> backwardVisitedMethods = new HashSet<>();
 	private PriorityQueue<PointOfIndirection> worklist = new PriorityQueue<PointOfIndirection>(300, new Comparator<PointOfIndirection>() {
 
 		@Override
@@ -68,9 +69,11 @@ public class SubQueryContext {
 		}
 	});
 	private ForwardSolver forwardSolver;
+	private BoomerangContext context;
 
 	SubQueryContext(Query q, BoomerangContext c, SubQueryContext parent) {
 		this.query = q;
+		this.context = c;
 	}
 
 	/**
@@ -149,6 +152,7 @@ public class SubQueryContext {
 	 * @return Returns <code>true</code> if the POI has been added, otherwise
 	 *         <code>false</code>.
 	 */
+	HashSet<PointOfIndirection> instantiated = new HashSet<>();
 	public boolean add(PointOfIndirection poi) {
 		return worklist.add(poi);
 	}
@@ -167,6 +171,7 @@ public class SubQueryContext {
 
 	PointOfIndirection removeFirst() {PointOfIndirection el = worklist.poll();
 
+		instantiated.add(el);
 		return el;
 	}
 
@@ -203,11 +208,4 @@ public class SubQueryContext {
 		return true;
 	}
 
-	public boolean visitedBackwardMethod(SootMethod m) {
-		return backwardVisitedMethods.contains(m);
-	}
-
-	public void addAsVisitedBackwardMethod(SootMethod m) {
-		backwardVisitedMethods.add(m);
-	}
 }

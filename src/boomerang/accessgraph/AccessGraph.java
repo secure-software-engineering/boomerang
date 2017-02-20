@@ -312,8 +312,8 @@ public class AccessGraph {
 	    Type child = newFirst.getDeclaringClass().getType();
 	    Type parent = this.getBaseType();
 	    boolean res =
-	        Scene.v().getFastHierarchy().canStoreType(child, parent)
-	            || Scene.v().getFastHierarchy().canStoreType(parent, child);
+	        Scene.v().getOrMakeFastHierarchy().canStoreType(child, parent)
+	            || Scene.v().getOrMakeFastHierarchy().canStoreType(parent, child);
 	    return res;
 	  }
 	
@@ -519,15 +519,15 @@ public class AccessGraph {
 
 	@Override
 	public int hashCode() {
-		if (hashCode != 0)
-			return hashCode;
+//		if (hashCode != 0)
+//			return hashCode;
 
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((fieldGraph == null) ? 0 : fieldGraph.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		if(WrappedSootField.TRACK_TYPE)
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
+			result = prime * result + ((type == null) ? 0 : type.hashCode());
 		result = prime * result + ((allocationSite == null) ? 0 : allocationSite.hashCode());
 		this.hashCode = result;
 
@@ -548,11 +548,11 @@ public class AccessGraph {
 		} else if (!value.equals(other.value))
 			return false;
 		if(WrappedSootField.TRACK_TYPE){
-		if (type == null) {
-			if (other.type != null)
+			if (type == null) {
+				if (other.type != null)
+					return false;
+			} else if (!type.equals(other.type))
 				return false;
-		} else if (!type.equals(other.type))
-			return false;
 		}
 		if (allocationSite == null) {
 			if (other.allocationSite != null)
@@ -576,5 +576,9 @@ public class AccessGraph {
 	public AccessGraph overApproximate() {
 		// TODO Auto-generated method stub
 		return new AccessGraph(value, type, fieldGraph == null ? null : fieldGraph.overapproximation(), allocationSite);
+	}
+
+	public AccessGraph noType() {
+		return new AccessGraph(value,null,fieldGraph == null ? null : fieldGraph.noType(), allocationSite);
 	}
 }
