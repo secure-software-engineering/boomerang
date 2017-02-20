@@ -32,12 +32,15 @@ public class Call implements BackwardBackwardHandler, PointOfIndirection {
 	public void execute(BackwardSolver backwardsSolver, BoomerangContext context) {
 		context.debugger.onProcessCallPOI(this);
 		Collection<WrappedSootField> lastFields = factInsideCall.getLastField();
+		if(lastFields == null)
+			return;
 		for (WrappedSootField lastField : lastFields) {
 			Set<AccessGraph> prefixes = factInsideCall.popLastField();
 			for (AccessGraph prefix : prefixes) {
 				AliasFinder dart = new AliasFinder(context);
-				Collection<AccessGraph> aliases = dart.findAliasAtStmtRec(prefix, returnSiteOfCall);
+				Collection<AccessGraph> aliases = dart.findAliasAtStmt(prefix, returnSiteOfCall).mayAliasSet();
 				aliases = AliasResults.appendField(aliases, lastField, context);
+				
 				for (AccessGraph ap : aliases) {
 
 					if (ap.equals(factInsideCall)) {
@@ -46,10 +49,11 @@ public class Call implements BackwardBackwardHandler, PointOfIndirection {
 					IPathEdge<Unit, AccessGraph> newEdge = new PathEdge<Unit,AccessGraph>(null, factInsideCall, returnSiteOfCall, ap);
 					context.debugger.indirectFlowEdgeAtCall(factInsideCall, returnSiteOfCall, ap, returnSiteOfCall);
 					backwardsSolver.propagate(newEdge, PropagationType.Normal);
+//					context.addProcessedPOI(new Call(ap,returnSiteOfCall,method));
 				}
-				backwardsSolver.awaitExecution();
 			}
 		}
+		backwardsSolver.awaitExecution();
 	}
 
 	@Override

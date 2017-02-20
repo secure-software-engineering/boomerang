@@ -27,7 +27,6 @@ public class Write implements ForwardPointOfIndirection {
   private Local base;
   private Local rightLocal;
   private IPathEdge<Unit, AccessGraph> edge;
-  private IInfoflowCFG icfg;
 
   public Write(Unit curr, Local leftLocal, SootField field, Local rightLocal, AccessGraph origin,
       IPathEdge<Unit, AccessGraph> edge) {
@@ -51,7 +50,6 @@ public class Write implements ForwardPointOfIndirection {
 	  context.debugger.onProcessWritePOI(this);
     if (context.isOutOfBudget())
       throw new BoomerangTimeoutException();
-    this.icfg = context.icfg;
     AliasFinder dart = new AliasFinder(context);
     AliasResults res = dart.findAliasAtStmt(new AccessGraph(base, base.getType()), curr);
     Set<AccessGraph> set =

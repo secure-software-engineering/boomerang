@@ -273,35 +273,6 @@ public class AliasFinder {
 	 * The analysis will first search for aliases of a, then append .f to all of
 	 * theses. Another search for all aliases of theses constructed access graph
 	 * is performed. Then, .g is appended to all of theses. This is done until a
-	 * fixed point is reached. The computation is performed with
-	 * {@link NoContextRequester}.
-	 * 
-	 * @param a
-	 *            Access graph to perform the operation on.
-	 * @param stmt
-	 *            The statement at which the query is triggered.
-	 * @return Set of access graph which alias to a at stmt.
-	 */
-	public Collection<AccessGraph> findAliasAtStmtRec(AccessGraph a, Unit stmt) {
-		Query query = new Query(a, stmt, context.icfg.getMethodOf(stmt));
-		RecursiveQueryCache cache = context.querycache.recursiveQueryCache();
-		if (cache.isDone(query))
-			return cache.getResults(query);
-		if (cache.isProcessing(query))
-			return Collections.emptySet();
-		cache.start(query);
-		Collection<AccessGraph> originalOut = findAliasAtStmtRec(a, stmt, new NoContextRequester());
-		cache.setResults(query, originalOut);
-		for (AccessGraph symmetricAlias : originalOut)
-			cache.setResults(new Query(symmetricAlias, stmt, context.icfg.getMethodOf(stmt)), originalOut);
-		return originalOut;
-	}
-
-	/**
-	 * Computes aliases of access graphs recursive. That is, if supplying a.f.g
-	 * The analysis will first search for aliases of a, then append .f to all of
-	 * theses. Another search for all aliases of theses constructed access graph
-	 * is performed. Then, .g is appended to all of theses. This is done until a
 	 * fixed point is reached.
 	 * 
 	 * @param a

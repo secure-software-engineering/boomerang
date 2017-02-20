@@ -10,6 +10,7 @@ import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.cache.AliasResults;
 import soot.Unit;
+import toools.collections.Collections;
 
 public class Return implements ForwardPointOfIndirection {
 
@@ -33,12 +34,14 @@ public class Return implements ForwardPointOfIndirection {
     assert context.bwicfg.isCallStmt(callSite);
     Collection<WrappedSootField> lastFields = outcomings.getLastField();
     Set<AccessGraph> newAliases = new HashSet<>();
+	  if(outcomings.isStatic())
+		  return newAliases;
     Set<AccessGraph> withOutLastFields = outcomings.popLastField();
     for(WrappedSootField lastField :lastFields){
 	    
 	    for (AccessGraph withOutLastField : withOutLastFields) {
 	      AliasFinder dart = new AliasFinder(context);
-	      Collection<AccessGraph> irRes = dart.findAliasAtStmtRec(withOutLastField, callSite);
+	      Collection<AccessGraph> irRes = dart.findAliasAtStmt(withOutLastField, callSite).mayAliasSet();
 	      newAliases.addAll(AliasResults.appendField(irRes, lastField, context));
 	    }
     }
