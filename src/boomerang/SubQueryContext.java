@@ -27,7 +27,46 @@ public class SubQueryContext {
 	private Query query;
 	private Incomings incomings = new Incomings();
 	private Set<SootMethod> backwardVisitedMethods = new HashSet<>();
-	private LinkedList<PointOfIndirection> worklist = new LinkedList<>();
+	private PriorityQueue<PointOfIndirection> worklist = new PriorityQueue<PointOfIndirection>(300, new Comparator<PointOfIndirection>() {
+
+		@Override
+		public int compare(PointOfIndirection o1, PointOfIndirection o2) {
+			if(o1 instanceof Alloc)
+				return -1;
+
+			if(o1 instanceof Call && o2 instanceof Alloc)
+				return 1;
+
+			if(o1 instanceof Call && o2 instanceof BackwardParameterTurnHandler)
+				return -1;
+			if(o1 instanceof Call && o2 instanceof Meeting)
+				return 1;
+
+			if(o1 instanceof Call && o2 instanceof Read)
+				return -1;
+
+			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Alloc)
+				return 1;
+
+			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Call)
+				return 1;
+			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Meeting)
+				return 1;
+			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Read)
+				return -1;
+
+			if(o1 instanceof Meeting && o2 instanceof Alloc)
+				return 1;
+			if(o1 instanceof Meeting && o2 instanceof Call)
+				return -1;
+			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Read)
+				return -1;
+			if(o1 instanceof Read)
+				return 1;
+
+			return 0;
+		}
+	});
 	private ForwardSolver forwardSolver;
 
 	SubQueryContext(Query q, BoomerangContext c, SubQueryContext parent) {
@@ -126,68 +165,9 @@ public class SubQueryContext {
 		return worklist.isEmpty();
 	}
 
-	PointOfIndirection removeFirst() {
-		PointOfIndirection out = null;
+	PointOfIndirection removeFirst() {PointOfIndirection el = worklist.poll();
 
-		for (PointOfIndirection p : worklist) {
-			if (p instanceof Alloc) {
-				out = p;
-				break;
-			}
-		}
-		if (out == null) {
-			for (PointOfIndirection p : worklist) {
-				if (p instanceof Call) {
-					out = p;
-					break;
-				}
-			}
-		}
-		if (out == null) {
-			for (PointOfIndirection p : worklist) {
-				if (p instanceof BackwardParameterTurnHandler) {
-					out = p;
-					break;
-				}
-			}
-		}
-
-		if (out == null) {
-			for (PointOfIndirection p : worklist) {
-				if (p instanceof Meeting) {
-					out = p;
-					break;
-				}
-			}
-		}
-
-		if (out == null) {
-			for (PointOfIndirection p : worklist) {
-				if (p instanceof Return) {
-					out = p;
-					break;
-				}
-			}
-		}
-		if (out == null) {
-			for (PointOfIndirection p : worklist) {
-				if (p instanceof Read) {
-					out = p;
-					break;
-				}
-			}
-		}
-
-		if (out == null) {
-			for (PointOfIndirection p : worklist) {
-				if (p instanceof Unbalanced) {
-					out = p;
-					break;
-				}
-			}
-		}
-		worklist.remove(out);
-		return out;
+		return el;
 	}
 
 	public ForwardSolver getCurrentForwardSolver() {
