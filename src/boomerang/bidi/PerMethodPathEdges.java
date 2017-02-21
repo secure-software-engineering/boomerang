@@ -11,6 +11,7 @@ import com.google.common.collect.Multimap;
 
 import boomerang.accessgraph.AccessGraph;
 import boomerang.ifdssolver.IPathEdge;
+import boomerang.pointsofindirection.AliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
 import heros.solver.Pair;
 import soot.SootMethod;
@@ -38,9 +39,9 @@ class PerMethodPathEdges {
     PerStatementPathEdges pathedges = getOrCreate(target);
     pathedges.register(pe);
   }
-  public void registerPointOfIndirectionAt(Unit stmt, PointOfIndirection poi) {
+  public void registerPointOfIndirectionAt(Unit stmt, PointOfIndirection poi, AliasCallback callback) {
 	    PerStatementPathEdges pathedges = getOrCreate(stmt);
-	    pathedges.registerPointOfIndirectionAt(poi);
+	    pathedges.registerPointOfIndirectionAt(poi,callback);
 	}
 
   public int size() {

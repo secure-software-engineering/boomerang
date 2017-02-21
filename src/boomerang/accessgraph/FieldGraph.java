@@ -178,7 +178,7 @@ public class FieldGraph implements IFieldGraph {
 	public IFieldGraph noType() {
 		LinkedList<WrappedSootField> list = new LinkedList<>();
 		for(WrappedSootField f: fields){
-			list.add(new WrappedSootField(f.getField(), null, null));
+			list.add(new WrappedSootField(f.getField(), f.getField().getType(), null));
 		}
 		return new FieldGraph(list);
 	}

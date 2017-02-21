@@ -13,8 +13,10 @@ import boomerang.forward.AbstractFlowFunctions;
 import boomerang.forward.ForwardFlowFunctions;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
+import boomerang.ifdssolver.PathEdge;
 import boomerang.pointsofindirection.Alloc;
-import boomerang.pointsofindirection.Read;
+import boomerang.pointsofindirection.BackwardAliasCallback;
+import boomerang.pointsofindirection.PointOfIndirection;
 import heros.FlowFunction;
 import soot.Local;
 import soot.SootField;
@@ -53,7 +55,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 		final Local thisLocal = method.isStatic() ? null : method.getActiveBody().getThisLocal();
 		return new FlowFunction<AccessGraph>() {
 			@Override
-			public Set<AccessGraph> computeTargets(AccessGraph source) {
+			public Set<AccessGraph> computeTargets(final AccessGraph source) {
 				assert thisLocal == null || !source.baseMatches(thisLocal)
 						|| ForwardFlowFunctions.hasCompatibleTypesForCall(source, method.getDeclaringClass());
 				assert !context.isIgnoredMethod(context.icfg.getMethodOf(curr));
@@ -94,11 +96,21 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 						}
 					} else if (rightOp instanceof InstanceFieldRef) {
 						// d = e.f, source = d.c ;
-						InstanceFieldRef fr = (InstanceFieldRef) rightOp;
+						final InstanceFieldRef fr = (InstanceFieldRef) rightOp;
 
 						if (fr.getBase() instanceof Local) {
 							Local base = (Local) fr.getBase();
-							context.registerPOI(curr,new Read(edge, base, fr.getField(), succ, source,context));
+							PointOfIndirection poi = new PointOfIndirection(new AccessGraph(base,base.getType()),curr,context);//, AliasFinder.ARRAY_FIELD, succ, source,context);
+							context.registerPOI(curr,poi,new BackwardAliasCallback(context) {
+								@Override
+								public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+									WrappedSootField[] fields = new WrappedSootField[]{new WrappedSootField(fr.getField(), source.getBaseType(),curr)};
+									alias = alias.appendFields(fields);
+									if(source.getFieldGraph() != null)
+										alias = alias.appendGraph(source.getFieldGraph());
+									return new PathEdge<Unit, AccessGraph>(null, edge.factAtSource(), succ, alias);
+								}
+							});
 
 							Set<AccessGraph> out = new HashSet<>();
 							WrappedSootField newFirstField = new WrappedSootField(fr.getField(), source.getBaseType(),
@@ -113,8 +125,17 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 					} else if (rightOp instanceof ArrayRef) {
 						ArrayRef arrayRef = (ArrayRef) rightOp;
 						Local base = (Local) arrayRef.getBase();
-						Read handler = new Read(edge, base, AliasFinder.ARRAY_FIELD, succ, source,context);
-						context.registerPOI(curr,handler);
+						PointOfIndirection poi = new PointOfIndirection(new AccessGraph(base,base.getType()),curr,context);//, AliasFinder.ARRAY_FIELD, succ, source,context);
+						context.registerPOI(curr,poi,new BackwardAliasCallback(context) {
+							@Override
+							public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+								WrappedSootField[] fields = new WrappedSootField[]{new WrappedSootField(AliasFinder.ARRAY_FIELD, source.getBaseType(),curr)};
+								alias = alias.appendFields(fields);
+								if(source.getFieldGraph() != null)
+									alias = alias.appendGraph(source.getFieldGraph());
+								return new PathEdge<Unit, AccessGraph>(null, edge.factAtSource(), succ, alias);
+							}
+						});
 
 						Set<AccessGraph> out = new HashSet<>();
 						AccessGraph prependField = source.prependField(
@@ -311,9 +332,8 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 				if(source.getFieldCount() == 1 && !source.isStatic()){
 					if(callee.isConstructor() && !context.icfg.getMethodOf(callSite).isConstructor()){
 						if(source.getBase().equals(thisLocal)){
-							System.out.println(edge);
-							System.out.println(source);
-							context.registerPOI(edge.getTarget(),new Alloc(source, edge.getTarget(), callee,context));
+							Alloc alloc = new Alloc(source, edge.getTarget(), callee,context);
+							alloc.execute();
 						}
 					}
 						
@@ -458,7 +478,8 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 		}
 			
 			context.debugger.onAllocationSiteReached(as, pe);
-			context.registerPOI(pe.getTarget(),new Alloc(factAtTarget,pe.getTarget(),context.icfg.getMethodOf(as),context));
+			Alloc alloc = new Alloc(factAtTarget,pe.getTarget(),context.icfg.getMethodOf(as),context);
+			alloc.execute();
 	}
 
 	private boolean queryTypeMatch(Type allocationSiteType) {

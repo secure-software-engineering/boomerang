@@ -5,12 +5,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JSONArray;
@@ -24,14 +21,6 @@ import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IPathEdge;
-import boomerang.pointsofindirection.Alloc;
-import boomerang.pointsofindirection.BackwardParameterTurnHandler;
-import boomerang.pointsofindirection.Call;
-import boomerang.pointsofindirection.Meeting;
-import boomerang.pointsofindirection.Read;
-import boomerang.pointsofindirection.Return;
-import boomerang.pointsofindirection.Unbalanced;
-import boomerang.pointsofindirection.Write;
 import heros.solver.Pair;
 import soot.SootMethod;
 import soot.Unit;
@@ -49,6 +38,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	private Map<SootMethod,ExplodedSuperGraph> methodToCfg = new HashMap<>();
 	private Map<Object,Integer> objectToInteger = new HashMap<>();
 	private IInfoflowCFG icfg;
+	private Integer mainMethodId;
 	public JSONOutputDebugger(File jsonFile) {
 		this.jsonFile = jsonFile;
 	}
@@ -150,6 +140,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 
 	@Override
 	public void startQuery(Query q) {
+		mainMethodId = id(icfg.getMethodOf(q.getStmt()));
 	}
 
 	@Override
@@ -162,42 +153,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 
 	@Override
 	public void onAllocationSiteReached(AssignStmt as, IPathEdge<Unit, AccessGraph> pe) {
-	}
-
-	@Override
-	public void onProcessingMeetingPOI(Meeting meeting) {
-	}
-
-	@Override
-	public void onProcessingFieldReadPOI(Read read) {
-	}
-
-	@Override
-	public void continuePausedEdges(Collection<IPathEdge<Unit, AccessGraph>> pauseEdges) {
-	}
-
-	@Override
-	public void onProcessAllocationPOI(Alloc alloc) {
-	}
-
-	@Override
-	public void onProcessCallPOI(Call call) {
-	}
-
-	@Override
-	public void onProcessReturnPOI(Return return1) {
-	}
-
-	@Override
-	public void onProcessWritePOI(Write write) {
-	}
-
-	@Override
-	public void onProcessUnbalancedReturnPOI(Unbalanced unbalanced) {
-	}
-
-	@Override
-	public void onProcessingParamPOI(BackwardParameterTurnHandler backwardParameterTurnHandler) {
 	}
 
 	@Override
@@ -218,6 +173,8 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 			file.write( "var methodList = [");
 			file.write(Joiner.on(",\n").join(methods));
 			file.write( "];\n");
+
+			file.write( "var activeMethod = \""+mainMethodId+"\";");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

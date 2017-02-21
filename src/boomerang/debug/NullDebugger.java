@@ -9,14 +9,6 @@ import boomerang.cache.Query;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IFDSDebugger;
 import boomerang.ifdssolver.IPathEdge;
-import boomerang.pointsofindirection.Alloc;
-import boomerang.pointsofindirection.BackwardParameterTurnHandler;
-import boomerang.pointsofindirection.Call;
-import boomerang.pointsofindirection.Meeting;
-import boomerang.pointsofindirection.Read;
-import boomerang.pointsofindirection.Return;
-import boomerang.pointsofindirection.Unbalanced;
-import boomerang.pointsofindirection.Write;
 import heros.solver.Pair;
 import soot.SootMethod;
 import soot.Unit;
@@ -70,45 +62,6 @@ public class NullDebugger implements
 
 	@Override
 	public void onAllocationSiteReached(AssignStmt as, IPathEdge<Unit, AccessGraph> pe) {
-	}
-
-	@Override
-	public void onProcessingMeetingPOI(Meeting meeting) {
-	}
-
-	@Override
-	public void onProcessingFieldReadPOI(Read read) {
-	}
-
-	@Override
-	public void continuePausedEdges(Collection<IPathEdge<Unit, AccessGraph>> pauseEdges) {
-	}
-
-	@Override
-	public void onProcessAllocationPOI(Alloc alloc) {
-	}
-
-	@Override
-	public void onProcessCallPOI(Call call) {
-
-	}
-
-	@Override
-	public void onProcessReturnPOI(Return return1) {
-
-	}
-
-	@Override
-	public void onProcessWritePOI(Write write) {
-
-	}
-
-	@Override
-	public void onProcessUnbalancedReturnPOI(Unbalanced unbalanced) {
-	}
-
-	@Override
-	public void onProcessingParamPOI(BackwardParameterTurnHandler backwardParameterTurnHandler) {
 	}
 
 	@Override

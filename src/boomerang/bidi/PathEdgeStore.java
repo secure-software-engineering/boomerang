@@ -18,6 +18,7 @@ import boomerang.BoomerangTimeoutException;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.IPathEdges;
+import boomerang.pointsofindirection.AliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
 import heros.solver.Pair;
 import soot.SootMethod;
@@ -48,10 +49,10 @@ public class PathEdgeStore implements
     perMethodPathEdges.register(pe);
   }
 
-  public void registerPointOfIndirectionAt(Unit stmt, PointOfIndirection poi){
+  public void registerPointOfIndirectionAt(Unit stmt, PointOfIndirection poi,AliasCallback cb){
 	    SootMethod m = context.icfg.getMethodOf(stmt);
 	    PerMethodPathEdges perMethodPathEdges = getOrCreatePerStmt(m);
-	    perMethodPathEdges.registerPointOfIndirectionAt(stmt,poi);
+	    perMethodPathEdges.registerPointOfIndirectionAt(stmt,poi,cb);
   }
   
   private void precheck() {

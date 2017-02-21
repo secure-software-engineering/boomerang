@@ -579,6 +579,6 @@ public class AccessGraph {
 	}
 
 	public AccessGraph noType() {
-		return new AccessGraph(value,null,fieldGraph == null ? null : fieldGraph.noType(), allocationSite);
+		return new AccessGraph(value,value != null ? value.getType() : null,fieldGraph == null ? null : fieldGraph.noType(), allocationSite);
 	}
 }

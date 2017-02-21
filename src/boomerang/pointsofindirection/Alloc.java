@@ -8,7 +8,7 @@ import soot.Unit;
 import soot.jimple.AssignStmt;
 import soot.jimple.NewExpr;
 
-public class Alloc implements BackwardForwardHandler {
+public class Alloc {
 
 	private Unit target;
 	private SootMethod method;
@@ -27,9 +27,7 @@ public class Alloc implements BackwardForwardHandler {
 		this.context = context;
 	}
 
-	@Override
-	public void registered() {
-		context.debugger.onProcessAllocationPOI(this);
+	public void execute() {
 		AccessGraph alloc = factAtTarget.deriveWithAllocationSite(target);
 		// if(!alloc.firstFirstFieldMayMatch(AliasFinder.ARRAY_FIELD))
 		// alloc = alloc.dropTail();
@@ -96,9 +94,4 @@ public class Alloc implements BackwardForwardHandler {
 			return false;
 		return true;
 	}
-
-	@Override
-	public void newEdgeRegistered(IPathEdge<Unit, AccessGraph> pe) {
-	}
-
 }

@@ -26,6 +26,7 @@ import boomerang.mock.DefaultForwardDataFlowMocker;
 import boomerang.mock.DefaultNativeCallHandler;
 import boomerang.mock.MockedDataFlow;
 import boomerang.mock.NativeCallHandler;
+import boomerang.pointsofindirection.AliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
 import soot.Local;
 import soot.SootMethod;
@@ -251,7 +252,7 @@ public class BoomerangContext {
 		return (PathEdgeStore) getForwardSolver().getPathEdges();
 	}
 
-	public void registerPOI(Unit stmt, PointOfIndirection poi) {
-		getForwardPathEdges().registerPointOfIndirectionAt(stmt, poi);
+	public void registerPOI(Unit stmt, PointOfIndirection poi, AliasCallback cb) {
+		getForwardPathEdges().registerPointOfIndirectionAt(stmt, poi,cb);
 	}
 }

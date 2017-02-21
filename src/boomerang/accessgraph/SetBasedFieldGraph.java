@@ -24,7 +24,7 @@ public class SetBasedFieldGraph implements IFieldGraph {
 		if (!type) {
 			this.fields = new HashSet<>();
 			for (WrappedSootField f : fields) {
-				this.fields.add(new WrappedSootField(f.getField(), null, null));
+				this.fields.add(new WrappedSootField(f.getField(), f.getField().getType(), null));
 			}
 		} else {
 			if (allFields == null)

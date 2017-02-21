@@ -7,12 +7,13 @@ import java.util.Set;
 
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
+import boomerang.accessgraph.WrappedSootField;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
-import boomerang.pointsofindirection.Return;
-import heros.solver.Pair;
+import boomerang.pointsofindirection.ForwardAliasCallback;
+import boomerang.pointsofindirection.PointOfIndirection;
 import soot.SootMethod;
 import soot.Unit;
 import soot.jimple.AssignStmt;
@@ -118,7 +119,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 
 	@Override
 	protected Collection<IPathEdge<Unit, AccessGraph>> unbalancedReturnFunctionExtendor(
-			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge, Unit callSite,
+			IPathEdge<Unit, AccessGraph> prevEdge, final IPathEdge<Unit, AccessGraph> succEdge, Unit callSite,
 			Unit returnSite) {
 		context.sanityCheckEdge(succEdge);
 		context.sanityCheckEdge(prevEdge);
@@ -129,41 +130,27 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		if (d1.hasAllocationSite()) {
 			out.add(succEdge);
 			if (succEdge.factAtTarget().getFieldCount() > 0) {
-				Return resHandler = new Return(callSite,d1,succEdge.getTarget(),succEdge.factAtTarget(),context);
-				context.registerPOI(callSite, resHandler);
+				AccessGraph d2 = succEdge.factAtTarget();
+				if(d2.getLastField() != null){
+					for(final WrappedSootField field : d2.getLastField()){
+						Set<AccessGraph> withoutLast = d2.popLastField();
+						if(withoutLast == null)
+							continue;
+						for(AccessGraph subgraph : withoutLast){
+							context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(context) {
+								
+								@Override
+								public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+									alias = alias.appendFields(new WrappedSootField[]{field});
+									return new PathEdge<Unit,AccessGraph>(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), alias);
+								}
+							});
+						}
+					}
+				}
 			}
-			return out;
 		}
 		assert d1.isStatic() || context.isParameterOrThisValue(exitStmt, d1.getBase());
-		sanitize(out);
-		return out;
-	}
-
-	private Collection<? extends IPathEdge<Unit, AccessGraph>> createAliasEdges(Unit callSite,
-			IPathEdge<Unit, AccessGraph> succEdge, SootMethod callee) {
-		PathEdge<Unit, AccessGraph> succAliasEdge;
-		Set<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
-		out.add(succEdge);
-		AccessGraph d = succEdge.factAtTarget();
-		if (isOverridenByCall(d, callSite))
-			return out;
-//		Return resHandler = new Return(callSite, d);
-//
-//		if (resHandler.isValid(context) && context.addToDirectlyProcessed(resHandler)) {
-//			Set<AccessGraph> aliases = resHandler.process(context);
-//			for (AccessGraph alias : aliases) {
-//				if (isOverridenByCall(alias, callSite)) {
-//					continue;
-//				}
-//				context.validateInput(alias, callSite);
-//				succAliasEdge = new PathEdge<Unit, AccessGraph>(succEdge.getStart(), succEdge.factAtSource(),
-//						succEdge.getTarget(), alias);
-//				out.add(succAliasEdge);
-//				context.debugger.indirectFlowEdgeAtReturn(d, callSite, alias, succEdge.getTarget());
-////				context.addToDirectlyProcessed(new Return(callSite, alias));
-//			}
-//		}
-
 		sanitize(out);
 		return out;
 	}
@@ -197,38 +184,36 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		assert incEdge.getStartNode().equals(succEdge.getStartNode());
 		if (succEdge.factAtTarget().getFieldCount() > 0 && !isIdentityEdge(prevEdge)) {
 			sanitize(succEdge);
-			return createAliasEdgesOnBalanced(incEdge.getTarget(), succEdge);
+			createAliasEdgesOnBalanced(incEdge.getTarget(), succEdge);
 		}
 		return Collections.singleton(succEdge);
 	}
 
-	private Collection<? extends IPathEdge<Unit, AccessGraph>> createAliasEdgesOnBalanced(Unit callSite,
-			IPathEdge<Unit, AccessGraph> succEdge) {
+	private void createAliasEdgesOnBalanced(Unit callSite,
+			final IPathEdge<Unit, AccessGraph> succEdge) {
 
 		Set<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
 		out.add(succEdge);
 		AccessGraph d2 = succEdge.factAtTarget();
 		if (isOverridenByCall(d2, callSite))
-			return out;
-		Return resHandler = new Return(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), d2,context);
-		context.registerPOI(callSite, resHandler);
-//		if (resHandler.isValid(context) && context.addToDirectlyProcessed(resHandler)) {
-//			Set<AccessGraph> aliases = resHandler.process(context);
-//			for (AccessGraph alias : aliases) {
-//				if (isOverridenByCall(alias, callSite))
-//					continue;
-//
-//				context.validateInput(alias, callSite);
-//				succAliasEdge = new PathEdge<Unit, AccessGraph>(succEdge.getStart(), succEdge.factAtSource(),
-//						succEdge.getTarget(), alias);
-//				out.add(succAliasEdge);
-//				context.debugger.indirectFlowEdgeAtReturn(d2, callSite, alias, succEdge.getTarget());
-////				context.addToDirectlyProcessed(new Return(callSite, alias));
-//			}
-//		}
-
-		sanitize(out);
-		return out;
+			return;
+		if(d2.getLastField() == null)
+			return;
+		for(final WrappedSootField field : d2.getLastField()){
+			Set<AccessGraph> withoutLast = d2.popLastField();
+			if(withoutLast == null)
+				continue;
+			for(AccessGraph subgraph : withoutLast){
+				context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(context) {
+					
+					@Override
+					public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+						alias = alias.appendFields(new WrappedSootField[]{field});
+						return new PathEdge<Unit,AccessGraph>(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), alias);
+					}
+				});
+			}
+		}
 	}
 
 	private boolean isIdentityEdge(IPathEdge<Unit, AccessGraph> edge) {

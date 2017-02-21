@@ -11,22 +11,16 @@ import com.sun.istack.internal.Nullable;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.SetBasedFieldGraph;
 import boomerang.accessgraph.WrappedSootField;
-import boomerang.backward.BackwardProblem;
 import boomerang.backward.BackwardSolver;
 import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
 import boomerang.cache.ResultCache.NoContextRequesterQueryCache;
-import boomerang.cache.ResultCache.RecursiveQueryCache;
 import boomerang.cache.ResultCache.WithContextRequesterQueryCache;
 import boomerang.context.ContextResolver;
 import boomerang.context.IContextRequester;
 import boomerang.context.NoContextRequester;
 import boomerang.debug.BoomerangDebugger;
-import boomerang.forward.ForwardProblem;
 import boomerang.forward.ForwardSolver;
-import boomerang.pointsofindirection.BackwardBackwardHandler;
-import boomerang.pointsofindirection.BackwardForwardHandler;
-import boomerang.pointsofindirection.PointOfIndirection;
 import grph.Grph;
 import heros.solver.Pair;
 import soot.Local;
@@ -47,8 +41,6 @@ public class AliasFinder {
 			return "ARRAY";
 		}
 	};
-
-	private static final boolean DEBUG = false;
 
 	/**
 	 * General context object, this object is globally accessible for the entire
@@ -84,8 +76,6 @@ public class AliasFinder {
 
 	public AliasFinder(IInfoflowCFG cfg, BackwardsInfoflowCFG bwcfg, BoomerangOptions options) {
 		this.context = new BoomerangContext(cfg, bwcfg, options);
-		if (DEBUG)
-			context.debugger = new BoomerangDebugger();
 	}
 	/**
 	 * Constructs an AliasFinder with the provided context. The context carries
@@ -96,8 +86,6 @@ public class AliasFinder {
 	 */
 	public AliasFinder(BoomerangContext context) {
 		this.context = context;
-		if (DEBUG)
-			context.debugger = new BoomerangDebugger();
 	}
 
 	/**
