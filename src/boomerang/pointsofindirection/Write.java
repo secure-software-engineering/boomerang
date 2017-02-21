@@ -26,7 +26,6 @@ public class Write implements ForwardPointOfIndirection {
 	private AccessGraph source;
 	private SootField field;
 	private Local base;
-	private Local rightLocal;
 	private IPathEdge<Unit, AccessGraph> edge;
 	private Set<Pair<Unit, AccessGraph>> origins = new HashSet<>();
 	private BoomerangContext context;
@@ -37,7 +36,6 @@ public class Write implements ForwardPointOfIndirection {
 		this.succ = succ;
 		this.field = field;
 		this.base = leftLocal;
-		this.rightLocal = rightLocal;
 		this.source = origin;
 		this.curr = curr;
 		this.edge = edge;

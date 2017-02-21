@@ -2,23 +2,15 @@ package boomerang.backward;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.google.common.collect.Multimap;
 
 import boomerang.BoomerangContext;
-import boomerang.SubQueryContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.forward.AbstractPathEdgeFunctions;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
-import boomerang.pointsofindirection.BackwardParameterTurnHandler;
 import boomerang.pointsofindirection.Call;
-import boomerang.pointsofindirection.Meeting;
-import heros.solver.Pair;
 import soot.SootMethod;
 import soot.Unit;
 
@@ -42,27 +34,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 //		return Collections.emptySet();
 //	};
 
-	/**
-	 * Checks whether the query has been started inside this method, to maybe do
-	 * the turn around at the method start point
-	 * 
-	 * @param prevEdge
-	 *            The current backward edge being processed.
-	 * @param callee
-	 *            The callee
-	 * @return
-	 */
-	private boolean isQueryStartedInsideMethod(IPathEdge<Unit, AccessGraph> prevEdge, SootMethod callee) {
-		AccessGraph d1 = prevEdge.factAtSource();
-		SubQueryContext query = context.getSubQuery();
-		if (query == null) {
-			return false;
-		}
-		if (context.bwicfg.getMethodOf(query.getStmt()).equals(callee) && d1.equals(query.getAccessPath())) {
-			return true;
-		}
-		return false;
-	}
 
 	/**
 	 * Checks if the edges reaches a start point of a method, if the target fact
@@ -76,8 +47,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		boolean doTurnaround = context.isParameterOrThisValue(edge.getTarget(), edge.factAtTarget().getBase())
 				|| (edge.factAtTarget().isStatic() && context.trackStaticFields());
 		if (doTurnaround) {
-			if (context.getSubQuery() == null)
-				return;
 //			context.getSubQuery().add(new BackwardParameterTurnHandler(edge, callee));
 		}
 	}

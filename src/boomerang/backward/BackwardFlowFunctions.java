@@ -457,10 +457,8 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 			factAtTarget= factAtTarget.dropTail();
 		}
 			
-		if (context.getSubQuery() != null) {
 			context.debugger.onAllocationSiteReached(as, pe);
 			context.registerPOI(pe.getTarget(),new Alloc(factAtTarget,pe.getTarget(),context.icfg.getMethodOf(as),context));
-		}
 	}
 
 	private boolean queryTypeMatch(Type allocationSiteType) {

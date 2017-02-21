@@ -2,21 +2,17 @@ package boomerang;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.lang.model.type.PrimitiveType;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.backward.BackwardProblem;
 import boomerang.backward.BackwardSolver;
-import boomerang.bidi.Incomings;
 import boomerang.bidi.PathEdgeStore;
 import boomerang.cache.ResultCache;
 import boomerang.debug.IBoomerangDebugger;
@@ -24,29 +20,22 @@ import boomerang.debug.JSONOutputDebugger;
 import boomerang.forward.ForwardFlowFunctions;
 import boomerang.forward.ForwardProblem;
 import boomerang.forward.ForwardSolver;
-import boomerang.ifdssolver.IIncomings;
 import boomerang.ifdssolver.IPathEdge;
-import boomerang.ifdssolver.IPathEdges;
-import boomerang.ifdssolver.PathEdge;
 import boomerang.mock.DefaultBackwardDataFlowMocker;
 import boomerang.mock.DefaultForwardDataFlowMocker;
 import boomerang.mock.DefaultNativeCallHandler;
 import boomerang.mock.MockedDataFlow;
 import boomerang.mock.NativeCallHandler;
-import boomerang.pointsofindirection.ForwardPointOfIndirection;
 import boomerang.pointsofindirection.PointOfIndirection;
-import boomerang.pointsofindirection.Read;
-import heros.solver.Pair;
 import soot.Local;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
 import soot.jimple.ReturnStmt;
 import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
-import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 
 @SuppressWarnings("serial")
-public class BoomerangContext extends LinkedList<SubQueryContext> {
+public class BoomerangContext {
 
 	/**
 	 * The inter-procedural control flow graph to be used.
@@ -83,8 +72,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 	Stopwatch startTime;
 	private long budgetInMilliSeconds = 10000;
 	private boolean trackStaticFields;
-	@SuppressWarnings("rawtypes")
-	private Multimap<Pair<Unit, AccessGraph>, Unit> meetingPointToPath = HashMultimap.create();
 
 	private Set<PointOfIndirection> processedPOIs = new HashSet<>();
 	private Set<SootMethod> backwardVisitedMethods = new HashSet<>();
@@ -105,16 +92,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		this.trackStaticFields = options.getTrackStaticFields();
 
 		querycache = new ResultCache();
-	}
-
-	public SubQueryContext getSubQuery() {
-		return peek();
-	}
-
-	public String toString() {
-		SubQueryContext subQuery = getSubQuery();
-		return "[Pos: " + size() + " "
-				+ (subQuery != null ? getSubQuery() + " € " + icfg.getMethodOf(getSubQuery().getStmt()) : "") + "]";
 	}
 
 	public boolean isValidAccessPath(AccessGraph a) {
@@ -150,15 +127,7 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 	}
 
 	public void forceTerminate() {
-		while (!isEmpty()) {
-			SubQueryContext peek = this.pollFirst();
-			if (peek != null) {
-				peek.cleanup();
-			}
-		}
 		cleanQueryCache();
-		meetingPointToPath.clear();
-		meetingPointToPath = HashMultimap.create();
 	}
 
 	public boolean isIgnoredMethod(SootMethod m) {
@@ -209,8 +178,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		}
 		return true;
 	};
-
-	private Set<PointOfIndirection> directProcessedPOI = new HashSet<>();
 
 	private ForwardSolver forwardSolver;
 

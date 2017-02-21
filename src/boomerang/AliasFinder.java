@@ -226,13 +226,11 @@ public class AliasFinder {
 		}
 		cache.start(q);
 
-		context.push(new SubQueryContext(q, context, (context.getSubQuery() != null ? context.getSubQuery() : null)));
 		context.debugger.startQuery(q);
-		AliasResults res = fixpointIteration();
+		AliasResults res = fixpointIteration(stmt,ap);
 		cache.setResults(q, res);
 		sanityCheck(cache.getResults(q), stmt);
 		context.debugger.finishedQuery(q, res);
-		context.pop();
 		if (!(req instanceof NoContextRequester))
 			res = resolveContext(stmt, req, res, q);
 
@@ -246,12 +244,9 @@ public class AliasFinder {
 		try {
 			res = internalFindAliasAtStmt(q, req);
 		} catch (BoomerangTimeoutException e) {
-			if (context.size() == 0)
-				context.debugger.onAliasTimeout(q);
 			throw new BoomerangTimeoutException();
 		} finally {
-			if (context.size() == 0)
-				context.debugger.onAliasQueryFinished(q, res);
+			context.debugger.onAliasQueryFinished(q, res);
 		}
 		return res;
 	}
@@ -331,14 +326,10 @@ public class AliasFinder {
 		return out;
 	}
 
-	private AliasResults fixpointIteration() {
-		if (context.getSubQuery() == null)
-			return new AliasResults();
-		Unit stmt = context.getSubQuery().getStmt();
-		AccessGraph accessPath = context.getSubQuery().getAccessPath();
+	private AliasResults fixpointIteration(Unit stmt, AccessGraph accessGraph) {
 		BackwardSolver backwardSolver = context.getBackwardSolver();
 		ForwardSolver forwardSolver = context.getForwardSolver();
-		backwardSolver.startPropagation(accessPath, stmt);
+		backwardSolver.startPropagation(accessGraph, stmt);
 		backwardSolver.awaitExecution();
 		while(!backwardSolver.isDone() || !forwardSolver.isDone()){
 			forwardSolver.awaitExecution();
@@ -346,7 +337,7 @@ public class AliasFinder {
 		}
 		
 		AliasResults res = new AliasResults();
-		res.putAll(context.getForwardPathEdges().getResultAtStmtContainingValue(stmt, accessPath));
+		res.putAll(context.getForwardPathEdges().getResultAtStmtContainingValue(stmt, accessGraph));
 
 		AliasResults aliasRes = new AliasResults(res);
 		return aliasRes;

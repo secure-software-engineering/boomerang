@@ -19,7 +19,6 @@ import org.json.simple.JSONObject;
 import com.google.common.base.Joiner;
 
 import boomerang.BoomerangContext;
-import boomerang.SubQueryContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
@@ -50,10 +49,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	private Map<SootMethod,ExplodedSuperGraph> methodToCfg = new HashMap<>();
 	private Map<Object,Integer> objectToInteger = new HashMap<>();
 	private IInfoflowCFG icfg;
-	private List<Subquery> subQueries = new LinkedList<>();
-	private Set<SubqueryEdge> subQueryEdges = new HashSet<>();
-	private Map<Subquery,AliasResults> queries = new HashMap<>();
-	
 	public JSONOutputDebugger(File jsonFile) {
 		this.jsonFile = jsonFile;
 	}
@@ -150,23 +145,11 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 
 	@Override
 	public void finishedQuery(Query q, AliasResults res) {
-		queries.put(new Subquery(context.getSubQuery(),0),res);
 		writeToFile();
-		System.out.println("HERe");
 	}
 
 	@Override
 	public void startQuery(Query q) {
-		int level = context.size();
-		Subquery subquery = new Subquery(context.getSubQuery(),level);
-		if(!subQueries.add(subquery))
-			return;
-		if(context.size() > 1){
-			Subquery parent = new Subquery(context.get(1),level-1);
-			if(!subQueries.contains(parent))
-				throw new AssertionError("Query Hierarchy wrong");
-			subQueryEdges.add(new SubqueryEdge(parent,subquery));
-		}
 	}
 
 	@Override
@@ -234,19 +217,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 			file.write( "];\n");
 			file.write( "var methodList = [");
 			file.write(Joiner.on(",\n").join(methods));
-			file.write( "];\n");
-			file.write( "var subQueries = [");
-			stringList = new LinkedList<String>();
-			for(Subquery c :subQueries){
-				if(queries.get(c) != null){
-				c.setResults(queries.get(c));
-				stringList.add(c.toJSONString());
-				}
-			}
-			for(SubqueryEdge c :subQueryEdges){
-				stringList.add(c.toJSONString());
-			}
-			file.write(Joiner.on(",\n").join(stringList));
 			file.write( "];\n");
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -488,27 +458,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 				additionalData.put("id", "n"+id(node));
 				additionalData.put("stmtId", id(node.u));
 				additionalData.put("factId", id(node.a));
-				for(Subquery q : queries.keySet()){
-					if(node.a.equals(q.sq.getAccessPath()) && node.u.equals(q.sq.getStmt()))
-						classes += " queryNode query"+id(q) +" ";
-				}
-				for(Entry<Subquery, AliasResults> q : queries.entrySet()){
-					if(!node.u.equals(q.getKey().sq.getStmt()))
-						continue;
-					if(node.a.equals(q.getKey().sq.getAccessPath())){
-						classes += " queryNode queryId"+id(q) +" ";
-						additionalData.put("queryId", id(q));
-					}
-					for(AccessGraph g : q.getValue().values()){
-						if(node.a.equals(g)){
-							classes +=  " queryId"+id(q) +" ";
-							additionalData.put("queryId", id(q));
-						}
-					}
-				}
-				nodeObj.put("classes", classes);
-				nodeObj.put("group", "nodes");
-				nodeObj.put("data", additionalData);
 				data.add(nodeObj);
 			}
 			for(ESGEdge edge: edges){
@@ -563,86 +512,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 
 	private String escapeHTML(String s){
 		return StringEscapeUtils.escapeHtml4(s);
-	}
-	private class Subquery extends JSONObject{
-		private SubQueryContext sq;
-
-		Subquery(SubQueryContext sq, int level){
-			this.sq = sq;
-			JSONObject data = new JSONObject();
-			data.put("stmt", escapeHTML(getShortLabel(sq.getStmt())));
-			data.put("method", escapeHTML(sq.getMethod().toString()));
-			data.put("fact", escapeHTML(sq.getAccessPath().toString()));
-			data.put("factId", id(sq.getAccessPath()));
-			data.put("methodId", id(sq.getMethod()));
-			data.put("stmtId", id(sq.getStmt()));
-			data.put("level", level);
-			data.put("label", sq.getAccessPath().toString());
-			data.put("id","sq"+id(this));
-			this.put("data", data);
-			this.put("group", "nodes");
-			this.put("subquery", true);
-		}
-
-
-		public void setResults(AliasResults aliasResults) {
-			JSONObject obj = (JSONObject)this.get("data");
-			JSONObject res = new JSONObject();
-			res.put("plain", escapeHTML(aliasResults.toString()));
-			JSONArray allocSites = new JSONArray();
-			for(Pair<Unit, AccessGraph> key : aliasResults.keySet()){
-				JSONObject alloc = new JSONObject();
-				alloc.put("stmt", escapeHTML(getShortLabel(key.getO1())));
-				alloc.put("stmtId", id(key.getO1()));
-				JSONArray values = new JSONArray();
-				for(AccessGraph a : aliasResults.get(key)){
-					JSONObject o = new JSONObject();
-					o.put("fact", escapeHTML(a.toString()));
-					o.put("factId", id(a));
-					values.add(o);
-				}
-				alloc.put("values", values);
-				allocSites.add(alloc);
-			}
-			res.put("allocSites",allocSites);
-			obj.put("results", res);
-		}
-
-
-		@Override
-		public int hashCode() {
-			int result =  ((sq == null) ? 0 : sq.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (getClass() != obj.getClass())
-				return false;
-			Subquery other = (Subquery) obj;
-			if (sq == null) {
-				if (other.sq != null)
-					return false;
-			} else if (!sq.equals(other.sq))
-				return false;
-			return true;
-		}
-
-		@Override
-		public String toString() {
-			return "wrapped"+sq.toString();
-		}
-			}
-	
-	private class SubqueryEdge extends JSONObject{
-		SubqueryEdge(Subquery start, Subquery target){
-			JSONObject data = new JSONObject();
-			data.put("source","sq"+ id(start));
-			data.put("target","sq"+ id(target));
-			this.put("data", data);
-		}
 	}
 	@Override
 	public void setContext(BoomerangContext boomerangContext) {

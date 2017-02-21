@@ -59,7 +59,7 @@ public class BackwardSolver extends
   }
 
   public String toString() {
-    return "BWSOLVER: " + context.getSubQuery();
+    return "BWSOLVER";
   }
 
 

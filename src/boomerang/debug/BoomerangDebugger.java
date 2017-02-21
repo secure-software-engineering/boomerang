@@ -106,11 +106,7 @@ public class BoomerangDebugger implements IBoomerangDebugger {
   }
 
   private void log(Object s) {
-    String str = "";
-    for(int i = 0; i < context.size() ;i++){
-      str += " ";
-    }
-    System.out.println(str + s.toString());
+    System.out.println(s.toString());
   }
 
   @Override

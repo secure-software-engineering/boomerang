@@ -2,14 +2,12 @@ package boomerang.pointsofindirection;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.google.common.collect.Multimap;
 
 import boomerang.BoomerangContext;
-import boomerang.SubQueryContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.backward.BackwardSolver;
