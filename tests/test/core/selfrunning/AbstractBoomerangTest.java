@@ -60,7 +60,7 @@ public class AbstractBoomerangTest {
 
 	@Before
 	public void performQuery() {
-		WrappedSootField.TRACK_TYPE = true;
+		WrappedSootField.TRACK_TYPE = false;
 		
 		initializeSootWithEntryPoint(name.getMethodName());
 		analyze(name.getMethodName());

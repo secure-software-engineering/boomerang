@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.common.base.Optional;
+
 import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
@@ -228,13 +230,13 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 				new ForwardAliasCallback(context) {
 
 					@Override
-					public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+					public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
 						alias = alias.appendFields(
 								new WrappedSootField[] { new WrappedSootField(field, source.getBaseType(), curr) });
 						if (source != null) {
 							alias = alias.appendGraph(source.getFieldGraph());
 						}
-						return new PathEdge<Unit,AccessGraph>(edge.getStart(),edge.factAtSource(),succ,alias);
+						return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit,AccessGraph>(edge.getStart(),edge.factAtSource(),succ,alias));
 					}
 				});
 	}

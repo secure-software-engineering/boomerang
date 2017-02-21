@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.common.base.Optional;
+
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
@@ -131,7 +133,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			out.add(succEdge);
 			if (succEdge.factAtTarget().getFieldCount() > 0) {
 				AccessGraph d2 = succEdge.factAtTarget();
-				if(d2.getLastField() != null){
+				if(d2.getLastField() != null && !d2.isStatic() && !d2.hasSetBasedFieldGraph()){
 					for(final WrappedSootField field : d2.getLastField()){
 						Set<AccessGraph> withoutLast = d2.popLastField();
 						if(withoutLast == null)
@@ -140,15 +142,16 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 							context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(context) {
 								
 								@Override
-								public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+								public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
 									alias = alias.appendFields(new WrappedSootField[]{field});
-									return new PathEdge<Unit,AccessGraph>(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), alias);
+									return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit,AccessGraph>(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), alias));
 								}
 							});
 						}
 					}
 				}
 			}
+			return out;
 		}
 		assert d1.isStatic() || context.isParameterOrThisValue(exitStmt, d1.getBase());
 		sanitize(out);
@@ -197,7 +200,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		AccessGraph d2 = succEdge.factAtTarget();
 		if (isOverridenByCall(d2, callSite))
 			return;
-		if(d2.getLastField() == null)
+		if(d2.getLastField() == null  || d2.hasSetBasedFieldGraph() || d2.isStatic())
 			return;
 		for(final WrappedSootField field : d2.getLastField()){
 			Set<AccessGraph> withoutLast = d2.popLastField();
@@ -207,9 +210,9 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 				context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(context) {
 					
 					@Override
-					public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+					public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
 						alias = alias.appendFields(new WrappedSootField[]{field});
-						return new PathEdge<Unit,AccessGraph>(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), alias);
+						return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit,AccessGraph>(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), alias));
 					}
 				});
 			}

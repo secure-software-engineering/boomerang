@@ -4,6 +4,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import com.google.common.base.Optional;
+
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
@@ -68,7 +70,7 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 
 		AccessGraph d2 = initialSelfLoop.factAtTarget();
 		final Unit returnSiteOfCall = initialSelfLoop.getTarget();
-		if(d2.getLastField() != null){
+		if(d2.getLastField() != null && !d2.hasSetBasedFieldGraph() && !d2.isStatic()){
 			for(final WrappedSootField field : d2.getLastField()){
 				Set<AccessGraph> withoutLast = d2.popLastField();
 				if(withoutLast == null)
@@ -76,9 +78,10 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 				for(AccessGraph subgraph : withoutLast){
 					context.registerPOI(returnSiteOfCall, new PointOfIndirection(subgraph, returnSiteOfCall, context), new BackwardAliasCallback(context) {
 						@Override
-						public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+						public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
 							alias = alias.appendFields(new WrappedSootField[]{field});
-							return new PathEdge<Unit,AccessGraph>(null,initialSelfLoop.factAtSource(),returnSiteOfCall, alias);
+							PathEdge<Unit, AccessGraph> edge = new PathEdge<Unit,AccessGraph>(null,initialSelfLoop.factAtSource(),returnSiteOfCall, alias);
+							return Optional.<IPathEdge<Unit, AccessGraph>>of(edge);
 						}
 					});
 				}
@@ -92,11 +95,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> balancedReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> calleeEdge, IPathEdge<Unit, AccessGraph> succEdge,
 			IPathEdge<Unit, AccessGraph> incEdge) {
-		SootMethod callee = context.icfg.getMethodOf(calleeEdge.getTarget());
-//		if (isQueryStartedInsideMethod(calleeEdge, callee)) {
-//			System.out.println("BALNACEd");
-//			reachesStartPointOfStartMethod(calleeEdge, callee);
-//		}
 		return Collections.singleton(succEdge);
 	}
 

@@ -26,6 +26,7 @@ class PerStatementPathEdges {
 	private Multimap<Pair<Unit, AccessGraph>, PointOfIndirection> targetToPOI = HashMultimap.create();
 	private Multimap<Pair<Unit, AccessGraph>, PointOfIndirection> originToPOI = HashMultimap.create();
 	private Multimap<PointOfIndirection, AliasCallback> poisToCallback = HashMultimap.create();
+	private Set<PointOfIndirection> pois = new HashSet<>();
 
 	void register(IPathEdge<Unit, AccessGraph> pe) {
 		Pair<Unit,AccessGraph> typeLessBackwardNode = new Pair<Unit,AccessGraph>(pe.getTarget(),pe.factAtTarget().noType());
@@ -44,12 +45,21 @@ class PerStatementPathEdges {
 	public void registerPointOfIndirectionAt(PointOfIndirection poi, AliasCallback callback) {
 		Pair<Unit, AccessGraph> aliasTarget = poi.getTarget();
 		poisToCallback.put(poi, callback);
-		if(targetToPOI.put(aliasTarget,poi)){
-			poi.sendBackward();
+		executeCallback(aliasTarget, poi,callback);
+		if(pois.add(poi)){
+			if(targetToPOI.put(aliasTarget,poi)){
+				poi.sendBackward();
+			}
 		}
-		registerPOIWithTarget(aliasTarget, poi);
 	}
-
+	private void executeCallback(Pair<Unit, AccessGraph> aliasTarget, PointOfIndirection poi, AliasCallback cb) {
+		for(Pair<Unit, AccessGraph> origin : reversePathEdges.get(aliasTarget)){
+			originToPOI.put(origin,poi);
+			for(Pair<Unit, AccessGraph> aliases : forwardPathEdges.get(origin)){
+					cb.newAliasEncountered(aliases.getO2());
+			}
+		}
+	}
 	private void registerPOIWithTarget(Pair<Unit, AccessGraph> aliasTarget, PointOfIndirection poi) {
 		for(Pair<Unit, AccessGraph> origin : reversePathEdges.get(aliasTarget)){
 			originToPOI.put(origin,poi);

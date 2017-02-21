@@ -1,5 +1,7 @@
 package boomerang.pointsofindirection;
 
+import com.google.common.base.Optional;
+
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.ifdssolver.IPathEdge;
@@ -11,7 +13,10 @@ public abstract class ForwardAliasCallback extends AliasCallback{
 		super(context);
 	}
 	public void newAliasEncountered(AccessGraph alias){
-		context.getForwardSolver().inject(createInjectableEdge(alias), PropagationType.Normal);
+		Optional<IPathEdge<Unit, AccessGraph>> edge = createInjectableEdge(alias);
+		if(!edge.isPresent())
+			return;
+		context.getForwardSolver().inject(edge.get(), PropagationType.Normal);
 	}
-	public abstract IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias);
+	public abstract Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias);
 }

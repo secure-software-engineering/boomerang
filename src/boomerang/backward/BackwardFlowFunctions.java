@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.common.base.Optional;
+
 import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
@@ -103,12 +105,15 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 							PointOfIndirection poi = new PointOfIndirection(new AccessGraph(base,base.getType()),curr,context);//, AliasFinder.ARRAY_FIELD, succ, source,context);
 							context.registerPOI(curr,poi,new BackwardAliasCallback(context) {
 								@Override
-								public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+								public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
 									WrappedSootField[] fields = new WrappedSootField[]{new WrappedSootField(fr.getField(), source.getBaseType(),curr)};
-									alias = alias.appendFields(fields);
+									if(!alias.canAppend(fields[0])){
+										return Optional.absent();
+									}
+										alias = alias.appendFields(fields);
 									if(source.getFieldGraph() != null)
 										alias = alias.appendGraph(source.getFieldGraph());
-									return new PathEdge<Unit, AccessGraph>(null, edge.factAtSource(), succ, alias);
+									return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit, AccessGraph>(null, edge.factAtSource(), succ, alias));
 								}
 							});
 
@@ -128,12 +133,12 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 						PointOfIndirection poi = new PointOfIndirection(new AccessGraph(base,base.getType()),curr,context);//, AliasFinder.ARRAY_FIELD, succ, source,context);
 						context.registerPOI(curr,poi,new BackwardAliasCallback(context) {
 							@Override
-							public IPathEdge<Unit, AccessGraph> createInjectableEdge(AccessGraph alias) {
+							public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
 								WrappedSootField[] fields = new WrappedSootField[]{new WrappedSootField(AliasFinder.ARRAY_FIELD, source.getBaseType(),curr)};
 								alias = alias.appendFields(fields);
 								if(source.getFieldGraph() != null)
 									alias = alias.appendGraph(source.getFieldGraph());
-								return new PathEdge<Unit, AccessGraph>(null, edge.factAtSource(), succ, alias);
+								return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit, AccessGraph>(null, edge.factAtSource(), succ, alias));
 							}
 						});
 

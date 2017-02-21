@@ -13,6 +13,8 @@ public class PointOfIndirection {
 	protected final Unit fromStmt;
 	protected final BoomerangContext context;
 	public PointOfIndirection(AccessGraph sendBackward, Unit fromStmt, BoomerangContext context){
+		assert !sendBackward.isStatic();
+		assert sendBackward.getBase() != null;
 		this.sendBackward = sendBackward.noType();
 		this.fromStmt = fromStmt;
 		this.context = context;

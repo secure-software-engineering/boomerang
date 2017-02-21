@@ -10,13 +10,6 @@ import boomerang.debug.IBoomerangDebugger;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.pointsofindirection.Alloc;
-import boomerang.pointsofindirection.BackwardParameterTurnHandler;
-import boomerang.pointsofindirection.Call;
-import boomerang.pointsofindirection.Meeting;
-import boomerang.pointsofindirection.Read;
-import boomerang.pointsofindirection.Return;
-import boomerang.pointsofindirection.Unbalanced;
-import boomerang.pointsofindirection.Write;
 import heros.solver.Pair;
 import soot.SootMethod;
 import soot.Unit;
@@ -115,60 +108,6 @@ public class TestDebugger implements IBoomerangDebugger {
 
   @Override
   public void onAllocationSiteReached(AssignStmt as, IPathEdge<Unit, AccessGraph> pe) {
-  }
-
-  @Override
-  public void onProcessingMeetingPOI(Meeting meeting) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void onProcessingFieldReadPOI(Read read) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void continuePausedEdges(Collection<IPathEdge<Unit, AccessGraph>> pauseEdges) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void onProcessAllocationPOI(Alloc alloc) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void onProcessCallPOI(Call call) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void onProcessReturnPOI(Return return1) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void onProcessWritePOI(Write write) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void onProcessUnbalancedReturnPOI(Unbalanced unbalanced) {
-    // TODO Auto-generated method stub
-
-  }
-
-  @Override
-  public void onProcessingParamPOI(BackwardParameterTurnHandler backwardParameterTurnHandler) {
-    // TODO Auto-generated method stub
-
   }
 
   @Override
