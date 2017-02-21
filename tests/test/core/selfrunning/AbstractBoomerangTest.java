@@ -106,10 +106,10 @@ public class AbstractBoomerangTest {
 			throw new RuntimeException("Unsound results for:" + answer);
 		}
 		Set<String> aliasVariables = new HashSet<>();
-		for (AccessGraph g : results.values()) {
+		for (AccessGraph g : expectedResults.values()) {
 			aliasVariables.add(g.toString());
 		}
-		for (AccessGraph remove : expectedResults.values())
+		for (AccessGraph remove : results.values())
 			aliasVariables.remove(remove.toString());
 		HashSet<String> missingVariables = new HashSet<>();
 

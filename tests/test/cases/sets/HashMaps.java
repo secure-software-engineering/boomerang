@@ -1,7 +1,7 @@
 package test.cases.sets;
 
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -11,7 +11,7 @@ import test.core.selfrunning.AllocatedObject;
 public class HashMaps extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieve(){
-		HashMap<Object,Object> set = new HashMap<>();
+		Map<Object,Object> set = new HashMap<>();
 		AllocatedObject alias = new AllocatedObject(){};
 		AllocatedObject alias3 = new AllocatedObject(){};
 		set.put(alias,alias3);

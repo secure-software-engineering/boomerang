@@ -7,7 +7,7 @@ import test.core.selfrunning.AllocatedObject;
 
 public class ReadPOITest extends AbstractBoomerangTest {
 	private class A{
-		Alloc b;
+		Alloc b = null;
 	}
 	
 	

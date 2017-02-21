@@ -1,6 +1,7 @@
-package test.cases.sets;
+package test.cases.lists;
 
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -9,10 +10,10 @@ import org.junit.Test;
 import test.core.selfrunning.AbstractBoomerangTest;
 import test.core.selfrunning.AllocatedObject;
 
-public class LinkedLists extends AbstractBoomerangTest{
+public class ArrayLists extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieveWithIterator(){
-		List<Object> set = new LinkedList<Object>();
+		List<Object> set = new ArrayList<Object>();
 		AllocatedObject alias = new AllocatedObject(){};
 		set.add(alias);
 		Object alias2 = null;
@@ -24,7 +25,7 @@ public class LinkedLists extends AbstractBoomerangTest{
 	}
 	@Test
 	public void addAndRetrieveByIndex1(){
-		List<Object> list = new LinkedList<Object>();
+		List<Object> list = new ArrayList<Object>();
 		AllocatedObject alias = new AllocatedObject(){};
 		list.add(alias);
 		Object ir = list.get(0);
@@ -33,7 +34,7 @@ public class LinkedLists extends AbstractBoomerangTest{
 	}
 	@Test
 	public void addAndRetrieveByIndex2(){
-		List<Object> list = new LinkedList<Object>();
+		List<Object> list = new ArrayList<Object>();
 		AllocatedObject alias = new AllocatedObject(){};
 		list.add(alias);
 		Object ir = list.get(1);
