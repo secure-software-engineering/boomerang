@@ -78,10 +78,7 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		if (doTurnaround) {
 			if (context.getSubQuery() == null)
 				return;
-			PathEdge<Unit,AccessGraph> pe = new PathEdge<>(edge.getTarget(),edge.factAtTarget(),edge.getTarget(),edge.factAtTarget());
-			if (context.getForwardPathEdges().hasAlreadyProcessed(pe))
-				return;
-			context.getSubQuery().add(new BackwardParameterTurnHandler(edge, callee));
+//			context.getSubQuery().add(new BackwardParameterTurnHandler(edge, callee));
 		}
 	}
 
@@ -91,27 +88,7 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		return Collections.singleton(succEdge);
 	}
 
-	private void performMeetCheckOnEnter(IPathEdge<Unit, AccessGraph> initialSelfLoopEdge,
-			IPathEdge<Unit, AccessGraph> callerEdge) {
-		Unit calleeExitStmt = initialSelfLoopEdge.getTarget();
-		AccessGraph enteringFact = initialSelfLoopEdge.factAtSource();
-		Multimap<Pair<Unit, AccessGraph>, AccessGraph> resultAtStmtContainingValue = context.getForwardPathEdges()
-				.getResultAtStmtContainingValue(calleeExitStmt, enteringFact);
-
-		for (Pair<Unit, AccessGraph> startNode : resultAtStmtContainingValue.keys()) {
-			if (!startNode.getO2().hasAllocationSite())
-				continue;
-			Set<IPathEdge<Unit, AccessGraph>> fwEdges = new HashSet<>();
-			for (AccessGraph factToContinue : resultAtStmtContainingValue.get(startNode)) {
-				fwEdges.add(new PathEdge<Unit, AccessGraph>(startNode.getO1(), startNode.getO2(), calleeExitStmt,
-						factToContinue));
-			}
-			if (fwEdges.isEmpty())
-				return;
-			Meeting meetingPoint = new Meeting(startNode, context.icfg.getMethodOf(callerEdge.getTarget()), fwEdges);
-			context.getSubQuery().add(meetingPoint);
-		}
-	}
+	
 
 	@Override
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> callFunctionExtendor(
@@ -119,10 +96,8 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 
 		initialSelfLoop = new PathEdge<>(null, initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(),
 				initialSelfLoop.factAtTarget());
-		performMeetCheckOnEnter(initialSelfLoop, prevEdge);
-		Call handler = new Call(initialSelfLoop.factAtTarget(), initialSelfLoop.getTarget(), callee);
-		context.getSubQuery().add(handler);
-
+		Call call = new Call(initialSelfLoop.factAtTarget(), initialSelfLoop.getTarget(), callee,context);
+		context.registerPOI(initialSelfLoop.getTarget(), call);
 		return Collections.singleton(initialSelfLoop);
 	}
 

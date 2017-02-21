@@ -149,7 +149,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
               if (withNewLocal.canPrepend(newFirstField)) {
                 AccessGraph newAp = withNewLocal.prependField(newFirstField);
                 out.add(newAp);
-                computeAliasesOnInstanceWrite(curr, source, lBase, field, (Local) rightOp, out,
+                computeAliasesOnInstanceWrite(curr,succ, source, lBase, field, (Local) rightOp, out,
                     edge);
               }
             }
@@ -165,7 +165,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
                   withNewLocal.prependField(new WrappedSootField(AliasFinder.ARRAY_FIELD, source
                       .getBaseType(), curr));
               out.add(newAp);
-              computeAliasesOnInstanceWrite(curr, source, lBase, AliasFinder.ARRAY_FIELD,
+              computeAliasesOnInstanceWrite(curr,succ, source, lBase, AliasFinder.ARRAY_FIELD,
                   (Local) rightOp, out, edge);
 
             }
@@ -230,14 +230,10 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions implements
 
 
 
-  private void computeAliasesOnInstanceWrite(Unit curr, AccessGraph source, Local lBase,
+  private void computeAliasesOnInstanceWrite(Unit curr, Unit succ,AccessGraph source, Local lBase,
       SootField field, Local rightLocal, HashSet<AccessGraph> out,
       IPathEdge<Unit, AccessGraph> edge) {
-    Write write = new Write(curr, lBase, field, rightLocal, source, edge);
-    if (context.addToDirectlyProcessed(write)) {
-      Set<AccessGraph> aliases = write.process(context);
-      out.addAll(aliases);
-    }
+	  context.registerPOI(curr, new Write(curr, succ, lBase, field, rightLocal, source, edge,context));
   }
 
   @Override

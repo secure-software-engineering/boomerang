@@ -5,8 +5,10 @@ import boomerang.BoomerangTimeoutException;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.bidi.Incomings;
 import boomerang.bidi.PathEdgeStore;
+import boomerang.bidi.Summaries;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IFDSSolver;
+import boomerang.ifdssolver.IFDSSolver.PropagationType;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
 import soot.SootMethod;
@@ -22,10 +24,9 @@ public class BackwardSolver extends
   public BackwardSolver(BackwardProblem tabulationProblem, BoomerangContext context) {
     super(tabulationProblem, context.debugger);
     this.context = context;
-//    this.pathEdges =new PathEdgeStore(context);
-    this.pathEdges = context.getBackwardsPathEdges();
-    this.summaries = context.BW_SUMMARIES;
-    this.incomings = context.backwardIncomings;
+    this.pathEdges = new PathEdgeStore(context);
+    this.summaries = new Summaries(context);
+    this.incomings = new Incomings();
   }
 
 
@@ -35,7 +36,6 @@ public class BackwardSolver extends
       debugger.backwardStart(Direction.BACKWARD, stmt, d1, s);
       propagate(edge, PropagationType.Normal);
     }
-    awaitExecution();
   }
 
   @Override
@@ -61,4 +61,8 @@ public class BackwardSolver extends
   public String toString() {
     return "BWSOLVER: " + context.getSubQuery();
   }
+
+
+
+
 }

@@ -1,9 +1,11 @@
 package boomerang.pointsofindirection;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
+
+import com.google.common.collect.Multimap;
 
 import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
@@ -11,98 +13,104 @@ import boomerang.BoomerangTimeoutException;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.cache.AliasResults;
-import boomerang.context.Context;
-import boomerang.context.IContextRequester;
-import boomerang.forward.ForwardSolver;
+import boomerang.ifdssolver.IFDSSolver.PropagationType;
 import boomerang.ifdssolver.IPathEdge;
+import boomerang.ifdssolver.PathEdge;
+import heros.solver.Pair;
 import soot.Local;
 import soot.SootField;
 import soot.Unit;
-import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 
 public class Write implements ForwardPointOfIndirection {
-  private Unit curr;
-  private AccessGraph source;
-  private SootField field;
-  private Local base;
-  private Local rightLocal;
-  private IPathEdge<Unit, AccessGraph> edge;
+	private Unit curr;
+	private AccessGraph source;
+	private SootField field;
+	private Local base;
+	private Local rightLocal;
+	private IPathEdge<Unit, AccessGraph> edge;
+	private Set<Pair<Unit, AccessGraph>> origins = new HashSet<>();
+	private BoomerangContext context;
+	private Unit succ;
 
-  public Write(Unit curr, Local leftLocal, SootField field, Local rightLocal, AccessGraph origin,
-      IPathEdge<Unit, AccessGraph> edge) {
-    this.field = field;
-    this.base = leftLocal;
-    this.rightLocal = rightLocal;
-    this.source = origin;
-    this.curr = curr;
-    this.edge = edge;
-  }
+	public Write(Unit curr, Unit succ, Local leftLocal, SootField field, Local rightLocal, AccessGraph origin,
+			IPathEdge<Unit, AccessGraph> edge, BoomerangContext context) {
+		this.succ = succ;
+		this.field = field;
+		this.base = leftLocal;
+		this.rightLocal = rightLocal;
+		this.source = origin;
+		this.curr = curr;
+		this.edge = edge;
+		this.context = context;
+	}
 
-  @Override
-  public Set<AccessGraph> process(BoomerangContext context) {
-    if (source.baseMatches(rightLocal)) {
-      return queryAliases(context);
-    }
-    return Collections.emptySet();
-  }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((curr == null) ? 0 : curr.hashCode());
+		result = prime * result + ((source == null) ? 0 : source.hashCode());
+		return result;
+	}
 
-  private Set<AccessGraph> queryAliases(BoomerangContext context) {
-	  context.debugger.onProcessWritePOI(this);
-    if (context.isOutOfBudget())
-      throw new BoomerangTimeoutException();
-    AliasFinder dart = new AliasFinder(context);
-    AliasResults res = dart.findAliasAtStmt(new AccessGraph(base, base.getType()), curr);
-    Set<AccessGraph> set =
-        AliasResults.appendField(res.mayAliasSet(), new WrappedSootField(field, source.getBaseType(),
-            curr), context);
-    set = AliasResults.appendFields(set, source, context);
-    for(AccessGraph ag: set){
-    	context.debugger.indirectFlowEdgeAtWrite(source,edge.getTarget(),ag, curr);
-    }
-    return set;
-  }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Write other = (Write) obj;
+		if (curr == null) {
+			if (other.curr != null)
+				return false;
+		} else if (!curr.equals(other.curr))
+			return false;
+		if (source == null) {
+			if (other.source != null)
+				return false;
+		} else if (!source.equals(other.source))
+			return false;
+		return true;
+	}
 
+	public String toString() {
+		return "WRITE: " + source + "@" + curr;
+	}
 
-  @Override
-  public Unit getStmt() {
-    return curr;
-  }
+	@Override
+	public void newEdgeRegistered(IPathEdge<Unit, AccessGraph> pe) {
+		AccessGraph baseAccessGraph = new AccessGraph(base, base.getType());
+		if (pe.factAtTarget().equals(baseAccessGraph)) {
+			if (origins.add(pe.getStartNode())) {
+				Multimap<Pair<Unit, AccessGraph>, AccessGraph> resultAtStmtContainingValue = context
+						.getForwardPathEdges().getResultAtStmtContainingValue(curr, baseAccessGraph);
+				for (Entry<Pair<Unit, AccessGraph>, AccessGraph> e : resultAtStmtContainingValue.entries()) {
+					newEdgeRegistered(new PathEdge<Unit, AccessGraph>(e.getKey().getO1(), e.getKey().getO2(), curr,
+							e.getValue()));
+				}
+			}
+		}
+		if (origins.contains(pe.getStartNode())) {
+			AccessGraph factAtTarget = pe.factAtTarget();
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((curr == null) ? 0 : curr.hashCode());
-    result = prime * result + ((source == null) ? 0 : source.hashCode());
-    return result;
-  }
+			factAtTarget = factAtTarget.appendFields(
+					new WrappedSootField[] { new WrappedSootField(field, source.getBaseType(), edge.getTarget()) });
+			if (source != null) {
+				factAtTarget = factAtTarget.appendGraph(source.getFieldGraph());
+			}
+			IPathEdge<Unit, AccessGraph> newEdge = new PathEdge<>(edge.getStart(), edge.factAtSource(), succ,
+					factAtTarget);
+			context.debugger.indirectFlowEdgeAtWrite(edge.factAtSource(), curr, factAtTarget, succ);
+			context.getForwardSolver().inject(newEdge, PropagationType.Normal);
+		}
+	}
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    Write other = (Write) obj;
-    if (curr == null) {
-      if (other.curr != null)
-        return false;
-    } else if (!curr.equals(other.curr))
-      return false;
-    if (source == null) {
-      if (other.source != null)
-        return false;
-    } else if (!source.equals(other.source))
-      return false;
-    return true;
-  }
-
-  public String toString() {
-    return "WRITE: " + source + "@" + curr;
-  }
-
-
-
+	@Override
+	public void registered() {
+		AccessGraph baseAccessGraph = new AccessGraph(base, base.getType());
+		PathEdge<Unit, AccessGraph> pe = new PathEdge<>(null, baseAccessGraph, curr, baseAccessGraph);
+		context.getBackwardSolver().inject(pe, PropagationType.Normal);
+	}
 }

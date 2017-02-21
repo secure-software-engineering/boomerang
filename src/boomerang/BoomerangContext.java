@@ -14,17 +14,20 @@ import com.google.common.collect.Multimap;
 
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
+import boomerang.backward.BackwardProblem;
+import boomerang.backward.BackwardSolver;
 import boomerang.bidi.Incomings;
 import boomerang.bidi.PathEdgeStore;
-import boomerang.bidi.Summaries;
 import boomerang.cache.ResultCache;
 import boomerang.debug.IBoomerangDebugger;
 import boomerang.debug.JSONOutputDebugger;
 import boomerang.forward.ForwardFlowFunctions;
-import boomerang.ifdssolver.IFDSSolver;
+import boomerang.forward.ForwardProblem;
+import boomerang.forward.ForwardSolver;
 import boomerang.ifdssolver.IIncomings;
 import boomerang.ifdssolver.IPathEdge;
-import boomerang.ifdssolver.ISummaries;
+import boomerang.ifdssolver.IPathEdges;
+import boomerang.ifdssolver.PathEdge;
 import boomerang.mock.DefaultBackwardDataFlowMocker;
 import boomerang.mock.DefaultForwardDataFlowMocker;
 import boomerang.mock.DefaultNativeCallHandler;
@@ -32,6 +35,7 @@ import boomerang.mock.MockedDataFlow;
 import boomerang.mock.NativeCallHandler;
 import boomerang.pointsofindirection.ForwardPointOfIndirection;
 import boomerang.pointsofindirection.PointOfIndirection;
+import boomerang.pointsofindirection.Read;
 import heros.solver.Pair;
 import soot.Local;
 import soot.SootMethod;
@@ -39,26 +43,17 @@ import soot.Unit;
 import soot.Value;
 import soot.jimple.ReturnStmt;
 import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
+import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 
 @SuppressWarnings("serial")
 public class BoomerangContext extends LinkedList<SubQueryContext> {
 
-	/**
-	 * Holds the summaries for all backward IFDS problems.
-	 */
-	public ISummaries<Unit, SootMethod, AccessGraph> BW_SUMMARIES;
-
-	/**
-	 * Holds the summaries for all forward IFDS problems.
-	 */
-	public ISummaries<Unit, SootMethod, AccessGraph> FW_SUMMARIES;
 	/**
 	 * The inter-procedural control flow graph to be used.
 	 */
 	public IInfoflowCFG icfg;
 
 	public IBoomerangDebugger debugger;
-
 
 	/**
 	 * The inter-procedural backward control flow graph to be used.
@@ -89,13 +84,11 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 	private long budgetInMilliSeconds = 10000;
 	private boolean trackStaticFields;
 	@SuppressWarnings("rawtypes")
-	private Set<IFDSSolver> solvers = new HashSet<>();
 	private Multimap<Pair<Unit, AccessGraph>, Unit> meetingPointToPath = HashMultimap.create();
 
-	private PathEdgeStore BW_PATHEDGES;
-	private PathEdgeStore FW_PATHEDGES;
 	private Set<PointOfIndirection> processedPOIs = new HashSet<>();
 	private Set<SootMethod> backwardVisitedMethods = new HashSet<>();
+
 	public BoomerangContext(IInfoflowCFG icfg, IInfoflowCFG bwicfg) {
 		this(icfg, bwicfg, new BoomerangOptions());
 	}
@@ -104,17 +97,13 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		this.icfg = icfg;
 		this.bwicfg = bwicfg;
 		this.debugger = options.getDebugger();
-		if(debugger instanceof JSONOutputDebugger)
+		if (debugger instanceof JSONOutputDebugger)
 			System.err.println("WARNING: Using JSON output slows down performance");
 		this.debugger.setContext(this);
 		this.budgetInMilliSeconds = options.getTimeBudget();
 		WrappedSootField.TRACK_STMT = options.getTrackStatementsInFields();
 		this.trackStaticFields = options.getTrackStaticFields();
 
-		FW_SUMMARIES = new Summaries(this);
-		BW_SUMMARIES = new Summaries(this);
-		BW_PATHEDGES = new PathEdgeStore(this);
-		FW_PATHEDGES = new PathEdgeStore(this);
 		querycache = new ResultCache();
 	}
 
@@ -129,7 +118,7 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 	}
 
 	public boolean isValidAccessPath(AccessGraph a) {
-	      return true;
+		return true;
 	}
 
 	public boolean isParameterOrThisValue(Unit stmtInMethod, Local local) {
@@ -160,27 +149,12 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 			querycache.clean();
 	}
 
-	public void resetSummaries() {
-		FW_SUMMARIES.clear();
-		BW_SUMMARIES.clear();
-		FW_SUMMARIES = new Summaries(this);
-		BW_SUMMARIES = new Summaries(this);
-	}
-
 	public void forceTerminate() {
 		while (!isEmpty()) {
 			SubQueryContext peek = this.pollFirst();
 			if (peek != null) {
 				peek.cleanup();
 			}
-		}
-		if (solvers != null) {
-			for (@SuppressWarnings("rawtypes")
-			IFDSSolver s : new HashSet<>(solvers)) {
-				if (s != null)
-					s.cleanup();
-			}
-			solvers.clear();
 		}
 		cleanQueryCache();
 		meetingPointToPath.clear();
@@ -235,23 +209,13 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		}
 		return true;
 	};
+
 	private Set<PointOfIndirection> directProcessedPOI = new HashSet<>();
-	public IIncomings<Unit, SootMethod, AccessGraph> forwardIncomings = new Incomings();
-	public IIncomings<Unit, SootMethod, AccessGraph> backwardIncomings = new Incomings();
-	/**
-	 * Forward POI ({@link ForwardPointOfIndirection}) are special and treated
-	 * specially, as they are directly processed and NOT put to a worklist. But
-	 * still they are added to the global set of processed POI, as they also
-	 * should never be computed twice.
-	 * 
-	 * @param poi
-	 *            The {@link ForwardPointOfIndirection}
-	 * @return <code>true</code> or <code>false</code> depending whether the POI
-	 *         has been added.
-	 */
-	public boolean addToDirectlyProcessed(PointOfIndirection poi) {
-		return directProcessedPOI.add(poi);
-	}
+
+	private ForwardSolver forwardSolver;
+
+	private BackwardSolver backwardSolver;
+
 	public boolean isOutOfBudget() {
 		if (startTime.elapsed(TimeUnit.MILLISECONDS) > budgetInMilliSeconds)
 			return true;
@@ -280,14 +244,6 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 		}
 	}
 
-	public PathEdgeStore getBackwardsPathEdges() {
-		return BW_PATHEDGES;
-	}
-
-	public PathEdgeStore getForwardPathEdges() {
-		return FW_PATHEDGES;
-	}
-
 	public boolean trackStaticFields() {
 		return this.trackStaticFields;
 	}
@@ -306,5 +262,29 @@ public class BoomerangContext extends LinkedList<SubQueryContext> {
 
 	public void addAsVisitedBackwardMethod(SootMethod m) {
 		backwardVisitedMethods.add(m);
+	}
+
+	public ForwardSolver getForwardSolver() {
+		if (forwardSolver == null) {
+			ForwardProblem forwardProblem = new ForwardProblem(this);
+			forwardSolver = new ForwardSolver(forwardProblem, this);
+		}
+		return forwardSolver;
+	}
+
+	public BackwardSolver getBackwardSolver() {
+		if(backwardSolver == null){
+			BackwardProblem problem = new BackwardProblem(this);
+			backwardSolver = new BackwardSolver(problem, this);
+		}
+		return backwardSolver;
+	}
+
+	public PathEdgeStore getForwardPathEdges() {
+		return (PathEdgeStore) getForwardSolver().getPathEdges();
+	}
+
+	public void registerPOI(Unit stmt, PointOfIndirection poi) {
+		getForwardPathEdges().registerPointOfIndirectionAt(stmt, poi);
 	}
 }

@@ -336,22 +336,15 @@ public class AliasFinder {
 			return new AliasResults();
 		Unit stmt = context.getSubQuery().getStmt();
 		AccessGraph accessPath = context.getSubQuery().getAccessPath();
-
-		BackwardProblem problem = new BackwardProblem(context);
-		BackwardSolver backwardsolver = new BackwardSolver(problem, context);
-		backwardsolver.startPropagation(accessPath, stmt);
-		while (!context.getSubQuery().isEmpty()) {
-			if (context.isOutOfBudget()) {
-				throw new BoomerangTimeoutException();
-			}
-			PointOfIndirection first = context.getSubQuery().removeFirst();
-			 if(!context.isProcessedPOI(first)){
-				processPOI(first, backwardsolver);
-			 context.addProcessedPOI(first);
-			 }
-
+		BackwardSolver backwardSolver = context.getBackwardSolver();
+		ForwardSolver forwardSolver = context.getForwardSolver();
+		backwardSolver.startPropagation(accessPath, stmt);
+		backwardSolver.awaitExecution();
+		while(!backwardSolver.isDone() || !forwardSolver.isDone()){
+			forwardSolver.awaitExecution();
+			backwardSolver.awaitExecution();
 		}
-		backwardsolver.cleanup();
+		
 		AliasResults res = new AliasResults();
 		res.putAll(context.getForwardPathEdges().getResultAtStmtContainingValue(stmt, accessPath));
 
@@ -359,24 +352,7 @@ public class AliasFinder {
 		return aliasRes;
 	}
 
-	private void processPOI(PointOfIndirection poi, BackwardSolver backwardsolver) {
-		if (poi instanceof BackwardForwardHandler) {
-			ForwardSolver solver = createNewForwardSolver();
-			((BackwardForwardHandler) poi).execute(solver, context);
-			solver.cleanup();
-		} else if (poi instanceof BackwardBackwardHandler) {
-			((BackwardBackwardHandler) poi).execute(backwardsolver, context);
-		} else {
-			throw new RuntimeException("Not supported type of POI");
-		}
 
-	}
-
-	private ForwardSolver createNewForwardSolver() {
-		ForwardProblem forwardProblem = new ForwardProblem(context);
-		ForwardSolver solver = new ForwardSolver(forwardProblem, context);
-		return solver;
-	}
 
 	private AliasResults resolveContext(Unit stmt, IContextRequester req, AliasResults res, Query q) {
 		Pair<Query, AliasResults> pair = new Pair<Query, AliasResults>(q, res);

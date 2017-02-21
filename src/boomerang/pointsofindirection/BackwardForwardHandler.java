@@ -11,12 +11,4 @@ import boomerang.forward.ForwardSolver;
  *
  */
 public interface BackwardForwardHandler extends PointOfIndirection{
-  /**
-   * Gets an instance of the forward solver which will be used to do the appropriate forward
-   * propagation.
-   * 
-   * @param solver The forward solver to be used.
-   * @param context The general context object
-   */
-  public void execute(ForwardSolver solver, BoomerangContext context);
 }

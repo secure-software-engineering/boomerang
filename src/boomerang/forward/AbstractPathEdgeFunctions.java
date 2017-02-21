@@ -28,10 +28,13 @@ public abstract class AbstractPathEdgeFunctions extends
     assertAccessPath(edge.factAtTarget());
     Unit target = edge.getTarget();
     AccessGraph ap = edge.factAtTarget();
+    assert edge.factAtSource().isStatic() || edge.factAtSource().getBase() !=null;
     SootMethod method = context.icfg.getMethodOf(target);
     if (ap.isStatic() || method.isStatic())
       return;
+    
     Local thisLocal = method.getActiveBody().getThisLocal();
+    assert ap.isStatic() || method.getActiveBody().getLocals().contains(ap.getBase());
     if (ap.baseMatches(thisLocal)) {
       assert ForwardFlowFunctions.hasCompatibleTypesForCall(ap, method.getDeclaringClass());
     }

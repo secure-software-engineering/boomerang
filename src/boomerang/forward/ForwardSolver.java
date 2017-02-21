@@ -4,8 +4,11 @@ import boomerang.BoomerangContext;
 import boomerang.BoomerangTimeoutException;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.bidi.Incomings;
+import boomerang.bidi.PathEdgeStore;
+import boomerang.bidi.Summaries;
 import boomerang.ifdssolver.IFDSSolver;
 import boomerang.ifdssolver.IPathEdge;
+import boomerang.ifdssolver.IPathEdges;
 import boomerang.ifdssolver.PathEdge;
 import soot.SootMethod;
 import soot.Unit;
@@ -15,20 +18,17 @@ public class ForwardSolver extends
     IFDSSolver<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> {
 
 
-  private ForwardPathEdgeFunctions edgeFunctions;
   private BoomerangContext context;
-  private String type;
   private long propagationCount;
 
 
 
   public ForwardSolver(ForwardProblem tabulationProblem, BoomerangContext context) {
     super(tabulationProblem, context.debugger);
-    this.edgeFunctions = tabulationProblem.pathEdgeFunctions();
-    this.pathEdges = context.getForwardPathEdges();
-    this.summaries = context.FW_SUMMARIES;
     this.context = context;
-    this.incomings = context.forwardIncomings;
+    this.pathEdges = new PathEdgeStore(context);
+    this.summaries = new Summaries(context);
+    this.incomings = new Incomings();
   }
 
 
@@ -50,8 +50,6 @@ public class ForwardSolver extends
       propagate(pathEdge, PropagationType.Normal);
     }
 
-    type = "alloc" + stmt + " " + d2 + " € " + context.icfg.getMethodOf(stmt);
-
     awaitExecution();
   }
 
@@ -66,7 +64,6 @@ public class ForwardSolver extends
   public void onMeet(final IPathEdge<Unit, AccessGraph> pathEdge) {
 //    pathEdges.register(pathEdge);
     processExit(pathEdge);
-    type = "meet@" + pathEdge;
     awaitExecution();
   }
   @Override
@@ -89,11 +86,13 @@ public class ForwardSolver extends
   }
 
   public String toString() {
-    return "FW Solver" + type;
+    return "FW Solver";
   }
 
   @Override
   public void cleanup() {
     super.cleanup();
   }
+
+
 }

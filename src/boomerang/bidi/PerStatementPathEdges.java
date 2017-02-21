@@ -16,6 +16,7 @@ import com.google.common.collect.Multimap;
 
 import boomerang.accessgraph.AccessGraph;
 import boomerang.ifdssolver.IPathEdge;
+import boomerang.pointsofindirection.PointOfIndirection;
 
 class PerStatementPathEdges {
   private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> forwardPathEdges = HashMultimap
@@ -26,13 +27,25 @@ class PerStatementPathEdges {
   private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> reverseMeetableEdges =
       HashMultimap.create();
   private Set<IPathEdge<Unit, AccessGraph>> processedPathEdges = new HashSet<>();
+  private Set<PointOfIndirection> pois = new HashSet<>();
 
   void register(IPathEdge<Unit, AccessGraph> pe) {
+	  
     forwardPathEdges.put(pe.getStartNode(), pe.getTargetNode());
     reversePathEdges.put(new Pair<Unit,AccessGraph>(pe.getTarget(),pe.factAtTarget().noType()), pe.getStartNode());
     processedPathEdges.add(pe);
+    for(PointOfIndirection p : pois){
+    	p.newEdgeRegistered(pe);
+    }
   }
 
+	public void registerPointOfIndirectionAt(PointOfIndirection poi) {
+		if(pois.add(poi)){
+			poi.registered();
+			for(IPathEdge<Unit, AccessGraph> edge : processedPathEdges)
+				poi.newEdgeRegistered(edge);
+		}
+	}
   Multimap<Pair<Unit, AccessGraph>, AccessGraph> getResultsAtStmtContainingValue(Unit stmt,
       AccessGraph fact) {
     Multimap<Pair<Unit, AccessGraph>, AccessGraph> out = HashMultimap.create();
@@ -123,5 +136,6 @@ class PerStatementPathEdges {
     reverseMeetableEdges = null;
     processedPathEdges = null;
   }
+
 
 }

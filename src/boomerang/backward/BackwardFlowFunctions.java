@@ -9,7 +9,6 @@ import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
-import boomerang.cache.AliasResults;
 import boomerang.forward.AbstractFlowFunctions;
 import boomerang.forward.ForwardFlowFunctions;
 import boomerang.ifdssolver.FlowFunctions;
@@ -18,7 +17,6 @@ import boomerang.pointsofindirection.Alloc;
 import boomerang.pointsofindirection.Read;
 import heros.FlowFunction;
 import soot.Local;
-import soot.Scene;
 import soot.SootField;
 import soot.SootMethod;
 import soot.Type;
@@ -72,6 +70,8 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 						if (source.getFieldCount() > 0 && !source.firstFieldMustMatch(AliasFinder.ARRAY_FIELD)) {
 							return Collections.emptySet();
 						}
+						if(source.getFieldCount() > 1 && source.firstFieldMustMatch(AliasFinder.ARRAY_FIELD))
+							return Collections.emptySet();
 
 						allocationSiteReached(edge, as, rightOp);
 						return Collections.emptySet();
@@ -98,9 +98,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 
 						if (fr.getBase() instanceof Local) {
 							Local base = (Local) fr.getBase();
-							Read handler = new Read(edge, base, fr.getField(), succ, source);
-							if (context.getSubQuery() != null)
-								context.getSubQuery().add(handler);
+							context.registerPOI(curr,new Read(edge, base, fr.getField(), succ, source,context));
 
 							Set<AccessGraph> out = new HashSet<>();
 							WrappedSootField newFirstField = new WrappedSootField(fr.getField(), source.getBaseType(),
@@ -115,9 +113,8 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 					} else if (rightOp instanceof ArrayRef) {
 						ArrayRef arrayRef = (ArrayRef) rightOp;
 						Local base = (Local) arrayRef.getBase();
-						Read handler = new Read(edge, base, AliasFinder.ARRAY_FIELD, succ, source);
-						if (context.getSubQuery() != null)
-							context.getSubQuery().add(handler);
+						Read handler = new Read(edge, base, AliasFinder.ARRAY_FIELD, succ, source,context);
+						context.registerPOI(curr,handler);
 
 						Set<AccessGraph> out = new HashSet<>();
 						AccessGraph prependField = source.prependField(
@@ -313,8 +310,11 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 				//Fields that do not have a null assignment must turn arodnd 
 				if(source.getFieldCount() == 1 && !source.isStatic()){
 					if(callee.isConstructor() && !context.icfg.getMethodOf(callSite).isConstructor()){
-						if(source.getBase().equals(thisLocal))
-							context.getSubQuery().add(new Alloc(source, edge.getTarget(), callee));
+						if(source.getBase().equals(thisLocal)){
+							System.out.println(edge);
+							System.out.println(source);
+							context.registerPOI(edge.getTarget(),new Alloc(source, edge.getTarget(), callee,context));
+						}
 					}
 						
 				}
@@ -366,10 +366,10 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 			public Set<AccessGraph> computeTargets(AccessGraph source) {
 				boolean sourceIsKilled = false;
 
+				if (callees.isEmpty()) {
+					return Collections.singleton(source);
+				}
 				if (context.trackStaticFields() && source.isStatic()) {
-					if (callees.isEmpty()) {
-						return Collections.singleton(source);
-					}
 					boolean staticFieldUsed = isFirstFieldUsedTransitivelyInMethod(source, callees);
 					if (!staticFieldUsed) {
 						return Collections.singleton(source);
@@ -459,7 +459,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 			
 		if (context.getSubQuery() != null) {
 			context.debugger.onAllocationSiteReached(as, pe);
-			context.getSubQuery().add(new Alloc(factAtTarget,pe.getTarget(),context.icfg.getMethodOf(as)));
+			context.registerPOI(pe.getTarget(),new Alloc(factAtTarget,pe.getTarget(),context.icfg.getMethodOf(as),context));
 		}
 	}
 

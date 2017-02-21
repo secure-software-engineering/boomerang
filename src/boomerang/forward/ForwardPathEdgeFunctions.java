@@ -44,20 +44,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		context.getForwardPathEdges().addMeetableEdge(pathEdge);
 	}
 
-	/**
-	 * 
-	 * @param startPoint
-	 * @return
-	 */
-	private Collection<IPathEdge<Unit, AccessGraph>> getPausedEdges(Pair<Unit, AccessGraph> startPoint) {
-		Collection<IPathEdge<Unit, AccessGraph>> pauseEdges = context.getForwardPathEdges()
-				.getAndRemovePauseEdge(startPoint);
-		if (!pauseEdges.isEmpty()) {
-			context.debugger.continuePausedEdges(pauseEdges);
-		}
-		HashSet<IPathEdge<Unit, AccessGraph>> copy = new HashSet<>(pauseEdges);
-		return copy;
-	}
 
 	@Override
 	public Collection<? extends IPathEdge<Unit, AccessGraph>> normalFunction(IPathEdge<Unit, AccessGraph> prevEdge,
@@ -139,12 +125,12 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 
 		AccessGraph d1 = prevEdge.factAtSource();
 		Unit exitStmt = prevEdge.getTarget();
-		SootMethod callee = context.bwicfg.getMethodOf(exitStmt);
 		HashSet<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
 		if (d1.hasAllocationSite()) {
 			out.add(succEdge);
 			if (succEdge.factAtTarget().getFieldCount() > 0) {
-				out.addAll(createAliasEdges(callSite, succEdge, callee));
+				Return resHandler = new Return(callSite,d1,succEdge.getTarget(),succEdge.factAtTarget(),context);
+				context.registerPOI(callSite, resHandler);
 			}
 			return out;
 		}
@@ -161,22 +147,22 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		AccessGraph d = succEdge.factAtTarget();
 		if (isOverridenByCall(d, callSite))
 			return out;
-		Return resHandler = new Return(callSite, d);
-
-		if (resHandler.isValid(context) && context.addToDirectlyProcessed(resHandler)) {
-			Set<AccessGraph> aliases = resHandler.process(context);
-			for (AccessGraph alias : aliases) {
-				if (isOverridenByCall(alias, callSite)) {
-					continue;
-				}
-				context.validateInput(alias, callSite);
-				succAliasEdge = new PathEdge<Unit, AccessGraph>(succEdge.getStart(), succEdge.factAtSource(),
-						succEdge.getTarget(), alias);
-				out.add(succAliasEdge);
-				context.debugger.indirectFlowEdgeAtReturn(d, callSite, alias, succEdge.getTarget());
-//				context.addToDirectlyProcessed(new Return(callSite, alias));
-			}
-		}
+//		Return resHandler = new Return(callSite, d);
+//
+//		if (resHandler.isValid(context) && context.addToDirectlyProcessed(resHandler)) {
+//			Set<AccessGraph> aliases = resHandler.process(context);
+//			for (AccessGraph alias : aliases) {
+//				if (isOverridenByCall(alias, callSite)) {
+//					continue;
+//				}
+//				context.validateInput(alias, callSite);
+//				succAliasEdge = new PathEdge<Unit, AccessGraph>(succEdge.getStart(), succEdge.factAtSource(),
+//						succEdge.getTarget(), alias);
+//				out.add(succAliasEdge);
+//				context.debugger.indirectFlowEdgeAtReturn(d, callSite, alias, succEdge.getTarget());
+////				context.addToDirectlyProcessed(new Return(callSite, alias));
+//			}
+//		}
 
 		sanitize(out);
 		return out;
@@ -222,25 +208,24 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		Set<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
 		out.add(succEdge);
 		AccessGraph d2 = succEdge.factAtTarget();
-		PathEdge<Unit, AccessGraph> succAliasEdge;
 		if (isOverridenByCall(d2, callSite))
 			return out;
-		Return resHandler = new Return(callSite, d2);
-
-		if (resHandler.isValid(context) && context.addToDirectlyProcessed(resHandler)) {
-			Set<AccessGraph> aliases = resHandler.process(context);
-			for (AccessGraph alias : aliases) {
-				if (isOverridenByCall(alias, callSite))
-					continue;
-
-				context.validateInput(alias, callSite);
-				succAliasEdge = new PathEdge<Unit, AccessGraph>(succEdge.getStart(), succEdge.factAtSource(),
-						succEdge.getTarget(), alias);
-				out.add(succAliasEdge);
-				context.debugger.indirectFlowEdgeAtReturn(d2, callSite, alias, succEdge.getTarget());
-//				context.addToDirectlyProcessed(new Return(callSite, alias));
-			}
-		}
+		Return resHandler = new Return(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), d2,context);
+		context.registerPOI(callSite, resHandler);
+//		if (resHandler.isValid(context) && context.addToDirectlyProcessed(resHandler)) {
+//			Set<AccessGraph> aliases = resHandler.process(context);
+//			for (AccessGraph alias : aliases) {
+//				if (isOverridenByCall(alias, callSite))
+//					continue;
+//
+//				context.validateInput(alias, callSite);
+//				succAliasEdge = new PathEdge<Unit, AccessGraph>(succEdge.getStart(), succEdge.factAtSource(),
+//						succEdge.getTarget(), alias);
+//				out.add(succAliasEdge);
+//				context.debugger.indirectFlowEdgeAtReturn(d2, callSite, alias, succEdge.getTarget());
+////				context.addToDirectlyProcessed(new Return(callSite, alias));
+//			}
+//		}
 
 		sanitize(out);
 		return out;

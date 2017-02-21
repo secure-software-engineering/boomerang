@@ -28,46 +28,6 @@ import soot.Unit;
 public class SubQueryContext {
 	private Query query;
 	private Incomings incomings = new Incomings();
-	private PriorityQueue<PointOfIndirection> worklist = new PriorityQueue<PointOfIndirection>(300, new Comparator<PointOfIndirection>() {
-
-		@Override
-		public int compare(PointOfIndirection o1, PointOfIndirection o2) {
-			if(o1 instanceof Alloc)
-				return -1;
-
-			if(o1 instanceof Call && o2 instanceof Alloc)
-				return 1;
-
-			if(o1 instanceof Call && o2 instanceof BackwardParameterTurnHandler)
-				return -1;
-			if(o1 instanceof Call && o2 instanceof Meeting)
-				return 1;
-
-			if(o1 instanceof Call && o2 instanceof Read)
-				return -1;
-
-			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Alloc)
-				return 1;
-
-			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Call)
-				return 1;
-			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Meeting)
-				return 1;
-			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Read)
-				return -1;
-
-			if(o1 instanceof Meeting && o2 instanceof Alloc)
-				return 1;
-			if(o1 instanceof Meeting && o2 instanceof Call)
-				return -1;
-			if(o1 instanceof BackwardParameterTurnHandler && o2 instanceof Read)
-				return -1;
-			if(o1 instanceof Read)
-				return 1;
-
-			return 0;
-		}
-	});
 	private ForwardSolver forwardSolver;
 	private BoomerangContext context;
 
@@ -152,10 +112,6 @@ public class SubQueryContext {
 	 * @return Returns <code>true</code> if the POI has been added, otherwise
 	 *         <code>false</code>.
 	 */
-	HashSet<PointOfIndirection> instantiated = new HashSet<>();
-	public boolean add(PointOfIndirection poi) {
-		return worklist.add(poi);
-	}
 
 	public String toString() {
 		return query.toString();
@@ -163,16 +119,6 @@ public class SubQueryContext {
 
 	public Collection<Type> getType() {
 		return query.getType();
-	}
-
-	public boolean isEmpty() {
-		return worklist.isEmpty();
-	}
-
-	PointOfIndirection removeFirst() {PointOfIndirection el = worklist.poll();
-
-		instantiated.add(el);
-		return el;
 	}
 
 	public ForwardSolver getCurrentForwardSolver() {
