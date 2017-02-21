@@ -5,9 +5,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JSONArray;
@@ -370,6 +372,17 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 						callees.add(new Method(callee));
 					label.put("callees", callees);	
 				}
+				if(icfg.isExitStmt(u)){
+					label.put("returnSite", icfg.isExitStmt(u));
+					JSONArray callees = new JSONArray();
+					Set<SootMethod> callers = new HashSet<>();
+					for(Unit callsite : icfg.getCallersOf(context.icfg.getMethodOf(u)))
+						callers.add(context.icfg.getMethodOf(callsite));
+					
+					for(SootMethod caller : callers)
+						callees.add(new Method(caller));
+					label.put("callers", callees);	
+				}
 				label.put("stmtId",id(u));
 				
 				nodeObj.put("data", label);
@@ -414,7 +427,11 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 				JSONObject additionalData = new JSONObject();
 				additionalData.put("id", "n"+id(node));
 				additionalData.put("stmtId", id(node.u));
-				additionalData.put("factId", id(node.a));
+				additionalData.put("factId", id(node.a));				
+				nodeObj.put("classes", classes);
+				nodeObj.put("group", "nodes");
+				nodeObj.put("data", additionalData);
+
 				data.add(nodeObj);
 			}
 			for(ESGEdge edge: edges){
@@ -461,14 +478,12 @@ public class JSONOutputDebugger implements IBoomerangDebugger{
 	}
 	
 	private class Method extends JSONObject{
+
 		Method(SootMethod m){
 			this.put("name",StringEscapeUtils.escapeHtml4(m.toString()));
 			this.put("id", id(m));
 		}
-	}
 
-	private String escapeHTML(String s){
-		return StringEscapeUtils.escapeHtml4(s);
 	}
 	@Override
 	public void setContext(BoomerangContext boomerangContext) {

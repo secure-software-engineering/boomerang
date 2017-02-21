@@ -17,88 +17,17 @@
 </head>
 <body>
 <script>
-var activeMethod = null;
 var selectedDirection ="BACKWARD";
 var isShortNotation = true;
 var highlightedNode;
 webix.ui({
   view: "tabview",
   cells: [
-   /* {
-      header: "ESG",
-      body: {view: "flexlayout",
-        rows:[
-          {
-            cols:[
-              { 
-               header:"Methods", body:
-                {
-                view:"list", 
-                width:320,
-                template:"#name#",
-                id:"methodList",
-                data: methodList,
-                select:1,
-                navigation:true,
-                on:{
-                  onSelectChange: function(methodId){
-                    activeMethod = methodId;
-                    renderMethodWithESG(methodId, $("div[id=main]"));
-                  }
-                }
-                }
-              },
-             {
-                 view:"resizer",
-                 id:"resizerRight"
-             },
-              {
-                rows:[{view:"toolbar",
-                      id:"myToolbar",
-                      cols:[
-                          { view:"segmented", width: 270,
-                            on:{
-                              onChange: function(selection){
-                                selectedDirection = selection;
-                                renderMethodWithESG(activeMethod,$("div[id=main]"));
-                              }
-                            }, 
-                            
-                            options:[
-                            {id:"BACKWARD", value:"Backward"},
-                            {id:"FORWARD", value:"Forward"},
-                            ] 
-                          }]},
-                      {
-                    view: "template",
-                    template: "<div id='main'></div>",
-                    on:{
-                      onAfterRender: function(){
-                        renderMethodWithESG(activeMethod,$("div[id=main]"));
-                      }
-                    }},
-                    ]
-                }
-            ]
-          }
-        ]
-      }
-    },*/
+  
     {
-      header: "Subquery Graph",
+      header: "Boomerang Visualization",
       body: {
         rows:[
-              { 
-                  view: "template",
-                  template: "<div id='subqueryGraph' style='height:100%;'></div>",
-                  on:{
-                    onAfterRender: renderSubqueryGraph
-                  },
-                  minHeight: 200,
-              },
-             {
-                 view:"resizer",
-             },
               {rows:[{view:"toolbar",
                       id:"myToolbar",
                       cols:[
@@ -116,8 +45,12 @@ webix.ui({
                             ] 
                           }]},{
                 view:"template",
-                id: "subqueryInfo", 
-                template: "Hover any of the nodes left",
+                template: "<div id='methodGraph' style='height: 100%;'></div>",
+                on:{
+                  onAfterRender:function(){
+                    renderMethodWithESG(activeMethod,$("div[id=methodGraph]"));
+                  }
+                },
                 minHeight: 200,
                 }]}
         ]
@@ -144,120 +77,13 @@ function addClassWhileOver(overElement,elements,cls){
   })
 }
 
-function renderSubqueryGraph(){
-   var methodDiv = $("div[id=subqueryGraph]");
-   var cy = cytoscape({
-          container: methodDiv,
-          zoomingEnabled: false,
-          userZoomingEnabled: false,
-          panningEnabled: true,
-          userPanningEnabled: true,
-          layout: {
-            name: 'dagre'
-          },
-
-
-          style: [
-            {
-              selector: 'node',
-              style: {
-                'height': 30,
-                'width':30,
-                'background-color': '#fff',
-                'label': 'data(label)',
-                'text-wrap': 'wrap',
-                'text-valign': 'center',
-                'text-halign': 'center',
-                'font-size': '12pt',
-                'color': '#666',
-              }
-            },
-            {
-              selector: 'edge',
-              style: {
-                'target-arrow-shape': 'triangle',
-                'target-arrow-color':  '#0ac60a',
-                'width': 1,
-                'line-color': '#0ac60a',
-                'curve-style':'bezier'
-              }
-            },{
-              selector: '.hightlightNode',
-              style:{
-                'background-color': '#ccc'
-              }
-            }
-          ],
-
-          elements: subQueries});
-          cy.on('mouseover','node',showQueryInformation);
-}
-function showQueryInformation(event){
-  if(highlightedNode)
-    highlightedNode.removeClass("hightlightNode");
-var container = $("div[view_id=subqueryInfo]");
-  container.empty();
-   webix.ui({
-    container: container[0],
-                view:"template",
-                id: "subqueryContextMenu", 
-                height: '100%',
-                template: "<div id='queryDetails'><div class='fact' factid='#factId#'><span class='label'>Access Graph:</span>#fact#</div><div class='stmt' stmtid='#stmtId#'><span class='label'>Statement:</span>#stmt#</div><div><span class='label'>Method:</span>#method#</div><div><span class='label'>Results:</span></div><div id='results'></div></div><div id='methodGraph' style='height: 100%;'></div>",
-                data:event.cyTarget.data()}).show();
-
-  $.each(event.cyTarget.data().results.allocSites, function(i,allocSites){
-    var text = allocSites.stmt +" -> {";
-    $.each(allocSites.values,function(i,o){
-        text += "<span class='accessGraph' factId='"+o.factId+"'>" + o.fact+",</span>";
-    })
-    text += "}<br>";
-    var resultsDiv = $("#results");
-    $("<span class='allocSite'>").html(text).attr("stmtId",allocSites.stmtId).appendTo(resultsDiv);
-  });
-
-  
-
-  activeMethod = event.cyTarget.data().methodId;
-  var cy = renderMethodWithESG(activeMethod, $("div[id=methodGraph]"));
-  event.cyTarget[0].addClass("hightlightNode");
-  highlightedNode = event.cyTarget[0];
-  var els = null;
-  $("span.allocSite").hover(function(ev){
-    var stmtId = $(ev.target).attr("stmtid");
-    if(!stmtId)
-      return
-    els = cy.$("node[stmtId="+stmtId+"]");
-    $(ev.target).children("span.accessGraph").each(function(i,el){
-      var factId = $(el).attr("factid");
-      var element = cy.$("node[factId="+factId+"]");
-      els = els.union(cy.$("node[factId="+factId+"]"));
-    });
-    els.addClass("bold");},
-    function(){
-      if(els != null)
-        els.removeClass("bold");
-    });
-  var queryEls = null
-  $("div#queryDetails").hover(function(ev){
-  /*  test = $(ev.target);
-    console.log(test);
-    var stmtId = $(ev.target).children("div.stmt")[0].attr("stmtid");
-    var factId = $(ev.target).children("div.fact")[0].attr("factid");
-    els = cy.$("node[stmtId="+stmtId+"]");
-    els = els.union(cy.$("node[factId="+factId+"]"));
-    els.addClass("boldHighlight");*/
-  },function(ev){
-      if(els != null)
-        els.removeClass("boldHighlight");
-  })
-}
-
-
 function renderMethodIn(methodId, methodDiv){
   var cy = null;
   $.each( methods, function( i, item ) {
         if(item.methodId != methodId)
           return;
+        console.log(methodDiv)
+        console.log(item.data)
         cy = cytoscape({
           container: methodDiv,
           zoomingEnabled: true,
@@ -396,12 +222,11 @@ function renderMethodWithESG(methodId, methodDiv){
         var cy = renderMethodIn(methodId,methodDiv);
         if(cy == null)
           return;
-        console.log(cy);
           cy.$("*").addClass("hidden");
           cy.$(".label").removeClass("hidden");
           cy.$(".method"+methodId+"."+selectedDirection).removeClass("hidden");
           
-          cy.on('mouseover','node[callSite]',function(event){console.log(event);
+          cy.on('mouseover','node[callSite]',function(event){
             var el = webix.ui({
                 view:"contextmenu",
                 id: "callSiteContextMenu", 
@@ -414,6 +239,26 @@ function renderMethodWithESG(methodId, methodDiv){
                   }
                 },
                 data:event.cyTarget.data().callees}).show();
+
+            $$("callSiteContextMenu").setPosition(event.originalEvent.x,event.originalEvent.y);
+            event.cyTarget.once('mouseout', function(event){
+                $$("callSiteContextMenu").hide();
+            })
+
+          });
+          cy.on('mouseover','node[returnSite]',function(event){
+            var el = webix.ui({
+                view:"contextmenu",
+                id: "callSiteContextMenu", 
+                width: 500,
+                template: "#name#",
+                on:{
+                  onItemClick: function(el){
+                    activeMethod = el;
+                    renderMethodWithESG(el,$("div[id=methodGraph]"));
+                  }
+                },
+                data:event.cyTarget.data().callers}).show();
 
             $$("callSiteContextMenu").setPosition(event.originalEvent.x,event.originalEvent.y);
             event.cyTarget.once('mouseout', function(event){
@@ -441,7 +286,6 @@ function renderMethodWithESG(methodId, methodDiv){
                 root: tgt,
                 directed: true, 
                 visit: function(i, depth, v){
-                  console.log(arguments);
                   addClassWhileOver(tgt,v,"highlight")
               }
             });
