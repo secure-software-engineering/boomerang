@@ -32,22 +32,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	}
 
 
-	/**
-	 * Whenever the forward analysis reaches the end of a path (that is, the
-	 * backward analysis has not visited a certain statement), the forward edge
-	 * is stored as a "meetable" edge. The backward analysis performs check, if
-	 * a statement has such meetable forward edges. These forward edges are then
-	 * supplied in the forward propagation. If the successor statement of an
-	 * edge was visited by the backward solver in the meanwhile, the analysis
-	 * will then automatically continue there.
-	 * 
-	 * @param pathEdge
-	 */
-	private void onPathendReached(IPathEdge<Unit, AccessGraph> pathEdge) {
-		context.getForwardPathEdges().addMeetableEdge(pathEdge);
-	}
-
-
 	@Override
 	public Collection<? extends IPathEdge<Unit, AccessGraph>> normalFunction(IPathEdge<Unit, AccessGraph> prevEdge,
 			Unit succ) {
@@ -100,7 +84,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
 		assert prevEdge.getStartNode().equals(succEdge.getStartNode());
 		if (!isActivePath(succEdge.getTarget())) {
-			onPathendReached(succEdge);
 			return Collections.emptySet();
 		}
 		return Collections.singleton(succEdge);
@@ -111,8 +94,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
 		assert prevEdge.getStartNode().equals(succEdge.getStartNode());
 		if (!isActivePath(succEdge.getTarget())) {
-			onPathendReached(succEdge);
-			
 			return Collections.emptySet();
 		}
 		sanitize(Collections.singleton(succEdge));
@@ -178,7 +159,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			IPathEdge<Unit, AccessGraph> incEdge) {
 
 		if (!isActivePath(succEdge.getTarget())) {
-			onPathendReached(succEdge);
 			return Collections.emptySet();
 		}
 

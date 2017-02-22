@@ -20,8 +20,6 @@ import soot.Unit;
 class PerStatementPathEdges {
 	private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> forwardPathEdges = HashMultimap.create();
 	private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> reversePathEdges = HashMultimap.create();
-	private Set<IPathEdge<Unit, AccessGraph>> meetableEdges = new HashSet<>();
-	private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> reverseMeetableEdges = HashMultimap.create();
 	private Set<IPathEdge<Unit, AccessGraph>> processedPathEdges = new HashSet<>();
 	private Multimap<Pair<Unit, AccessGraph>, PointOfIndirection> targetToPOI = HashMultimap.create();
 	private Multimap<Pair<Unit, AccessGraph>, PointOfIndirection> originToPOI = HashMultimap.create();
@@ -94,27 +92,6 @@ class PerStatementPathEdges {
 		return false;
 	}
 
-	void addMeetableEdge(IPathEdge<Unit, AccessGraph> pathEdge) {
-		meetableEdges.add(pathEdge);
-		reverseMeetableEdges.put(pathEdge.getTargetNode(), pathEdge.getStartNode());
-	}
-
-	boolean hasMeetableEdges() {
-		return !meetableEdges.isEmpty();
-	}
-
-	Set<IPathEdge<Unit, AccessGraph>> getAndRemoveMeetableEdges(Pair<Unit, AccessGraph> targetNode) {
-		HashSet<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
-		Collection<Pair<Unit, AccessGraph>> startNodes = reverseMeetableEdges.get(targetNode);
-		for (IPathEdge<Unit, AccessGraph> edge : meetableEdges) {
-			if (startNodes.contains(edge.getStartNode())) {
-				out.add(edge);
-			}
-		}
-
-		meetableEdges.removeAll(out);
-		return out;
-	}
 
 	int size() {
 		return forwardPathEdges.size();
@@ -148,15 +125,11 @@ class PerStatementPathEdges {
 
 	void clear() {
 		forwardPathEdges.clear();
-		reverseMeetableEdges.clear();
 		reversePathEdges.clear();
-		meetableEdges.clear();
 		processedPathEdges.clear();
 
 		forwardPathEdges = null;
 		reversePathEdges = null;
-		meetableEdges = null;
-		reverseMeetableEdges = null;
 		processedPathEdges = null;
 	}
 

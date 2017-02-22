@@ -51,35 +51,6 @@ class PerMethodPathEdges {
     return c;
   }
 
-  void addMeetableEdge(IPathEdge<Unit, AccessGraph> pathEdge) {
-    Unit target = pathEdge.getTarget();
-    PerStatementPathEdges pathedges = getOrCreate(target);
-    meetableEdges.add(pathEdge);
-    pathedges.addMeetableEdge(pathEdge);
-  }
-
-  boolean hasMeetableEdges(Unit stmt) {
-    PerStatementPathEdges pathedges = getOrCreate(stmt);
-    return pathedges.hasMeetableEdges();
-  }
-
-  Set<IPathEdge<Unit, AccessGraph>> getAndRemoveMeetableEdges(
-      Pair<Unit, AccessGraph> targetNode) {
-    PerStatementPathEdges pathedges = getOrCreate(targetNode.getO1());
-    return pathedges.getAndRemoveMeetableEdges(targetNode);
-  }
-
-  Set<IPathEdge<Unit, AccessGraph>> getAndRemoveMeetableEdgesByStartNode(
-      Pair<Unit, AccessGraph> startPoint) {
-    Set<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
-    for (IPathEdge<Unit, AccessGraph> edge : meetableEdges) {
-      if (edge.getStartNode().equals(startPoint))
-        out.add(edge);
-    }
-    meetableEdges.removeAll(out);
-    return out;
-  }
-
   Multimap<Pair<Unit, AccessGraph>, AccessGraph> getResultsAtStmtContainingValue(Unit stmt,
       AccessGraph fact) {
     PerStatementPathEdges pathedges = getOrCreate(stmt);

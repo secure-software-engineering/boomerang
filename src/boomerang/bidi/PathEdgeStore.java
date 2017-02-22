@@ -104,34 +104,6 @@ public class PathEdgeStore implements
     stmtToPathEdges.clear();
   }
 
-  public void addMeetableEdge(IPathEdge<Unit, AccessGraph> pathEdge) {
-    precheck();
-    if (DEBUG)
-      logger.debug("Pausing edge {} at {}", pathEdge, pathEdge.getTarget());
-    SootMethod target = context.icfg.getMethodOf(pathEdge.getTarget());
-    PerMethodPathEdges perStmtPathEdges = getOrCreatePerStmt(target);
-    perStmtPathEdges.addMeetableEdge(pathEdge);
-  }
-
-  public boolean hasMeetableEdges(Unit stmt) {
-    precheck();
-    SootMethod m = context.icfg.getMethodOf(stmt);
-    PerMethodPathEdges perStmtPathEdges = getOrCreatePerStmt(m);
-    return perStmtPathEdges.hasMeetableEdges(stmt);
-  }
-
-  public Set<IPathEdge<Unit, AccessGraph>> getAndRemoveMeetableEdges(
-      Pair<Unit, AccessGraph> targetNode) {
-    precheck();
-    SootMethod m = context.icfg.getMethodOf(targetNode.getO1());
-    PerMethodPathEdges perStmtPathEdges = getOrCreatePerStmt(m);
-    Set<IPathEdge<Unit, AccessGraph>> pausedEdges =
-        perStmtPathEdges.getAndRemoveMeetableEdges(targetNode);
-
-    if (DEBUG)
-      logger.debug("Fetching paused edges {} for {}", pausedEdges, targetNode);
-    return pausedEdges;
-  }
 
   private PerMethodPathEdges getOrCreatePerStmt(SootMethod method) {
     precheck();
@@ -142,20 +114,6 @@ public class PathEdgeStore implements
     }
     return perMethodPathEdges;
   }
-
-  public Collection<IPathEdge<Unit, AccessGraph>> getAndRemovePauseEdge(
-      Pair<Unit, AccessGraph> startPoint) {
-    precheck();
-    SootMethod m = context.icfg.getMethodOf(startPoint.getO1());
-    PerMethodPathEdges perStmtPathEdges = getOrCreatePerStmt(m);
-    Set<IPathEdge<Unit, AccessGraph>> pausedEdges =
-        perStmtPathEdges.getAndRemoveMeetableEdgesByStartNode(startPoint);
-
-    if (DEBUG)
-      logger.debug("Fetching paused edges {} for {}", pausedEdges, startPoint);
-    return pausedEdges;
-  }
-
   @Override
   public void printTopMethods(int i) {
     precheck();
