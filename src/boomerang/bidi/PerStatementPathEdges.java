@@ -51,15 +51,12 @@ class PerStatementPathEdges {
 				poi.sendBackward();
 			}
 
-			System.out.println(poi);
 		}
 	}
 	private void executeCallback(Pair<Unit, AccessGraph> aliasTarget, PointOfIndirection poi, AliasCallback cb) {
 		for(Pair<Unit, AccessGraph> origin : reversePathEdges.get(aliasTarget)){
-			if(originToPOI.put(origin,poi)){
 			for(Pair<Unit, AccessGraph> aliases : forwardPathEdges.get(origin)){
 					cb.newAliasEncountered(poi,aliases.getO2());	
-			}
 			}
 		}
 	}
