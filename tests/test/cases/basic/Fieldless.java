@@ -50,6 +50,16 @@ public class Fieldless extends AbstractBoomerangTest {
 
 		queryFor(alias2);
 	}
+	@Test
+	public void returnNullAllocation() {
+		Object alias2 = returnNull(); 
+		queryFor(alias2);
+	}
+
+	private Object returnNull() {
+		Object x = new Object();
+		return null;
+	}
 
 	@Test
 	public void cast() {
