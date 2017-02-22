@@ -226,19 +226,14 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 
 	private void computeAliasesOnInstanceWrite(final Unit curr, final Unit succ, final AccessGraph source, Local lBase, final SootField field,
 			Local rightLocal, final IPathEdge<Unit, AccessGraph> edge) {
-		context.registerPOI(curr, new PointOfIndirection(new AccessGraph(lBase, lBase.getType()), curr, context),
-				new ForwardAliasCallback(context) {
-
-					@Override
-					public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
-						alias = alias.appendFields(
-								new WrappedSootField[] { new WrappedSootField(field, source.getBaseType(), curr) });
-						if (source != null) {
-							alias = alias.appendGraph(source.getFieldGraph());
-						}
-						return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit,AccessGraph>(edge.getStart(),edge.factAtSource(),succ,alias));
-					}
-				});
+		 WrappedSootField[] toAppend;
+		if(source.getFieldGraph() == null)
+			toAppend = new WrappedSootField[] { new WrappedSootField(field, source.getBaseType(), curr) };
+		else
+			toAppend = source.getFieldGraph().prependField(new WrappedSootField(field, source.getBaseType(), curr) ).getFields();
+		if(toAppend.length > 0)
+			context.registerPOI(curr, new PointOfIndirection(new AccessGraph(lBase, lBase.getType()), curr, context),
+					new ForwardAliasCallback(edge.getStart(),edge.factAtSource(),succ,toAppend,context));
 	}
 
 	@Override

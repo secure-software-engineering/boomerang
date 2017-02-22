@@ -30,40 +30,47 @@ class PerStatementPathEdges {
 		Pair<Unit,AccessGraph> typeLessBackwardNode = new Pair<Unit,AccessGraph>(pe.getTarget(),pe.factAtTarget().noType());
 		forwardPathEdges.put(pe.getStartNode(), pe.getTargetNode());
 		reversePathEdges.put(typeLessBackwardNode, pe.getStartNode());
-		processedPathEdges.add(pe);
+		if(!processedPathEdges.add(pe))
+			return;
 		for (PointOfIndirection p : targetToPOI.get(typeLessBackwardNode)) {
 			registerPOIWithTarget(typeLessBackwardNode,p);
 		}
 		for(PointOfIndirection p : originToPOI.get(pe.getStartNode())){
-			for(AliasCallback cb : poisToCallback.get(p))
-				cb.newAliasEncountered(pe.factAtTarget());
+			for(AliasCallback cb : poisToCallback.get(p)){
+					cb.newAliasEncountered(p,pe.factAtTarget());
+			}
 		}
 	}
 
 	public void registerPointOfIndirectionAt(PointOfIndirection poi, AliasCallback callback) {
 		Pair<Unit, AccessGraph> aliasTarget = poi.getTarget();
-		poisToCallback.put(poi, callback);
-		executeCallback(aliasTarget, poi,callback);
+		if(poisToCallback.put(poi, callback))
+			executeCallback(aliasTarget, poi,callback);
 		if(pois.add(poi)){
 			if(targetToPOI.put(aliasTarget,poi)){
 				poi.sendBackward();
 			}
+
+			System.out.println(poi);
 		}
 	}
 	private void executeCallback(Pair<Unit, AccessGraph> aliasTarget, PointOfIndirection poi, AliasCallback cb) {
 		for(Pair<Unit, AccessGraph> origin : reversePathEdges.get(aliasTarget)){
-			originToPOI.put(origin,poi);
+			if(originToPOI.put(origin,poi)){
 			for(Pair<Unit, AccessGraph> aliases : forwardPathEdges.get(origin)){
-					cb.newAliasEncountered(aliases.getO2());
+					cb.newAliasEncountered(poi,aliases.getO2());	
+			}
 			}
 		}
 	}
 	private void registerPOIWithTarget(Pair<Unit, AccessGraph> aliasTarget, PointOfIndirection poi) {
 		for(Pair<Unit, AccessGraph> origin : reversePathEdges.get(aliasTarget)){
-			originToPOI.put(origin,poi);
-			for(Pair<Unit, AccessGraph> aliases : forwardPathEdges.get(origin)){
-				for(AliasCallback cb : poisToCallback.get(poi))
-					cb.newAliasEncountered(aliases.getO2());
+			if(originToPOI.put(origin,poi)){
+				for(Pair<Unit, AccessGraph> aliases : forwardPathEdges.get(origin)){
+					for(AliasCallback cb : poisToCallback.get(poi)){
+							cb.newAliasEncountered(poi,aliases.getO2());
+					}
+				}
 			}
 		}
 	}
@@ -82,7 +89,6 @@ class PerStatementPathEdges {
 				out.put(start, target.getO2());
 			}
 		}
-		System.out.println(out);
 		return out;
 	}
 

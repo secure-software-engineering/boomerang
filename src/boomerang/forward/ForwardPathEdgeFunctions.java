@@ -108,7 +108,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		context.sanityCheckEdge(prevEdge);
 
 		AccessGraph d1 = prevEdge.factAtSource();
-		Unit exitStmt = prevEdge.getTarget();
 		HashSet<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
 		if (d1.hasAllocationSite()) {
 			out.add(succEdge);
@@ -120,20 +119,14 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 						if(withoutLast == null)
 							continue;
 						for(AccessGraph subgraph : withoutLast){
-							context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(context) {
-								
-								@Override
-								public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
-									alias = alias.appendFields(new WrappedSootField[]{field});
-									return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit,AccessGraph>(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), alias));
-								}
-							});
+							context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(callSite,d1,succEdge.getTarget(),new WrappedSootField[]{field},context));
 						}
 					}
 				}
 			}
 			return out;
 		}
+		Unit exitStmt = prevEdge.getTarget();
 		assert d1.isStatic() || context.isParameterOrThisValue(exitStmt, d1.getBase());
 		sanitize(out);
 		return out;
@@ -174,9 +167,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 
 	private void createAliasEdgesOnBalanced(Unit callSite,
 			final IPathEdge<Unit, AccessGraph> succEdge) {
-
-		Set<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
-		out.add(succEdge);
 		AccessGraph d2 = succEdge.factAtTarget();
 		if (isOverridenByCall(d2, callSite))
 			return;
@@ -187,14 +177,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			if(withoutLast == null)
 				continue;
 			for(AccessGraph subgraph : withoutLast){
-				context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(context) {
-					
-					@Override
-					public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
-						alias = alias.appendFields(new WrappedSootField[]{field});
-						return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit,AccessGraph>(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(), alias));
-					}
-				});
+				context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(),new WrappedSootField[]{field},context));
 			}
 		}
 	}

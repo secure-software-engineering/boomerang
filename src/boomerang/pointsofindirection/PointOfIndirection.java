@@ -21,8 +21,10 @@ public class PointOfIndirection {
 	}
 	
 	public void sendBackward(){
-		PathEdge<Unit, AccessGraph> pe = new PathEdge<>(null, sendBackward, fromStmt, sendBackward);
+		for(Unit u :context.icfg.getPredsOf(fromStmt)){
+		PathEdge<Unit, AccessGraph> pe = new PathEdge<>(null, sendBackward, u, sendBackward);
 		context.getBackwardSolver().inject(pe, PropagationType.Normal);
+		}
 	}
 	public Pair<Unit,AccessGraph> getTarget(){
 		return new Pair<Unit,AccessGraph>(fromStmt,sendBackward);
@@ -59,5 +61,8 @@ public class PointOfIndirection {
 		return true;
 	}
 	
-	
+	@Override
+	public String toString() {
+		return "POI " + sendBackward + " @ " + fromStmt;
+	}
 }

@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.google.common.base.Optional;
-
 import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
@@ -15,7 +13,6 @@ import boomerang.forward.AbstractFlowFunctions;
 import boomerang.forward.ForwardFlowFunctions;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
-import boomerang.ifdssolver.PathEdge;
 import boomerang.pointsofindirection.Alloc;
 import boomerang.pointsofindirection.BackwardAliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
@@ -103,19 +100,14 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 						if (fr.getBase() instanceof Local) {
 							Local base = (Local) fr.getBase();
 							PointOfIndirection poi = new PointOfIndirection(new AccessGraph(base,base.getType()),curr,context);//, AliasFinder.ARRAY_FIELD, succ, source,context);
-							context.registerPOI(curr,poi,new BackwardAliasCallback(context) {
-								@Override
-								public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
-									WrappedSootField[] fields = new WrappedSootField[]{new WrappedSootField(fr.getField(), source.getBaseType(),curr)};
-									if(!alias.canAppend(fields[0])){
-										return Optional.absent();
-									}
-										alias = alias.appendFields(fields);
-									if(source.getFieldGraph() != null)
-										alias = alias.appendGraph(source.getFieldGraph());
-									return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit, AccessGraph>(null, edge.factAtSource(), succ, alias));
-								}
-							});
+							WrappedSootField[] toAppend;
+							if(source.getFieldGraph() == null)
+								toAppend = new WrappedSootField[]{new WrappedSootField(fr.getField(), source.getBaseType(),curr)};
+							else 
+								toAppend = source.getFieldGraph().prependField(new WrappedSootField(fr.getField(), source.getBaseType(),curr)).getFields();
+							
+							if(toAppend.length > 0)
+								context.registerPOI(curr,poi,new BackwardAliasCallback(edge.factAtSource(), succ,toAppend, context));
 
 							Set<AccessGraph> out = new HashSet<>();
 							WrappedSootField newFirstField = new WrappedSootField(fr.getField(), source.getBaseType(),
@@ -131,16 +123,14 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 						ArrayRef arrayRef = (ArrayRef) rightOp;
 						Local base = (Local) arrayRef.getBase();
 						PointOfIndirection poi = new PointOfIndirection(new AccessGraph(base,base.getType()),curr,context);//, AliasFinder.ARRAY_FIELD, succ, source,context);
-						context.registerPOI(curr,poi,new BackwardAliasCallback(context) {
-							@Override
-							public Optional<IPathEdge<Unit, AccessGraph>> createInjectableEdge(AccessGraph alias) {
-								WrappedSootField[] fields = new WrappedSootField[]{new WrappedSootField(AliasFinder.ARRAY_FIELD, source.getBaseType(),curr)};
-								alias = alias.appendFields(fields);
-								if(source.getFieldGraph() != null)
-									alias = alias.appendGraph(source.getFieldGraph());
-								return Optional.<IPathEdge<Unit, AccessGraph>>of(new PathEdge<Unit, AccessGraph>(null, edge.factAtSource(), succ, alias));
-							}
-						});
+						WrappedSootField[] toAppend;
+						if(source.getFieldGraph() == null)
+							toAppend = new WrappedSootField[]{new WrappedSootField(AliasFinder.ARRAY_FIELD, source.getBaseType(),curr)};
+						else 
+							toAppend = source.getFieldGraph().prependField(new WrappedSootField(AliasFinder.ARRAY_FIELD, source.getBaseType(),curr)).getFields();
+						
+						if(toAppend.length>0)
+							context.registerPOI(curr,poi,new BackwardAliasCallback(edge.factAtSource(),succ,toAppend,context));
 
 						Set<AccessGraph> out = new HashSet<>();
 						AccessGraph prependField = source.prependField(
