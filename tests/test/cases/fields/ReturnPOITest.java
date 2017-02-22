@@ -47,7 +47,7 @@ public class ReturnPOITest extends AbstractBoomerangTest {
 
 	
 	@Test
-	public void unbalancedReturnPOI2(){
+	public void whyRecursiveReturnPOIIsNecessary(){
 		C c = new C();
 		B b =  new B();
 		A a = new A();

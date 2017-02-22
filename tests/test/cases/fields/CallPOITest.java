@@ -49,8 +49,26 @@ public class CallPOITest extends AbstractBoomerangTest {
 		C alias = b.b.c;
 		queryFor(alias);
 	}
+	
+
+	@Test
+	public void whyRecursiveCallPOIIsNecessary(){
+		A a = new A();
+		C alloc = new C();
+		A b = a;
+		allocationIndirect(a,alloc);
+		C alias = b.b.c;
+		queryFor(alias);
+	}
 	private void allocation(A a, C d) {
 		B intermediate = a.b;
+		intermediate.c = d;
+	}
+	private void allocationIndirect(A a, C d) {
+		B b = new B();
+		A a2 = a;
+		a2.b= b;
+		B intermediate = a2.b;
 		intermediate.c = d;
 	}
 }

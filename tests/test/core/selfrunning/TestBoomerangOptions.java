@@ -1,4 +1,4 @@
-package test.core;
+package test.core.selfrunning;
 
 import java.io.File;
 

@@ -50,7 +50,6 @@ import soot.jimple.toolkits.callgraph.ReachableMethods;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.options.Options;
 import soot.util.queue.QueueReader;
-import test.core.TestBoomerangOptions;
 
 public class AbstractBoomerangTest {
 	private IInfoflowCFG icfg;

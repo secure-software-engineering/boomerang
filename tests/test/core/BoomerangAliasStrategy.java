@@ -34,6 +34,7 @@ import soot.jimple.spark.pag.Node;
 import soot.jimple.toolkits.ide.icfg.BiDiInterproceduralCFG;
 import soot.util.Chain;
 import soot.util.MultiMap;
+import test.core.selfrunning.TestBoomerangOptions;
 
 public class BoomerangAliasStrategy implements IAliasStrategy<AccessGraph, AliasResults> {
 
