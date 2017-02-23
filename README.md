@@ -23,6 +23,13 @@ After the checkout, the root folder of Boomerang will contain a libs folder with
 
 We have prepared a couple of examples on how to use Boomerang. They can be found [here](example/example/Example.java).
 
+# Visualization
+
+Boomerang can be dynamically visualized. During and after the a query, the exploded super-graph that is generated can be visualized as a dynamic webpage. The exploded super-graph can be drawn per method that is visited during a query. To understand the result of the query, the exploded super-graph can then be stepped through interactively per method. 
+
+![alt text](images/example-visualization.png "Boomerang Visualization")
+
+
 # Licencse
 Boomerang is released under LGPL - see [LICENSE.txt](LICENSE.txt) for details.
 
