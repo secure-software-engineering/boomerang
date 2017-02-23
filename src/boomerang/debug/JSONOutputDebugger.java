@@ -16,8 +16,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
@@ -83,7 +81,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 	public void callFlow(Direction dir, Unit start, AccessGraph startFact, Unit target, AccessGraph targetFact) {
 		ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(start));
 		ESGNode callSiteNode = new ESGNode(start, startFact, dir);
-		CalleeESGNode calleeNode = new CalleeESGNode(target, targetFact, dir, callSiteNode);
+		CalleeESGNode calleeNode = new CalleeESGNode( dir == Direction.BACKWARD ? null : target,targetFact, dir, callSiteNode);
 		cfg.addEdge(new ESGEdge(callSiteNode, calleeNode, "callFlow"));
 	}
 
@@ -236,7 +234,10 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 				return false;
 			return true;
 		}
-
+		@Override
+		public String toString() {
+			return "CalleeESGNode "+ super.toString() + " linked to "+ linkedNode;
+		}
 	}
 
 	private class ESGNode {
@@ -291,6 +292,10 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 			} else if (!dir.equals(other.dir))
 				return false;
 			return true;
+		}
+		@Override
+		public String toString() {
+			return a +" @ "+ u + " " + dir ;
 		}
 	}
 
@@ -364,7 +369,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 		void addNode(ESGNode g) {
 			if (!nodes.contains(g))
 				nodes.add(g);
-			if (!facts.contains(g.a))
+			if (!facts.contains(g.a) && !(g instanceof CalleeESGNode))
 				facts.add(g.a);
 			if (g instanceof CalleeESGNode)
 				calleeNodes.add((CalleeESGNode) g);
@@ -380,7 +385,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 		private JSONObject toJSONObject() {
 			linkSummaries();
 			JSONObject o = new JSONObject();
-			o.put("methodName", method.toString());
+			o.put("methodName", StringEscapeUtils.escapeHtml4(method.toString()));
 			o.put("methodId", id(method));
 			JSONArray data = new JSONArray();
 			LinkedList<Unit> stmtsList = new LinkedList<>();
@@ -390,7 +395,9 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 			for (AccessGraph g : facts) {
 				labelYOffset = Math.max(labelYOffset, charSize * g.toString().length());
 			}
+			int index = 0;
 			for (Unit u : method.getActiveBody().getUnits()) {
+				
 				JSONObject nodeObj = new JSONObject();
 				JSONObject pos = new JSONObject();
 				stmtsList.add(u);
@@ -419,11 +426,26 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 					label.put("callers", callees);
 				}
 				label.put("stmtId", id(u));
+				label.put("id", "stmt" + id(u));
+
+				label.put("stmtIndex", index);
+				index++;
 
 				nodeObj.put("data", label);
-				nodeObj.put("classes", "stmt label");
+				nodeObj.put("classes", "stmt label " + (icfg.isExitStmt(u) ? " returnSite " :" ")+ (icfg.isCallStmt(u) ? " callSite " :" "));
 				data.add(nodeObj);
-				offset = Math.max(offset, u.toString().length());
+				offset = Math.max(offset, getShortLabel(u).toString().length());
+				
+				for(Unit succ : context.icfg.getSuccsOf(u)){
+					JSONObject cfgEdgeObj = new JSONObject();
+					JSONObject dataEntry = new JSONObject();
+					dataEntry.put("source", "stmt" + id(u));
+					dataEntry.put("target", "stmt" + id(succ));
+					dataEntry.put("directed", "true");
+					cfgEdgeObj.put("data", dataEntry);
+					cfgEdgeObj.put("classes", "cfgEdge label method" + id(method));
+					data.add(cfgEdgeObj);
+				}
 			}
 
 			LinkedList<AccessGraph> factsList = new LinkedList<>();
@@ -495,9 +517,9 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 				Set<CalleeESGNode> starts = new HashSet<>();
 				Set<CalleeESGNode> targets = new HashSet<>();
 				for (CalleeESGNode n : calleeNodes) {
-					if (n.a.equals(start.a) && n.u.equals(start.u) && n.dir.equals(start.dir))
+					if (n.a.equals(start.a) && (n.u == null || n.u.equals(start.u)) && n.dir.equals(start.dir))
 						starts.add(n);
-					if (n.a.equals(target.a) && n.u.equals(target.u) && n.dir.equals(target.dir))
+					if (n.a.equals(target.a) &&(n.u == null || n.u.equals(target.u)) && n.dir.equals(target.dir))
 						targets.add(n);
 				}
 				for (CalleeESGNode summaryStart : starts) {

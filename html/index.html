@@ -27,11 +27,24 @@ webix.ui({
     {
       header: "Boomerang Visualization",
       body: {
-        rows:[
+        cols:[{view: "list", 
+              data: methodList,
+              width: 300,
+              template: "<span style='font-size:9pt'>#name#</span>",
+              select:true,
+              on:{
+                 onSelectChange:function (selection) {
+                  activeMethod = selection[0]
+                    renderMethodWithESG(activeMethod,$("div[id=methodGraph]"));
+                 }
+              }
+            },
+            { view:"resizer" },
               {rows:[{view:"toolbar",
                       id:"myToolbar",
                       cols:[
                           { view:"segmented", width: 270,
+                            align: "center",
                             on:{
                               onChange: function(selection){
                                 selectedDirection = selection;
@@ -43,7 +56,14 @@ webix.ui({
                             {id:"BACKWARD", value:"Backward"},
                             {id:"FORWARD", value:"Forward"},
                             ] 
-                          }]},{
+                          },
+                          { 
+                              view:"label", 
+                              id: "methodLabel",
+                              label: "Label", 
+                              align:"center"
+                          }
+                          ]},{
                 view:"template",
                 template: "<div id='methodGraph' style='height: 100%;'></div>",
                 on:{
@@ -66,6 +86,9 @@ function isReverseEdge(el){
     return el.source().position().y < el.target().position().y;
   }
 }
+function drawStraighLine(el){
+  return el.source().data().stmtIndex +1 == el.target().data().stmtIndex;
+}
 function isIdentityEdge(el){
     return el.source().position().x == el.target().position().x;
 }
@@ -82,8 +105,9 @@ function renderMethodIn(methodId, methodDiv){
   $.each( methods, function( i, item ) {
         if(item.methodId != methodId)
           return;
-        console.log(methodDiv)
-        console.log(item.data)
+
+        $$("methodLabel").setValue(item.methodName);
+        $$("methodLabel").refresh();
         cy = cytoscape({
           container: methodDiv,
           zoomingEnabled: true,
@@ -106,14 +130,24 @@ function renderMethodIn(methodId, methodDiv){
           {
               selector: '.stmt.label',
               style: {
-                'background-color': '#ffffff',
+                'background-color': '#cccccc',
                 'label': (isShortNotation ? 'data(shortLabel)' : 'data(label)'),
                 'text-halign': 'right',
                 'font-size': '12pt',
                 'color': '#666',
-                'height': 20,
-                'width':50,
+                'height': 10,
+                'width':10,
                 'font-family': 'Courier'
+              }
+            }, {
+              selector: '.stmt.label.callSite',
+              style: {
+                'background-color': 'green'
+              }
+            }, {
+              selector: '.stmt.label.returnSite',
+              style: {
+                'background-color': 'red'
               }
             }, 
             {
@@ -141,10 +175,19 @@ function renderMethodIn(methodId, methodDiv){
                 "font-weight": "bold",
                 'color': 'rgb(255, 156, 49)',
               }
+            },{
+              selector: '.cfgEdge',
+              style: {
+                'target-arrow-shape': 'triangle',
+                'target-arrow-color': '#ccc',
+                'line-color': '#ccc',
+                'width': 1,
+               
+                'curve-style': function(el){return (drawStraighLine(el) ? 'bezier': 'unbundled-bezier');}
+              }
             },
-
             {
-              selector: 'edge',
+              selector: '.esgEdge',
               style: {
                 'target-arrow-shape': 'triangle',
                 'target-arrow-color': function(el){ return (isIdentityEdge(el) ? '#cccccc' : '#0ac60a');},
