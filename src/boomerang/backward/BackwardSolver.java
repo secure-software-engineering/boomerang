@@ -8,7 +8,6 @@ import boomerang.bidi.PathEdgeStore;
 import boomerang.bidi.Summaries;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IFDSSolver;
-import boomerang.ifdssolver.IFDSSolver.PropagationType;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
 import soot.SootMethod;

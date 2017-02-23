@@ -14,8 +14,6 @@ import boomerang.forward.ForwardFlowFunctions;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.pointsofindirection.Alloc;
-import boomerang.pointsofindirection.BackwardAliasCallback;
-import boomerang.pointsofindirection.PointOfIndirection;
 import heros.FlowFunction;
 import soot.Local;
 import soot.SootField;
@@ -99,15 +97,6 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 
 						if (fr.getBase() instanceof Local) {
 							Local base = (Local) fr.getBase();
-							PointOfIndirection poi = new PointOfIndirection(new AccessGraph(base,base.getType()),curr,context);//, AliasFinder.ARRAY_FIELD, succ, source,context);
-							WrappedSootField[] toAppend;
-							if(source.getFieldGraph() == null)
-								toAppend = new WrappedSootField[]{new WrappedSootField(fr.getField(), source.getBaseType(),curr)};
-							else 
-								toAppend = source.getFieldGraph().prependField(new WrappedSootField(fr.getField(), source.getBaseType(),curr)).getFields();
-							
-							if(toAppend.length > 0)
-								context.registerPOI(curr,poi,new BackwardAliasCallback(edge.factAtSource(), succ,toAppend, context));
 
 							Set<AccessGraph> out = new HashSet<>();
 							WrappedSootField newFirstField = new WrappedSootField(fr.getField(), source.getBaseType(),
@@ -122,15 +111,6 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 					} else if (rightOp instanceof ArrayRef) {
 						ArrayRef arrayRef = (ArrayRef) rightOp;
 						Local base = (Local) arrayRef.getBase();
-						PointOfIndirection poi = new PointOfIndirection(new AccessGraph(base,base.getType()),curr,context);//, AliasFinder.ARRAY_FIELD, succ, source,context);
-						WrappedSootField[] toAppend;
-						if(source.getFieldGraph() == null)
-							toAppend = new WrappedSootField[]{new WrappedSootField(AliasFinder.ARRAY_FIELD, source.getBaseType(),curr)};
-						else 
-							toAppend = source.getFieldGraph().prependField(new WrappedSootField(AliasFinder.ARRAY_FIELD, source.getBaseType(),curr)).getFields();
-						
-						if(toAppend.length>0)
-							context.registerPOI(curr,poi,new BackwardAliasCallback(edge.factAtSource(),succ,toAppend,context));
 
 						Set<AccessGraph> out = new HashSet<>();
 						AccessGraph prependField = source.prependField(
@@ -266,7 +246,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 								if (callee != null && !ForwardFlowFunctions.hasCompatibleTypesForCall(source,
 										callee.getDeclaringClass()))
 									return Collections.emptySet();
-								if (source.getFieldCount() == 0)
+								if (source.getFieldCount() == 0 && !source.hasSetBasedFieldGraph())
 									return Collections.emptySet();
 								if (!context.isIgnoredMethod(callee)) {
 									AccessGraph replacedThisValue = source.deriveWithNewLocal(thisLocal,
@@ -323,16 +303,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 			public Set<AccessGraph> computeTargets(AccessGraph source) {
 				AccessGraph derivedSource = source;
 				Set<AccessGraph> out = new HashSet<>();
-				//Fields that do not have a null assignment must turn arodnd 
-				if(source.getFieldCount() == 1 && !source.isStatic()){
-					if(callee.isConstructor() && !context.icfg.getMethodOf(callSite).isConstructor()){
-						if(source.getBase().equals(thisLocal)){
-							Alloc alloc = new Alloc(source, edge.getTarget(), callee,context);
-							alloc.execute();
-						}
-					}
-						
-				}
+				
 
 				if (context.trackStaticFields() && source.isStatic())
 					return Collections.singleton(source);
@@ -360,6 +331,17 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 								if (typeCompatible(newBase.getType(), source.getBaseType())) {
 									AccessGraph ap = derivedSource.deriveWithNewLocal(newBase, source.getBaseType());
 									out.add(ap);
+									
+									//Fields that do not have a null assignment must turn arodnd 
+									if(source.getFieldCount() == 1 && !source.isStatic()){
+										SootMethod caller = context.icfg.getMethodOf(callSite);
+										if(callee.isConstructor() && (!caller.isConstructor() || !caller.getActiveBody().getThisLocal().equals(newBase))){
+												Alloc alloc = new Alloc(source, edge.getTarget(), callee,context);
+												alloc.execute();
+												return Collections.emptySet();
+										}
+									}
+									
 								}
 							}
 						}
@@ -381,9 +363,6 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 			public Set<AccessGraph> computeTargets(AccessGraph source) {
 				boolean sourceIsKilled = false;
 
-				if (callees.isEmpty()) {
-					return Collections.singleton(source);
-				}
 				if (context.trackStaticFields() && source.isStatic()) {
 					boolean staticFieldUsed = isFirstFieldUsedTransitivelyInMethod(source, callees);
 					if (!staticFieldUsed) {
@@ -430,6 +409,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 									out.addAll(nativeAbs);
 								}
 							}
+							return out;
 						}
 					}
 
@@ -446,6 +426,9 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 				if (!sourceIsKilled)
 					out.add(source);
 
+				if (callees.isEmpty()) {
+					return Collections.singleton(source);
+				}
 				return out;
 			}
 
@@ -468,7 +451,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 //		if (factAtTarget.getFieldCount() > 0 && !factAtTarget.firstFieldMustMatch(AliasFinder.ARRAY_FIELD)) {
 //			return;
 //		} 
-		if(factAtTarget.hasSetBasedFieldGraph()){
+		if(factAtTarget.hasSetBasedFieldGraph() && !factAtTarget.firstFirstFieldMayMatch(AliasFinder.ARRAY_FIELD)){
 			factAtTarget= factAtTarget.dropTail();
 		}
 			

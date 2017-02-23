@@ -2,20 +2,14 @@ package boomerang.backward;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
-
-import com.google.common.base.Optional;
 
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
-import boomerang.accessgraph.WrappedSootField;
 import boomerang.forward.AbstractPathEdgeFunctions;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
-import boomerang.pointsofindirection.BackwardAliasCallback;
-import boomerang.pointsofindirection.PointOfIndirection;
 import soot.SootMethod;
 import soot.Unit;
 
@@ -69,20 +63,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			IPathEdge<Unit, AccessGraph> prevEdge, final IPathEdge<Unit, AccessGraph> initialSelfLoop,
 			SootMethod callee) {
 
-		AccessGraph d2 = initialSelfLoop.factAtTarget();
-		final Unit returnSiteOfCall = initialSelfLoop.getTarget();
-		if (d2.getLastField() != null && !d2.hasSetBasedFieldGraph() && !d2.isStatic()) {
-			for (final WrappedSootField field : d2.getLastField()) {
-				Set<AccessGraph> withoutLast = d2.popLastField();
-				if (withoutLast == null)
-					continue;
-				for (AccessGraph subgraph : withoutLast) {
-					context.registerPOI(returnSiteOfCall, new PointOfIndirection(subgraph, returnSiteOfCall, context),
-							new BackwardAliasCallback(initialSelfLoop.factAtSource(), returnSiteOfCall,
-									new WrappedSootField[] { field }, context));
-				}
-			}
-		}
 		return Collections.singleton(new PathEdge<>(null, initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(),
 				initialSelfLoop.factAtTarget()));
 	}

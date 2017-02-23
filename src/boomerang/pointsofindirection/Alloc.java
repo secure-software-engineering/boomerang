@@ -2,7 +2,6 @@ package boomerang.pointsofindirection;
 
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
-import boomerang.ifdssolver.IPathEdge;
 import soot.SootMethod;
 import soot.Unit;
 import soot.jimple.AssignStmt;
@@ -29,8 +28,6 @@ public class Alloc {
 
 	public void execute() {
 		AccessGraph alloc = factAtTarget.deriveWithAllocationSite(target);
-		// if(!alloc.firstFirstFieldMayMatch(AliasFinder.ARRAY_FIELD))
-		// alloc = alloc.dropTail();
 		if (target instanceof AssignStmt && ((AssignStmt) target).getRightOp() instanceof NewExpr)
 			alloc = alloc.deriveWithNewLocal(alloc.getBase(),
 					((NewExpr) ((AssignStmt) target).getRightOp()).getBaseType());

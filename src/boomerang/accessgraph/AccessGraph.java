@@ -196,7 +196,7 @@ public class AccessGraph {
 	public String toString() {
 		String str = "";
 		if (value != null)
-      str += value.toString();// + "(" + getBaseType() + ")";
+      str += value.toString() + (WrappedSootField.TRACK_TYPE ? "(" + getBaseType() + ")" : "");
 		if (fieldGraph != null) {
 			
 			 str += fieldGraph.toString();

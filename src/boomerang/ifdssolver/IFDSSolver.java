@@ -16,12 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import boomerang.accessgraph.AccessGraph;
-import boomerang.bidi.Incomings;
-import boomerang.bidi.PathEdgeStore;
-import boomerang.bidi.Summaries;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
-import boomerang.ifdssolver.IFDSSolver.PropagationType;
 import heros.solver.Pair;
 import soot.SootMethod;
 import soot.Unit;

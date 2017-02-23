@@ -30,7 +30,10 @@ public class SetBasedFieldGraph implements IFieldGraph {
 			if (allFields == null)
 				allFields = new HashSet<>();
 			allFields.addAll(fields);
-			this.fields = minimize(allFields);
+			if(!WrappedSootField.TRACK_TYPE)
+				this.fields =new HashSet<>(fields);// minimize(fields);
+			else
+				this.fields = minimize(fields);
 		}
 		// assert fields.size() > 1;
 	}

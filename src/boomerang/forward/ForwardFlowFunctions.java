@@ -12,6 +12,7 @@ import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.ifdssolver.FlowFunctions;
+import boomerang.ifdssolver.IFDSSolver.PropagationType;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
 import boomerang.pointsofindirection.ForwardAliasCallback;
@@ -110,8 +111,27 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 					InstanceFieldRef fr = (InstanceFieldRef) leftOp;
 					Value base = fr.getBase();
 					SootField field = fr.getField();
-					if (source.baseAndFirstFieldMatches(base, field)) {
-						return Collections.emptySet();
+					if(!source.isStatic()){
+						if (source.getBase().equals(base) && source.firstFirstFieldMayMatch(field)) {
+							if (rightOp instanceof Local) {
+								Local local = (Local) rightOp;
+								AccessGraph a = new AccessGraph(local, local.getType());
+								context.getBackwardSolver().inject(new PathEdge<Unit, AccessGraph>(null, a, curr, a),
+										PropagationType.Normal);
+							}
+						}
+						if(source.baseAndFirstFieldMatches(base, field))
+							return Collections.emptySet();
+					}
+				} else if (leftOp instanceof ArrayRef) {
+					ArrayRef fr = (ArrayRef) leftOp;
+					Value base = fr.getBase();
+					if (source.baseMatches(base) && source.firstFirstFieldMayMatch(AliasFinder.ARRAY_FIELD)
+							&& rightOp instanceof Local) {
+						Local local = (Local) rightOp;
+						AccessGraph a = new AccessGraph(local, local.getType());
+						context.getBackwardSolver().inject(new PathEdge<Unit, AccessGraph>(null, a, curr, a),
+								PropagationType.Normal);
 					}
 				}
 				if (rightOp instanceof CastExpr) {
@@ -147,8 +167,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 							if (withNewLocal.canPrepend(newFirstField)) {
 								AccessGraph newAp = withNewLocal.prependField(newFirstField);
 								out.add(newAp);
-								computeAliasesOnInstanceWrite(curr, succ, source, lBase, field, (Local) rightOp,
-										edge);
+								computeAliasesOnInstanceWrite(curr, succ, source, lBase, field, (Local) rightOp, edge);
 							}
 						}
 					} else if (leftOp instanceof ArrayRef) {
@@ -224,16 +243,17 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 		};
 	}
 
-	private void computeAliasesOnInstanceWrite(final Unit curr, final Unit succ, final AccessGraph source, Local lBase, final SootField field,
-			Local rightLocal, final IPathEdge<Unit, AccessGraph> edge) {
-		 WrappedSootField[] toAppend;
-		if(source.getFieldGraph() == null)
+	private void computeAliasesOnInstanceWrite(final Unit curr, final Unit succ, final AccessGraph source, Local lBase,
+			final SootField field, Local rightLocal, final IPathEdge<Unit, AccessGraph> edge) {
+		WrappedSootField[] toAppend;
+		if (source.getFieldGraph() == null)
 			toAppend = new WrappedSootField[] { new WrappedSootField(field, source.getBaseType(), curr) };
 		else
-			toAppend = source.getFieldGraph().prependField(new WrappedSootField(field, source.getBaseType(), curr) ).getFields();
-		if(toAppend.length > 0)
+			toAppend = source.getFieldGraph().prependField(new WrappedSootField(field, source.getBaseType(), curr))
+					.getFields();
+		if (toAppend.length > 0)
 			context.registerPOI(curr, new PointOfIndirection(new AccessGraph(lBase, lBase.getType()), curr, context),
-					new ForwardAliasCallback(edge.getStart(),edge.factAtSource(),succ,toAppend,context));
+					new ForwardAliasCallback(edge.getStart(), edge.factAtSource(), succ, toAppend, context));
 	}
 
 	@Override
