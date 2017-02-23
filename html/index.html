@@ -190,9 +190,9 @@ function renderMethodIn(methodId, methodDiv){
               selector: '.esgEdge',
               style: {
                 'target-arrow-shape': 'triangle',
-                'target-arrow-color': function(el){ return (isIdentityEdge(el) ? '#cccccc' : '#0ac60a');},
+                'target-arrow-color': function(el){ return (isIdentityEdge(el) ? '#cccccc' : 'blue');},
                 'width': 1,
-                'line-color': function(el){ return (isIdentityEdge(el) ? "#cccccc" : '#0ac60a');},
+                'line-color': function(el){ return (isIdentityEdge(el) ? "#cccccc" : 'blue');},
                 
                 'curve-style': function(el){return (isReverseEdge(el) ? 'unbundled-bezier': 'bezier');}
               }
@@ -204,20 +204,24 @@ function renderMethodIn(methodId, methodDiv){
             },{
               selector: '.callFlow',
               style: {
-                'target-arrow-color': 'blue',
-                'line-color': 'blue',
+                'target-arrow-color': 'green',
+                'line-color': 'green',
+                'target-arrow-shape': 'none',
+                'line-style': 'dotted',
               }
             },{
               selector: '.summaryFlow',
               style: {
-                'target-arrow-color': 'blue',
-                'line-color': 'blue',
+                'target-arrow-color': 'green',
+                'line-color': 'green',
               }
             },{
               selector: '.returnFlow',
               style: {
-                'target-arrow-color': 'red',
-                'line-color': 'red',
+                'target-arrow-color': 'green',
+                'line-color': 'green',
+                'target-arrow-shape': 'none',
+                'line-style': 'dotted',
               }
             },{
               selector: '.call2ReturnFlow',
