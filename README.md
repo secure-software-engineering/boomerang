@@ -25,7 +25,7 @@ We have prepared a couple of examples on how to use Boomerang. They can be found
 
 # Visualization
 
-Boomerang can be dynamically visualized. During and after the a query, the exploded super-graph that is generated can be visualized as a dynamic webpage. The exploded super-graph can be drawn per method that is visited during a query. To understand the result of the query, the exploded super-graph can then be stepped through interactively per method. 
+Boomerang can be dynamically visualized. During and after a query has been resolved, the exploded super-graph that is generated can be visualized as a dynamic webpage. The exploded super-graph can be drawn per method that is visited during a query. To understand the result of the query, the exploded super-graph can then be stepped through interactively per method. The webpage for the visualization can be found [here](visualization/index.html) and can be viewed locally in a browser once this git-project has been checked out.
 
 ![alt text](images/example-visualization.png "Boomerang Visualization")
 
