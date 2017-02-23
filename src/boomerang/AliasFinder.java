@@ -19,9 +19,7 @@ import boomerang.cache.ResultCache.WithContextRequesterQueryCache;
 import boomerang.context.ContextResolver;
 import boomerang.context.IContextRequester;
 import boomerang.context.NoContextRequester;
-import boomerang.debug.BoomerangDebugger;
 import boomerang.forward.ForwardSolver;
-import grph.Grph;
 import heros.solver.Pair;
 import soot.Local;
 import soot.RefType;
@@ -192,7 +190,6 @@ public class AliasFinder {
 		AccessGraph ap = q.getAp();
 		assert stmt != null;
 		context.validateInput(ap, stmt);
-		Grph.useCache = false;
 		NoContextRequesterQueryCache cache = context.querycache.contextlessQueryCache();
 		if (context.isOutOfBudget()) {
 			throw new BoomerangTimeoutException();

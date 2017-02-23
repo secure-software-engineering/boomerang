@@ -2,17 +2,12 @@ package boomerang.accessgraph;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import soot.Scene;
 import soot.SootField;
-import soot.Type;
-import toools.collections.Collections;
 
 /**
  * A field graph represents only the of the access graph field accesses. It is a
