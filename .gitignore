@@ -5,3 +5,4 @@
 ant.settings
 /target/
 /testBin/
+*.DS_Store
