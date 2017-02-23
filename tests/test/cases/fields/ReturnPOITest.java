@@ -45,7 +45,18 @@ public class ReturnPOITest extends AbstractBoomerangTest {
 		a2.c = a;
 	}
 
-	
+	@Test
+	public void unbalancedReturnPOI3(){
+		B b =  new B();
+		B c = b;
+		setField(c);
+		C query = c.c;
+		queryFor(query);
+	}
+	private void setField(B c) {
+		c.c = new C();
+	}
+
 	@Test
 	public void whyRecursiveReturnPOIIsNecessary(){
 		C c = new C();
