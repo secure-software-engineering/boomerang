@@ -315,7 +315,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 							if (context.isIgnoredMethod(callee)) {
 								return Collections.emptySet();
 							}
-							if (d1 != null && d1.hasAllocationSite() && source.getFieldCount() < 1) {
+						if (d1 != null && d1.hasAllocationSite() && (source.getFieldCount() < 1 && !source.hasSetBasedFieldGraph())) {
 								Unit sourceStmt = d1.getSourceStmt();
 								if (sourceStmt instanceof AssignStmt) {
 									AssignStmt as = (AssignStmt) sourceStmt;

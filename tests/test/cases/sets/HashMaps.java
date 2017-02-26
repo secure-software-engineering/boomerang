@@ -12,9 +12,9 @@ public class HashMaps extends AbstractBoomerangTest{
 	@Test
 	public void addAndRetrieve(){
 		Map<Object,Object> set = new HashMap<>();
-		AllocatedObject alias = new AllocatedObject(){};
+		Object key = new Object();
 		AllocatedObject alias3 = new AllocatedObject(){};
-		set.put(alias,alias3);
+		set.put(key,alias3);
 		Object alias2 = null;
 		for(Object o : set.values())
 			alias2 = o;

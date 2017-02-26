@@ -252,7 +252,6 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 			esgNodeCounter++;
 			if (esgNodeCounter % 1000 == 0) {
 				System.err.println("Warning: Using JSONOutputDebugger, might slow down performance.");
-				writeToFile();
 			}
 		}
 
