@@ -1,7 +1,5 @@
 package boomerang;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,8 +13,6 @@ import boomerang.backward.BackwardSolver;
 import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
 import boomerang.cache.ResultCache.NoContextRequesterQueryCache;
-import boomerang.cache.ResultCache.WithContextRequesterQueryCache;
-import boomerang.context.ContextResolver;
 import boomerang.context.IContextRequester;
 import boomerang.context.NoContextRequester;
 import boomerang.forward.ForwardSolver;
@@ -190,6 +186,7 @@ public class AliasFinder {
 		AccessGraph ap = q.getAp();
 		assert stmt != null;
 		context.validateInput(ap, stmt);
+		context.setContextRequester(req);
 		NoContextRequesterQueryCache cache = context.querycache.contextlessQueryCache();
 		if (context.isOutOfBudget()) {
 			throw new BoomerangTimeoutException();
@@ -199,10 +196,7 @@ public class AliasFinder {
 
 		if (cache.isDone(q)) {
 			sanityCheck(cache.getResults(q), stmt);
-			if (req instanceof NoContextRequester)
 				return cache.getResults(q);
-			context.debugger.onLoadingQueryFromCache(q, cache.getResults(q));
-			return resolveContext(stmt, req, cache.getResults(q), q);
 		}
 
 		if (cache.isProcessing(q)) {
@@ -216,8 +210,6 @@ public class AliasFinder {
 		cache.setResults(q, res);
 		sanityCheck(cache.getResults(q), stmt);
 		context.debugger.finishedQuery(q, res);
-		if (!(req instanceof NoContextRequester))
-			res = resolveContext(stmt, req, res, q);
 
 		return res;
 	}
@@ -248,69 +240,6 @@ public class AliasFinder {
 		WrappedSootField.TRACK_TYPE = val;
 	}
 
-	/**
-	 * Computes aliases of access graphs recursive. That is, if supplying a.f.g
-	 * The analysis will first search for aliases of a, then append .f to all of
-	 * theses. Another search for all aliases of theses constructed access graph
-	 * is performed. Then, .g is appended to all of theses. This is done until a
-	 * fixed point is reached.
-	 * 
-	 * @param a
-	 *            Access graph to perform the operation on.
-	 * @param stmt
-	 *            The statement at which the query is triggered.
-	 * @param requester
-	 *            Provides the context under which the query is to be evaluted.
-	 * @return Set of access graph which alias to a at stmt.
-	 */
-	public Collection<AccessGraph> findAliasAtStmtRec(AccessGraph a, Unit stmt, IContextRequester requester) {
-		if (context.isOutOfBudget()) {
-			throw new BoomerangTimeoutException();
-		}
-		AccessGraph askFor = new AccessGraph(a.getBase(), a.getBaseType());
-		if (!context.isValidQuery(askFor, stmt))
-			return Collections.emptySet();
-		Collection<AccessGraph> prevAliases = internalFindAliasAtStmt(
-				new Query(askFor, stmt, context.icfg.getMethodOf(stmt)), requester).mayAliasSet();
-		if (a.getFieldCount() < 1) {
-			return prevAliases;
-		}
-		WrappedSootField[] nodes = a.getRepresentative();
-
-		Set<AccessGraph> out = new HashSet<>();
-
-		out.addAll(AliasResults.appendFields(prevAliases, nodes, context));
-		Collection<AccessGraph> changeSet = prevAliases;
-		for (int i = 0; i < nodes.length; i++) {
-			Set<AccessGraph> withFieldsSet = AliasResults.appendField(changeSet, nodes[i], context);
-			if (i != nodes.length) {
-				WrappedSootField[] subFields = new WrappedSootField[i + 1];
-				System.arraycopy(nodes, 0, subFields, 0, i + 1);
-				AccessGraph original = new AccessGraph(a.getBase(), a.getBaseType(), subFields);
-				withFieldsSet.add(original);
-			}
-
-			prevAliases = askForEach(withFieldsSet, stmt, requester);
-			WrappedSootField[] subFields = new WrappedSootField[nodes.length - i - 1];
-			System.arraycopy(nodes, i + 1, subFields, 0, nodes.length - i - 1);
-			if (subFields.length > 0) {
-				changeSet = new HashSet<>();
-				for (AccessGraph alias : prevAliases) {
-					if (alias.canAppend(subFields[0])) {
-						AccessGraph appendFields = alias.appendFields(subFields);
-						if (out.contains(appendFields))
-							continue;
-						out.add(appendFields);
-						changeSet.add(alias);
-					}
-				}
-			} else {
-				out.addAll(prevAliases);
-			}
-		}
-		return out;
-	}
-
 	private AliasResults fixpointIteration(Unit stmt, AccessGraph accessGraph) {
 		BackwardSolver backwardSolver = context.getBackwardSolver();
 		ForwardSolver forwardSolver = context.getForwardSolver();
@@ -322,7 +251,7 @@ public class AliasFinder {
 		}
 		
 		AliasResults res = new AliasResults();
-		res.putAll(context.getForwardPathEdges().getResultAtStmtContainingValue(stmt, accessGraph));
+		res.putAll(context.getForwardPathEdges().getResultAtStmtContainingValue(stmt, accessGraph, new HashSet<Pair<Unit,AccessGraph>>()));
 
 		AliasResults aliasRes = new AliasResults(res);
 		return aliasRes;
@@ -330,22 +259,6 @@ public class AliasFinder {
 
 
 
-	private AliasResults resolveContext(Unit stmt, IContextRequester req, AliasResults res, Query q) {
-		Pair<Query, AliasResults> pair = new Pair<Query, AliasResults>(q, res);
-		WithContextRequesterQueryCache cache = context.querycache.resolvedCache();
-		if (cache.isDone(pair)) {
-			return cache.getResults(pair);
-		}
-		if (cache.isProcessing(pair)) {
-			return new AliasResults();
-		}
-		cache.start(pair);
-		ContextResolver contextResolver = new ContextResolver(req, q, context);
-
-		res = contextResolver.resolve(res, stmt);
-		cache.setResults(pair, new AliasResults(res));
-		return res;
-	}
 
 	private void sanityCheck(AliasResults res, Unit stmt) {
 		SootMethod methodOf = context.icfg.getMethodOf(stmt);
@@ -358,26 +271,6 @@ public class AliasFinder {
 			assert methodOf.getActiveBody().getUnits().contains(key
 					.getO1()) : "The allocation sites should always be local to a method, when no context was resolved!";
 		}
-	}
-
-	private Set<AccessGraph> askForEach(Collection<AccessGraph> collection, Unit stmt, IContextRequester requestor) {
-		Set<AccessGraph> res = new HashSet<>();
-		for (AccessGraph a : collection) {
-			if (context.isOutOfBudget()) {
-				throw new BoomerangTimeoutException();
-			}
-			boolean accessesField = false;
-			for (WrappedSootField wrappedField : a.getFirstField()) {
-				accessesField = accessesField
-						|| context.icfg.accessesField(context.icfg.getMethodOf(stmt), wrappedField.getField());
-			}
-			if (!accessesField)
-				res.add(a);
-			else
-				res.addAll(internalFindAliasAtStmt(new Query(a, stmt, context.icfg.getMethodOf(stmt)), requestor)
-						.mayAliasSet());
-		}
-		return res;
 	}
 
 	public void startQuery() {

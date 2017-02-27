@@ -151,8 +151,7 @@ public class BoomerangAliasStrategy implements IAliasStrategy<AccessGraph, Alias
     AliasFinder boomerang = new AliasFinder(icfg, new TestBoomerangOptions());
 
     IContextRequester c =
-        (allContexts ? new AllCallersRequester<BiDiInterproceduralCFG<Unit, SootMethod>>(
-boomerang.context.icfg)
+        (allContexts ? new AllCallersRequester()
         : new NoContextRequester());
     boomerang.startQuery();
     return boomerang.findAliasAtStmt(fact, stmt, c);

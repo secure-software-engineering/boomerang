@@ -10,12 +10,15 @@ import java.util.TreeMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
+import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.pointsofindirection.AliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
 import heros.solver.Pair;
+import soot.SootMethod;
 import soot.Unit;
+import soot.jimple.NopStmt;
 
 class PerStatementPathEdges {
 	private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> forwardPathEdges = HashMultimap.create();
@@ -25,6 +28,11 @@ class PerStatementPathEdges {
 	private Multimap<Pair<Unit, AccessGraph>, PointOfIndirection> originToPOI = HashMultimap.create();
 	private Multimap<PointOfIndirection, AliasCallback> poisToCallback = HashMultimap.create();
 	private Set<PointOfIndirection> pois = new HashSet<>();
+	private final BoomerangContext context;
+
+	public PerStatementPathEdges(BoomerangContext context) {
+		this.context = context;
+	}
 
 	void register(IPathEdge<Unit, AccessGraph> pe) {
 		Pair<Unit,AccessGraph> typeLessBackwardNode = new Pair<Unit,AccessGraph>(pe.getTarget(),pe.factAtTarget().noType());
@@ -72,8 +80,13 @@ class PerStatementPathEdges {
 		}
 	}
 
-	Multimap<Pair<Unit, AccessGraph>, AccessGraph> getResultsAtStmtContainingValue(Unit stmt, AccessGraph fact) {
-		Multimap<Pair<Unit, AccessGraph>, AccessGraph> out = HashMultimap.create();
+	Multimap<Pair<Unit, AccessGraph>, AccessGraph> getResultsAtStmtContainingValue(Unit stmt, AccessGraph fact, Set<Pair<Unit,AccessGraph>> visited) {
+		Pair<Unit, AccessGraph> visit = new Pair<Unit,AccessGraph>(stmt,fact);
+		if(visited.contains(visit)){
+			return HashMultimap.create();
+		}
+		visited.add(visit);
+		Multimap<Pair<Unit, AccessGraph>, AccessGraph> pathEdges = HashMultimap.create();
 		Pair<Unit, AccessGraph> o = new Pair<>(stmt, fact.noType());
 		if (!reversePathEdges.containsKey(o))
 			return HashMultimap.create();
@@ -83,7 +96,37 @@ class PerStatementPathEdges {
 		for (Pair<Unit, AccessGraph> start : matchingStarts) {
 			Collection<Pair<Unit, AccessGraph>> fwPair = forwardPathEdges.get(start);
 			for (Pair<Unit, AccessGraph> target : fwPair) {
-				out.put(start, target.getO2());
+				pathEdges.put(start, target.getO2());
+			}
+		}
+		Multimap<Pair<Unit, AccessGraph>, AccessGraph> out = HashMultimap.create();
+		for(Pair<Unit, AccessGraph> key: pathEdges.keySet()){
+			Unit pathEdgeStart = key.getO1();
+			SootMethod callee = context.icfg.getMethodOf(pathEdgeStart);
+			boolean maintainPathEdge = false;
+			if(context.icfg.getStartPointsOf(callee).contains(pathEdgeStart)){
+				for(Unit callSite : context.icfg.getCallersOf(callee)){
+					maintainPathEdge |= !context.getContextRequester().continueAtCallSite(callSite, callee);
+					Set<AccessGraph> factsAtCallSite = context.getBackwardTargetsFor(key.getO2(), callSite, callee);
+					for(AccessGraph factAtCallSite: factsAtCallSite){
+						Multimap<Pair<Unit, AccessGraph>, AccessGraph> aliasesAtCallSite = context.getForwardPathEdges().getResultAtStmtContainingValue(callSite, factAtCallSite, visited);
+						for(Entry<Pair<Unit, AccessGraph>, AccessGraph> aliasEntry : aliasesAtCallSite.entries()){
+							Set<AccessGraph> withinCalleeFacts = context.getForwardTargetsFor(aliasEntry.getValue(), callSite, callee);
+							for(AccessGraph wihinCalleeFact : withinCalleeFacts){
+								
+								Collection<Pair<Unit, AccessGraph>> fwPair = forwardPathEdges.get(new Pair<Unit,AccessGraph>(pathEdgeStart,wihinCalleeFact));
+								for (Pair<Unit, AccessGraph> target : fwPair) {
+									out.put(aliasEntry.getKey(),target.getO2());
+								}
+							}
+						}
+					}
+				}
+			} else{
+				maintainPathEdge = true;
+			}
+			if(maintainPathEdge){
+				out.putAll(key, pathEdges.get(key));
 			}
 		}
 		return out;

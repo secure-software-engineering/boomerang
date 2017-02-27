@@ -327,7 +327,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 										SootClass methodClass = callee.getDeclaringClass();
 										if (typeClass != null && methodClass != null && typeClass != methodClass
 												&& !typeClass.isInterface()) {
-											if (!Scene.v().getFastHierarchy().isSubclass(typeClass, methodClass)) {
+											if (!Scene.v().getOrMakeFastHierarchy().isSubclass(typeClass, methodClass)) {
 												return Collections.emptySet();
 											}
 										}

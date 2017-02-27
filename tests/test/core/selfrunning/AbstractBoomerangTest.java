@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -15,17 +14,17 @@ import org.junit.rules.TestName;
 
 import boomerang.AliasFinder;
 import boomerang.accessgraph.AccessGraph;
-import boomerang.accessgraph.SetBasedFieldGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.cache.AliasResults;
 import boomerang.cache.Query;
-import boomerang.preanalysis.PreparationTransformer;
+import boomerang.context.AllCallersRequester;
+import boomerang.context.IContextRequester;
+import boomerang.context.NoContextRequester;
 import heros.solver.Pair;
 import soot.ArrayType;
 import soot.Body;
 import soot.G;
 import soot.Local;
-import soot.MethodOrMethodContext;
 import soot.Modifier;
 import soot.PackManager;
 import soot.RefType;
@@ -46,16 +45,15 @@ import soot.jimple.NewExpr;
 import soot.jimple.Stmt;
 import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 import soot.jimple.infoflow.solver.cfg.InfoflowCFG;
-import soot.jimple.toolkits.callgraph.ReachableMethods;
 import soot.jimple.toolkits.ide.icfg.JimpleBasedInterproceduralCFG;
 import soot.options.Options;
-import soot.util.queue.QueueReader;
 
 public class AbstractBoomerangTest {
 	private IInfoflowCFG icfg;
 	@Rule
 	public TestName name = new TestName();
 	private SootMethod sootTestMethod;
+	private IContextRequester contextReuqester;
 
 	@Before
 	public void performQuery() {
@@ -74,7 +72,8 @@ public class AbstractBoomerangTest {
 			protected void internalTransform(String phaseName, @SuppressWarnings("rawtypes") Map options) {
 				icfg = new InfoflowCFG(new JimpleBasedInterproceduralCFG());
 
-				Query q = parseQuery();
+				Query q = parseQuery(sootTestMethod);
+				contextReuqester = (q.getMethod().equals(sootTestMethod) ? new NoContextRequester() : new AllCallersRequester());
 				AliasResults expectedResults = parseExpectedQueryResults(q);
 				AliasResults results = runQuery(q);
 				compareQuery(q, expectedResults, results);
@@ -127,7 +126,7 @@ public class AbstractBoomerangTest {
 
 		AliasFinder boomerang = new AliasFinder(icfg, new TestBoomerangOptions());
 		boomerang.startQuery();
-		return boomerang.findAliasAtStmt(q.getAp(), q.getStmt());
+		return boomerang.findAliasAtStmt(q.getAp(), q.getStmt(),contextReuqester);
 	}
 
 	private AliasResults parseExpectedQueryResults(Query q) {
@@ -231,14 +230,27 @@ public class AbstractBoomerangTest {
 		return out;
 	}
 
-	private Query parseQuery() {
-		if (!sootTestMethod.hasActiveBody())
-			throw new RuntimeException(
-					"The method that contains the query does not have a body" + sootTestMethod.getName());
-		Body activeBody = sootTestMethod.getActiveBody();
-
-		System.out.println(sootTestMethod.getActiveBody());
+	private Query parseQuery(SootMethod m) {
 		LinkedList<Query> queries = new LinkedList<>();
+		parseQuery(m, queries, new HashSet<SootMethod>());
+		if (queries.size() == 0)
+			throw new RuntimeException(
+					"No call to method queryFor was found within " + m.getName());
+		if (queries.size() > 1)
+			System.err.println(
+					"More than one possible query found, might be unambigious, picking query " + queries.getLast());
+		return queries.getLast();
+	}
+	private void parseQuery(SootMethod m, LinkedList<Query> queries, Set<SootMethod> visited) {
+		if (!m.hasActiveBody() || visited.contains(m))
+			return;
+		visited.add(m);
+		Body activeBody = m.getActiveBody();
+		for(Unit callSite : icfg.getCallsFromWithin(m)){
+			for(SootMethod callee : icfg.getCalleesOfCallAt(callSite))
+				parseQuery(callee, queries,visited);
+		}
+		System.out.println(m.getActiveBody());
 		for (Unit u : activeBody.getUnits()) {
 			if (!(u instanceof Stmt))
 				continue;
@@ -253,15 +265,8 @@ public class AbstractBoomerangTest {
 			if (!(param instanceof Local))
 				continue;
 			Local queryVar = (Local) param;
-			queries.add(new Query(new AccessGraph(queryVar, queryVar.getType()), stmt));
+			queries.add(new Query(new AccessGraph(queryVar, queryVar.getType()), stmt,m));
 		}
-		if (queries.size() == 0)
-			throw new RuntimeException(
-					"No variable whose name contains query has been found in " + sootTestMethod.getName());
-		if (queries.size() > 1)
-			System.err.println(
-					"More than one possible query found, might be unambigious, picking query " + queries.getLast());
-		return queries.getLast();
 	}
 
 	@SuppressWarnings("static-access")
@@ -271,7 +276,7 @@ public class AbstractBoomerangTest {
 		Options.v().setPhaseOption("jb", "use-original-names:true");
 		Options.v().setPhaseOption("cg.spark", "on");
 		Options.v().setPhaseOption("cg.spark", "verbose:true");
-		// Options.v().set_output_format(Options.output_format_none);
+		Options.v().set_output_format(Options.output_format_none);
 		String userdir = System.getProperty("user.dir");
 		String sootCp = userdir + "/testBin";
 		if (includeJDK()) {

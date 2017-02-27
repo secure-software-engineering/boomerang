@@ -1,8 +1,6 @@
 package boomerang.context;
 
-import java.util.Collections;
-import java.util.Set;
-
+import soot.SootMethod;
 import soot.Unit;
 
 /**
@@ -16,15 +14,9 @@ import soot.Unit;
  *
  */
 public class NoContextRequester implements IContextRequester {
-
 	@Override
-	public Set<Context> getCallSiteOf(Context child) {
-		return Collections.emptySet();
-	}
-
-	@Override
-	public Context initialContext(Unit stmt) {
-		return null;
+	public boolean continueAtCallSite(Unit callSite, SootMethod callee) {
+		return false;
 	}
 
 }

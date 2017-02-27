@@ -303,7 +303,11 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 			public Set<AccessGraph> computeTargets(AccessGraph source) {
 				AccessGraph derivedSource = source;
 				Set<AccessGraph> out = new HashSet<>();
-				
+				if(!context.getContextRequester().continueAtCallSite(callSite, callee) && !context.visitedBackwardMethod(context.icfg.getMethodOf(callSite))){
+					Alloc alloc = new Alloc(source, edge.getTarget(), callee,context);
+					alloc.execute();
+					return Collections.emptySet();
+				}
 
 				if (context.trackStaticFields() && source.isStatic())
 					return Collections.singleton(source);
@@ -332,7 +336,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 									AccessGraph ap = derivedSource.deriveWithNewLocal(newBase, source.getBaseType());
 									out.add(ap);
 									
-									//Fields that do not have a null assignment must turn arodnd 
+									//Fields that do not have a null assignment must turn around 
 									if(source.getFieldCount() == 1 && !source.isStatic()){
 										SootMethod caller = context.icfg.getMethodOf(callSite);
 										if(callee.isConstructor() && (!caller.isConstructor() || !caller.getActiveBody().getThisLocal().equals(newBase))){

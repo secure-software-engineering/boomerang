@@ -34,8 +34,6 @@ public class PathEdgeStore implements
     Forward, Backward
   }
 
-  private static Logger logger = LoggerFactory.getLogger(PathEdgeStore.class);
-  private static boolean DEBUG = false;//logger.isDebugEnabled();
 
   public PathEdgeStore(BoomerangContext c) {
     this.context = c;
@@ -71,14 +69,14 @@ public class PathEdgeStore implements
   }
 
   public Multimap<Pair<Unit, AccessGraph>, AccessGraph> getResultAtStmtContainingValue(Unit stmt,
-      final AccessGraph fact) {
+      final AccessGraph fact, Set<Pair<Unit,AccessGraph>> visited) {
     precheck();
     SootMethod m = context.icfg.getMethodOf(stmt);
     PerMethodPathEdges perMethodPathEdges = stmtToPathEdges.get(m);
     if (perMethodPathEdges == null)
       return HashMultimap.create();
 
-    return perMethodPathEdges.getResultsAtStmtContainingValue(stmt, fact);
+    return perMethodPathEdges.getResultsAtStmtContainingValue(stmt, fact,visited);
 
   }
 
@@ -109,7 +107,7 @@ public class PathEdgeStore implements
     precheck();
     PerMethodPathEdges perMethodPathEdges = stmtToPathEdges.get(method);
     if (perMethodPathEdges == null) {
-      perMethodPathEdges = new PerMethodPathEdges();
+      perMethodPathEdges = new PerMethodPathEdges(context);
       stmtToPathEdges.put(method, perMethodPathEdges);
     }
     return perMethodPathEdges;

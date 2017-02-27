@@ -35,22 +35,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	// return Collections.emptySet();
 	// };
 
-	/**
-	 * Checks if the edges reaches a start point of a method, if the target fact
-	 * is a method parameter (incl this) it adds the appropriate POI to let the
-	 * analysis turn around.
-	 * 
-	 * @param edge
-	 * @param callee
-	 */
-	private void reachesStartPointOfStartMethod(IPathEdge<Unit, AccessGraph> edge, SootMethod callee) {
-		boolean doTurnaround = context.isParameterOrThisValue(edge.getTarget(), edge.factAtTarget().getBase())
-				|| (edge.factAtTarget().isStatic() && context.trackStaticFields());
-		if (doTurnaround) {
-			// context.getSubQuery().add(new BackwardParameterTurnHandler(edge,
-			// callee));
-		}
-	}
 
 	@Override
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> normalFunctionExtendor(
@@ -85,10 +69,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> unbalancedReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge, Unit callSite,
 			Unit returnSite) {
-		if (!context.visitedBackwardMethod(context.icfg.getMethodOf(callSite))) {
-			reachesStartPointOfStartMethod(prevEdge, context.icfg.getMethodOf(prevEdge.getTarget()));
-			return Collections.emptySet();
-		}
 		succEdge = new PathEdge<Unit, AccessGraph>(null, succEdge.factAtTarget(), succEdge.getTarget(),
 				succEdge.factAtTarget());
 		return Collections.singleton(succEdge);

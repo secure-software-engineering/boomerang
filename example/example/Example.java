@@ -77,7 +77,7 @@ public class Example {
     // method)
     af.startQuery();
     aliases = af.findAliasAtStmt(query.getAccessGraph(), query.getStatement(),
-        new AllCallersRequester<BiDiInterproceduralCFG<Unit, SootMethod>>(icfg));
+        new AllCallersRequester());
     System.out.println(query);
     System.out.println(aliases.withMethodOfAllocationSite(icfg));
   }
