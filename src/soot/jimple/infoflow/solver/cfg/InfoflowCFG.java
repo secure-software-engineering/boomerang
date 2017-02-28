@@ -113,7 +113,7 @@ public class InfoflowCFG implements IInfoflowCFG {
 
 	public InfoflowCFG(BiDiInterproceduralCFG<Unit, SootMethod> delegate) {
 		this.delegate = delegate;
-		preanalysis();
+//		preanalysis();
 	}
 
 	private void preanalysis() {
@@ -416,17 +416,17 @@ public class InfoflowCFG implements IInfoflowCFG {
 
 	@Override
 	public boolean containsAllocSiteOfType(SootMethod method, Type type) {
-		return preanalysis.containsAllocSiteOfType(method, type);
+		return (preanalysis == null ? true : preanalysis.containsAllocSiteOfType(method, type));
 	}
 
 	@Override
 	public boolean accessesField(SootMethod method, SootField field) {
-		return preanalysis.accessesField(method, field);
+		return (preanalysis == null ? true : preanalysis.accessesField(method, field));
 	}
 
 	@Override
 	public boolean writesToField(SootMethod method, SootField field) {
-		return preanalysis.writesToField(method, field);
+		return (preanalysis == null ? true : preanalysis.writesToField(method, field));
 	}
 
 	@Override
