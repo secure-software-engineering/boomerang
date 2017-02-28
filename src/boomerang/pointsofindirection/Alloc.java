@@ -13,21 +13,23 @@ public class Alloc {
 	private SootMethod method;
 	private AccessGraph factAtTarget;
 	private BoomerangContext context;
+	private boolean isNullAlloc;
 
 	/**
 	 * Creates an allocation POI with the backward path edge reaching it.
 	 * 
 	 * @param pathEdge
 	 */
-	public Alloc(AccessGraph factAtTarget, Unit target, SootMethod method, BoomerangContext context) {
+	public Alloc(AccessGraph factAtTarget, Unit target, SootMethod method, BoomerangContext context, boolean isNullAlloc) {
 		this.factAtTarget = factAtTarget;
 		this.method = method;
 		this.target = target;
 		this.context = context;
+		this.isNullAlloc = isNullAlloc;
 	}
 
 	public void execute() {
-		AccessGraph alloc = factAtTarget.deriveWithAllocationSite(target);
+		AccessGraph alloc = factAtTarget.deriveWithAllocationSite(target,isNullAlloc);
 		if (target instanceof AssignStmt && ((AssignStmt) target).getRightOp() instanceof NewExpr)
 			alloc = alloc.deriveWithNewLocal(alloc.getBase(),
 					((NewExpr) ((AssignStmt) target).getRightOp()).getBaseType());

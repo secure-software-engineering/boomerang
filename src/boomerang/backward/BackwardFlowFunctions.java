@@ -304,7 +304,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 				AccessGraph derivedSource = source;
 				Set<AccessGraph> out = new HashSet<>();
 				if(!context.getContextRequester().continueAtCallSite(callSite, callee) && !context.visitedBackwardMethod(context.icfg.getMethodOf(callSite))){
-					Alloc alloc = new Alloc(source, edge.getTarget(), callee,context);
+					Alloc alloc = new Alloc(source, edge.getTarget(), callee,context, true);
 					alloc.execute();
 					return Collections.emptySet();
 				}
@@ -340,7 +340,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 									if(source.getFieldCount() == 1 && !source.isStatic()){
 										SootMethod caller = context.icfg.getMethodOf(callSite);
 										if(callee.isConstructor() && (!caller.isConstructor() || !caller.getActiveBody().getThisLocal().equals(newBase))){
-												Alloc alloc = new Alloc(source, edge.getTarget(), callee,context);
+												Alloc alloc = new Alloc(source, edge.getTarget(), callee,context, true);
 												alloc.execute();
 												return Collections.emptySet();
 										}
@@ -460,7 +460,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 		}
 			
 			context.debugger.onAllocationSiteReached(as, pe);
-			Alloc alloc = new Alloc(factAtTarget,pe.getTarget(),context.icfg.getMethodOf(as),context);
+			Alloc alloc = new Alloc(factAtTarget,pe.getTarget(),context.icfg.getMethodOf(as),context, false);
 			alloc.execute();
 	}
 

@@ -7,6 +7,7 @@ import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.forward.AbstractPathEdgeFunctions;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
+import boomerang.pointsofindirection.Alloc;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
@@ -69,6 +70,14 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> unbalancedReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge, Unit callSite,
 			Unit returnSite) {
+		if(callSite == null && returnSite == null){
+			SootMethod callee = context.icfg.getMethodOf(prevEdge.getTarget());
+			if(context.getContextRequester().isEntryPointMethod(callee)){
+				Alloc alloc = new Alloc(prevEdge.factAtTarget(), prevEdge.getTarget(), callee,context, true);
+				alloc.execute();
+			}
+			return Collections.emptySet();
+		}
 		succEdge = new PathEdge<Unit, AccessGraph>(null, succEdge.factAtTarget(), succEdge.getTarget(),
 				succEdge.factAtTarget());
 		return Collections.singleton(succEdge);

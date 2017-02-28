@@ -48,6 +48,8 @@ public class AccessGraph {
 	 */
 	private Unit allocationSite;
 
+	private boolean isNullAllocsite;
+
 	/**
 	 * Constructs an access graph with empty field graph, but specified base
 	 * (local) variable.
@@ -58,11 +60,11 @@ public class AccessGraph {
 	 *            The type of the base
 	 */
 	public AccessGraph(Local val, Type t) {
-		this(val, t, null, null);
+		this(val, t, null, null, false);
 	}
 
-	public AccessGraph(Local val, Type t, Unit allocsite) {
-		this(val, t, null, allocsite);
+	public AccessGraph(Local val, Type t, Unit allocsite,boolean isNullAllocsite) {
+		this(val, t, null, allocsite, isNullAllocsite);
 	}
 
 	/**
@@ -77,7 +79,7 @@ public class AccessGraph {
 	 *            the first field access
 	 */
 	public AccessGraph(Local val, Type t, WrappedSootField field) {
-		this(val, t, new FieldGraph(field), null);
+		this(val, t, new FieldGraph(field), null,false);
 	}
 
 	/**
@@ -92,11 +94,12 @@ public class AccessGraph {
 	 *            An array of field accesses
 	 */
 	public AccessGraph(Local val, Type t, WrappedSootField[] f) {
-		this(val, t, (f == null || f.length == 0 ? null : new FieldGraph(f)), null);
+		this(val, t, (f == null || f.length == 0 ? null : new FieldGraph(f)), null, false);
 	}
 
-	protected AccessGraph(Local value, Type t, IFieldGraph fieldGraph, Unit sourceStmt) {
+	protected AccessGraph(Local value, Type t, IFieldGraph fieldGraph, Unit sourceStmt, boolean isNullAllocsite) {
 		this.value = value;
+		this.isNullAllocsite = isNullAllocsite;
 		this.type = (WrappedSootField.TRACK_TYPE ? t : null);
 //		if(apgs == null){
 //			apgs = new LinkedList<IFieldGraph>();
@@ -218,7 +221,7 @@ public class AccessGraph {
 	 * @return The access graph
 	 */
 	public AccessGraph deriveWithNewLocal(Local local, Type type) {
-		return new AccessGraph(local, type, fieldGraph, allocationSite);
+		return new AccessGraph(local, type, fieldGraph, allocationSite,isNullAllocsite);
 	}
 
 	/**
@@ -234,7 +237,7 @@ public class AccessGraph {
 		if(newapg.shouldOverApproximate()){
 			newapg = newapg.overapproximation();
 		}
-		return new AccessGraph(value, type, newapg, allocationSite);
+		return new AccessGraph(value, type, newapg, allocationSite,isNullAllocsite);
 	}
 
 	/**
@@ -251,7 +254,7 @@ public class AccessGraph {
 		if(newapg.shouldOverApproximate()){
 			newapg = newapg.overapproximation();
 		}
-		return new AccessGraph(value, type, newapg, allocationSite);
+		return new AccessGraph(value, type, newapg, allocationSite,isNullAllocsite);
 	}
 	
 	 /**
@@ -330,7 +333,7 @@ public class AccessGraph {
 		if(newapg.shouldOverApproximate()){
 			newapg = newapg.overapproximation();
 		}
-		return new AccessGraph(value, type, newapg, allocationSite);
+		return new AccessGraph(value, type, newapg, allocationSite,isNullAllocsite);
 	}
 
 	/**
@@ -378,10 +381,10 @@ public class AccessGraph {
 
 		Set<IFieldGraph> newapg = fieldGraph.popFirstField();
 		if (newapg.isEmpty())
-			return Collections.singleton(new AccessGraph(value, type, null, allocationSite));
+			return Collections.singleton(new AccessGraph(value, type, null, allocationSite,isNullAllocsite));
 		Set<AccessGraph> out = new HashSet<>();
 		for (IFieldGraph a : newapg) {
-				out.add(new AccessGraph(value, type, a, allocationSite));
+				out.add(new AccessGraph(value, type, a, allocationSite,isNullAllocsite));
 		}
 		return out;
 	}
@@ -401,9 +404,9 @@ public class AccessGraph {
 
 		Set<AccessGraph> out = new HashSet<>();
 		if (newapg.isEmpty())
-			return Collections.singleton(new AccessGraph(value, type, null, allocationSite));
+			return Collections.singleton(new AccessGraph(value, type, null, allocationSite,isNullAllocsite));
 		for (IFieldGraph a : newapg) {
-			out.add(new AccessGraph(value, type, a, allocationSite));
+			out.add(new AccessGraph(value, type, a, allocationSite,isNullAllocsite));
 		}
 		return out;
 	}
@@ -426,8 +429,8 @@ public class AccessGraph {
 	 *            The statement, typically the allocation site.
 	 * @return The derived access graph
 	 */
-	public AccessGraph deriveWithAllocationSite(Unit stmt) {
-		return new AccessGraph(value, type, fieldGraph, stmt);
+	public AccessGraph deriveWithAllocationSite(Unit stmt, boolean isNullAllocsite) {
+		return new AccessGraph(value, type, fieldGraph, stmt, isNullAllocsite);
 	}
 
 	/**
@@ -448,7 +451,7 @@ public class AccessGraph {
 	 * @return The derived access graph
 	 */
 	public AccessGraph deriveWithoutAllocationSite() {
-		return new AccessGraph(value, type,fieldGraph, null);
+		return new AccessGraph(value, type,fieldGraph, null, false);
 	}
 
 	/**
@@ -457,7 +460,7 @@ public class AccessGraph {
 	 * @return The derived access graph
 	 */
 	public AccessGraph dropTail() {
-		return new AccessGraph(value, type, null, allocationSite);
+		return new AccessGraph(value, type, null, allocationSite,isNullAllocsite);
 	}
 
 	/**
@@ -468,7 +471,7 @@ public class AccessGraph {
 	 * @return The derived access graph.
 	 */
 	public AccessGraph makeStatic() {
-		return new AccessGraph(null, null, fieldGraph, allocationSite);
+		return new AccessGraph(null, null, fieldGraph, allocationSite,isNullAllocsite);
 	}
 
 	/**
@@ -575,10 +578,14 @@ public class AccessGraph {
 
 	public AccessGraph overApproximate() {
 		// TODO Auto-generated method stub
-		return new AccessGraph(value, type, fieldGraph == null ? null : fieldGraph.overapproximation(), allocationSite);
+		return new AccessGraph(value, type, fieldGraph == null ? null : fieldGraph.overapproximation(), allocationSite,isNullAllocsite);
 	}
 
 	public AccessGraph noType() {
-		return new AccessGraph(value,value != null ? value.getType() : null,fieldGraph == null ? null : fieldGraph.noType(), allocationSite);
+		return new AccessGraph(value,value != null ? value.getType() : null,fieldGraph == null ? null : fieldGraph.noType(), allocationSite,isNullAllocsite);
+	}
+
+	public boolean hasNullAllocationSite() {
+		return isNullAllocsite;
 	}
 }

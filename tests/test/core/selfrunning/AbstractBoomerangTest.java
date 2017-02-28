@@ -126,7 +126,7 @@ public class AbstractBoomerangTest {
 
 		AliasFinder boomerang = new AliasFinder(icfg, new TestBoomerangOptions());
 		boomerang.startQuery();
-		return boomerang.findAliasAtStmt(q.getAp(), q.getStmt(),contextReuqester);
+		return boomerang.findAliasAtStmt(q.getAp(), q.getStmt(),contextReuqester).withoutNullAllocationSites();
 	}
 
 	private AliasResults parseExpectedQueryResults(Query q) {

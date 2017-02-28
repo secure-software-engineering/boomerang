@@ -13,6 +13,8 @@ import boomerang.accessgraph.FieldGraph;
 import boomerang.accessgraph.WrappedSootField;
 import heros.solver.Pair;
 import soot.Unit;
+import soot.jimple.AssignStmt;
+import soot.jimple.NullConstant;
 import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 
 public class AliasResults extends ForwardingMultimap<Pair<Unit, AccessGraph>, AccessGraph> {
@@ -147,5 +149,13 @@ public class AliasResults extends ForwardingMultimap<Pair<Unit, AccessGraph>, Ac
 		}
 		sb.append("}");
 		return "AliasResults: " + sb.toString();
+	}
+	public AliasResults withoutNullAllocationSites(){
+		AliasResults res = new AliasResults();
+		for(Pair<Unit,AccessGraph> key : keySet()){
+			if(!key.getO2().hasNullAllocationSite())
+				res.putAll(key, get(key));
+		}
+		return res;
 	}
 }
