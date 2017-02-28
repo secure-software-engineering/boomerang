@@ -19,4 +19,9 @@ public class NoContextRequester implements IContextRequester {
 		return false;
 	}
 
+	@Override
+	public boolean isEntryPointMethod(SootMethod method) {
+		return false;
+	}
+
 }

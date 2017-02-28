@@ -23,4 +23,9 @@ public class AllCallersRequester implements
 	public boolean continueAtCallSite(Unit callSite, SootMethod callee) {
 		return true;
 	}
+
+	@Override
+	public boolean isEntryPointMethod(SootMethod method) {
+		return true;
+	}
 }
