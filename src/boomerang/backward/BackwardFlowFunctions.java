@@ -145,8 +145,10 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 					SootField field = fr.getField();
 					if (source.baseMatches(base) && source.firstFirstFieldMayMatch(field)) {
 						if (rightOp instanceof NullConstant) {
-							if(source.getFieldCount() == 1)
-								allocationSiteReached(edge, as, rightOp);
+							if(source.getFieldCount() == 1 || source.hasSetBasedFieldGraph()){
+								Alloc alloc = new Alloc(source,as,context.icfg.getMethodOf(as),context, true);
+								alloc.execute();
+							}
 
 							if(!source.firstFieldMustMatch(field))
 								return Collections.singleton(source);
