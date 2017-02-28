@@ -186,7 +186,7 @@ public class AbstractBoomerangTest {
 				if (allocatesObjectOfInterest((NewExpr) as.getRightOp())) {
 					Local local = (Local) as.getLeftOp();
 					AccessGraph accessGraph = new AccessGraph(local, ((NewExpr) as.getRightOp()).getBaseType());
-					out.add(new Pair<Unit, AccessGraph>(as, accessGraph.deriveWithAllocationSite(as)));
+					out.add(new Pair<Unit, AccessGraph>(as, accessGraph.deriveWithAllocationSite(as, true)));
 				}
 			}
 
@@ -219,7 +219,7 @@ public class AbstractBoomerangTest {
 					if (allocatesObjectOfInterest((NewExpr) as.getRightOp())) {
 						Local local = (Local) as.getLeftOp();
 						AccessGraph accessGraph = new AccessGraph(local, ((NewExpr) as.getRightOp()).getBaseType());
-						out.add(accessGraph.deriveWithAllocationSite(as));
+						out.add(accessGraph.deriveWithAllocationSite(as,true));
 					}
 				}
 
