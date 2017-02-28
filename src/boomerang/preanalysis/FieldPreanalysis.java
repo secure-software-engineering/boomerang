@@ -54,13 +54,6 @@ public class FieldPreanalysis {
 
   public FieldPreanalysis(InterproceduralCFG<Unit, SootMethod> icfg) {
     compute();
-    try {
-      AliasFinder.ARRAY_COPY =
-          Scene.v().getMethod(
-              "<java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>");
-    } catch (RuntimeException e) {
-
-    }
   }
 
   private void compute() {

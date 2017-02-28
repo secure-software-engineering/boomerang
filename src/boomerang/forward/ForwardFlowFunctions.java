@@ -458,7 +458,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 						return context.forwardMockHandler.computeTargetsOverCall(callSite, ie, source, callArgs, edge);
 					}
 
-					if (ie.getMethod().equals(AliasFinder.ARRAY_COPY)) {
+					if (ie.getMethod().equals(AliasFinder.arrayCopy())) {
 						for (Value callVal : callArgs) {
 							if (callVal == source.getBase()) {
 								// java uses call by value, but fields of

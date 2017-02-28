@@ -16,6 +16,7 @@ import boomerang.forward.ForwardSolver;
 import heros.solver.Pair;
 import soot.Local;
 import soot.RefType;
+import soot.Scene;
 import soot.SootField;
 import soot.SootMethod;
 import soot.Type;
@@ -48,8 +49,19 @@ public class AliasFinder {
 	 * Holds the System.arraycopy method and is used within the flow functions
 	 * to describe aliases flow upon calling this method.
 	 */
-	public static SootMethod ARRAY_COPY;
+	private static SootMethod ARRAY_COPY;
 
+	public static SootMethod arrayCopy(){
+		if(ARRAY_COPY == null)
+		    try {
+		      ARRAY_COPY =
+		          Scene.v().getMethod(
+		              "<java.lang.System: void arraycopy(java.lang.Object,int,java.lang.Object,int,int)>");
+		    } catch (RuntimeException e) {
+
+		    }
+		return ARRAY_COPY;
+	} 
 	/**
 	 * Constructs an AliasFinder with the provided interprocedural control flow
 	 * graph.

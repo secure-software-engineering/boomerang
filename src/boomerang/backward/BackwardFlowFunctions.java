@@ -401,7 +401,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 							return context.backwardMockHandler.computeTargetsOverCall(callSite, ie, source, callArgs,
 									edge);
 						}
-						if (ie.getMethod().equals(AliasFinder.ARRAY_COPY)) {
+						if (ie.getMethod().equals(AliasFinder.arrayCopy())) {
 							for (Value callVal : callArgs) {
 								if (callVal.equals(source.getBase())) {
 									// java uses call by value, but fields of
