@@ -15,8 +15,10 @@ import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IFDSSolver.PropagationType;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
+import boomerang.pointsofindirection.AliasCallback;
 import boomerang.pointsofindirection.ForwardAliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
+import boomerang.pointsofindirection.StrongUpdateCallback;
 import heros.FlowFunction;
 import soot.Local;
 import soot.PrimType;
@@ -119,6 +121,12 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 								context.getBackwardSolver().inject(new PathEdge<Unit, AccessGraph>(null, a, curr, a),
 										PropagationType.Normal);
 							}
+						}
+						//Strong update on fields
+						if(source.firstFieldMustMatch(field)){
+							System.out.println("STRONG UPDATE " + curr);
+							context.getForwardPathEdges().registerPointOfIndirectionAt(curr, new PointOfIndirection(new AccessGraph((Local) base, ((Local)base).getType()), curr, context), new StrongUpdateCallback(new PathEdge<Unit,AccessGraph>(edge.getStart(),edge.factAtSource(),succ,source), context));
+							return Collections.emptySet();
 						}
 						if(source.baseAndFirstFieldMatches(base, field))
 							return Collections.emptySet();
