@@ -1,4 +1,4 @@
-package boomerang.cache;
+package boomerang;
 
 import java.util.Collection;
 

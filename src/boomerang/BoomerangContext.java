@@ -15,7 +15,6 @@ import boomerang.backward.BackwardFlowFunctions;
 import boomerang.backward.BackwardProblem;
 import boomerang.backward.BackwardSolver;
 import boomerang.bidi.PathEdgeStore;
-import boomerang.cache.ResultCache;
 import boomerang.context.IContextRequester;
 import boomerang.debug.IBoomerangDebugger;
 import boomerang.debug.JSONOutputDebugger;
@@ -54,10 +53,6 @@ public class BoomerangContext {
 	 */
 	public IInfoflowCFG bwicfg;
 
-	/**
-	 * Global query cache, holding different caches.
-	 */
-	public ResultCache querycache;
 
 	/**
 	 * Native call handler, defines how aliases flow at native call sites.
@@ -96,7 +91,6 @@ public class BoomerangContext {
 		WrappedSootField.TRACK_STMT = options.getTrackStatementsInFields();
 		this.trackStaticFields = options.getTrackStaticFields();
 
-		querycache = new ResultCache();
 	}
 
 	public boolean isValidAccessPath(AccessGraph a) {
@@ -120,19 +114,6 @@ public class BoomerangContext {
 			return method.getActiveBody().getThisLocal().equals(local);
 		}
 		return false;
-	}
-
-	public void resetQueryCache() {
-		querycache.clear();
-	}
-
-	public void cleanQueryCache() {
-		if (querycache != null)
-			querycache.clean();
-	}
-
-	public void forceTerminate() {
-		cleanQueryCache();
 	}
 
 	public boolean isIgnoredMethod(SootMethod m) {

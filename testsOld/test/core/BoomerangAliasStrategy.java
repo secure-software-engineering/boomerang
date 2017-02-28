@@ -8,10 +8,10 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
 import boomerang.AliasFinder;
+import boomerang.AliasResults;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
-import boomerang.cache.AliasResults;
 import boomerang.context.AllCallersRequester;
 import boomerang.context.IContextRequester;
 import boomerang.context.NoContextRequester;

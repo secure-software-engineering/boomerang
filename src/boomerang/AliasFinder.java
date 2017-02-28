@@ -10,9 +10,6 @@ import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.SetBasedFieldGraph;
 import boomerang.accessgraph.WrappedSootField;
 import boomerang.backward.BackwardSolver;
-import boomerang.cache.AliasResults;
-import boomerang.cache.Query;
-import boomerang.cache.ResultCache.NoContextRequesterQueryCache;
 import boomerang.context.IContextRequester;
 import boomerang.context.NoContextRequester;
 import boomerang.forward.ForwardSolver;
@@ -187,28 +184,14 @@ public class AliasFinder {
 		assert stmt != null;
 		context.validateInput(ap, stmt);
 		context.setContextRequester(req);
-		NoContextRequesterQueryCache cache = context.querycache.contextlessQueryCache();
 		if (context.isOutOfBudget()) {
 			throw new BoomerangTimeoutException();
 		}
 		if (stmt instanceof ThrowStmt)
 			return new AliasResults();
 
-		if (cache.isDone(q)) {
-			sanityCheck(cache.getResults(q), stmt);
-				return cache.getResults(q);
-		}
-
-		if (cache.isProcessing(q)) {
-			context.debugger.onCurrentlyProcessingRecursiveQuery(q);
-			return new AliasResults();
-		}
-		cache.start(q);
-
 		context.debugger.startQuery(q);
 		AliasResults res = fixpointIteration(stmt,ap);
-		cache.setResults(q, res);
-		sanityCheck(cache.getResults(q), stmt);
 		context.debugger.finishedQuery(q, res);
 
 		return res;

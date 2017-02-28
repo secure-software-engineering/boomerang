@@ -6,7 +6,7 @@ import java.util.List;
 import com.google.common.base.Stopwatch;
 
 import boomerang.AliasFinder;
-import boomerang.cache.AliasResults;
+import boomerang.AliasResults;
 import boomerang.context.AllCallersRequester;
 import boomerang.preanalysis.PreparationTransformer;
 import soot.G;

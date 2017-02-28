@@ -13,10 +13,10 @@ import org.junit.Rule;
 import org.junit.rules.TestName;
 
 import boomerang.AliasFinder;
+import boomerang.AliasResults;
+import boomerang.Query;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
-import boomerang.cache.AliasResults;
-import boomerang.cache.Query;
 import boomerang.context.AllCallersRequester;
 import boomerang.context.IContextRequester;
 import boomerang.context.NoContextRequester;

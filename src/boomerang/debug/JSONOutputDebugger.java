@@ -17,10 +17,10 @@ import org.json.simple.JSONObject;
 
 import com.google.common.base.Joiner;
 
+import boomerang.AliasResults;
 import boomerang.BoomerangContext;
+import boomerang.Query;
 import boomerang.accessgraph.AccessGraph;
-import boomerang.cache.AliasResults;
-import boomerang.cache.Query;
 import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IPathEdge;
 import heros.solver.Pair;

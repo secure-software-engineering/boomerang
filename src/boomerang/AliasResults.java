@@ -1,4 +1,4 @@
-package boomerang.cache;
+package boomerang;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,7 +8,6 @@ import com.google.common.collect.ForwardingMultimap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 
-import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.FieldGraph;
 import boomerang.accessgraph.WrappedSootField;
