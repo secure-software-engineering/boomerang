@@ -1,14 +1,10 @@
 package boomerang.bidi;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -16,6 +12,7 @@ import com.google.common.collect.Multimap;
 import boomerang.BoomerangContext;
 import boomerang.BoomerangTimeoutException;
 import boomerang.accessgraph.AccessGraph;
+import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.IPathEdges;
 import boomerang.pointsofindirection.AliasCallback;
@@ -29,14 +26,13 @@ public class PathEdgeStore implements
     IPathEdges<Unit, AccessGraph, SootMethod, BiDiInterproceduralCFG<Unit, SootMethod>> {
   private Map<SootMethod, PerMethodPathEdges> stmtToPathEdges = new HashMap<>();
   private BoomerangContext context;
-
-  public enum Direction {
-    Forward, Backward
-  }
+private Direction direction;
 
 
-  public PathEdgeStore(BoomerangContext c) {
+
+  public PathEdgeStore(BoomerangContext c, Direction dir) {
     this.context = c;
+	this.direction = dir;
   }
 
   public void register(IPathEdge<Unit, AccessGraph> pe) {
@@ -107,7 +103,7 @@ public class PathEdgeStore implements
     precheck();
     PerMethodPathEdges perMethodPathEdges = stmtToPathEdges.get(method);
     if (perMethodPathEdges == null) {
-      perMethodPathEdges = new PerMethodPathEdges(context);
+      perMethodPathEdges = new PerMethodPathEdges(context, direction);
       stmtToPathEdges.put(method, perMethodPathEdges);
     }
     return perMethodPathEdges;

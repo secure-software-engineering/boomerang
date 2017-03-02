@@ -31,6 +31,7 @@ import boomerang.mock.NativeCallHandler;
 import boomerang.pointsofindirection.AliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
 import heros.FlowFunction;
+import heros.solver.Pair;
 import soot.Local;
 import soot.SootMethod;
 import soot.Unit;
@@ -231,6 +232,9 @@ public class BoomerangContext {
 		return (PathEdgeStore) getForwardSolver().getPathEdges();
 	}
 
+	public Set<? extends IPathEdge<Unit, AccessGraph>> getForwardIncomings(Pair<Unit,AccessGraph> startNode) {
+		return getForwardSolver().incoming(startNode, icfg.getMethodOf(startNode.getO1()));
+	}
 	public void registerPOI(Unit stmt, PointOfIndirection poi, AliasCallback cb) {
 		getForwardPathEdges().registerPointOfIndirectionAt(stmt, poi,cb);
 	}
