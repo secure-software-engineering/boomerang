@@ -11,12 +11,16 @@ public class AliasViaParameter extends AbstractBoomerangTest{
 		A a = new A();
 		A b = a;
 		setAndLoadFieldOnAlias(a,b);
+		AllocatedObject query = a.field;
+		queryFor(query);
 	}
 	@Test
 	public void aliasViaParameterWrapped(){
 		A a = new A();
 		A b = a;
 		passThrough(a,b);
+		AllocatedObject query = a.field;
+		queryFor(query);
 	}
 	
 	private void passThrough(A a, A b) {
@@ -24,8 +28,6 @@ public class AliasViaParameter extends AbstractBoomerangTest{
 	}
 	private void setAndLoadFieldOnAlias(A a, A b) {
 		b.field = new AllocatedObject(){};
-		AllocatedObject query = a.field;
-		queryFor(query);
 	}
 
 	private static class A{

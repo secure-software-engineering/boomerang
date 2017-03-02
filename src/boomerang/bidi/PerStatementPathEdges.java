@@ -70,7 +70,7 @@ class PerStatementPathEdges {
 	}
 
 	private boolean aliasInContext(Unit start, AccessGraph potentialAlias1, AccessGraph potentialAlias2) {
-		return aliasInContext(start,potentialAlias1, potentialAlias2, new HashSet<>());
+		return aliasInContext(start,potentialAlias1, potentialAlias2, new HashSet<Unit>());
 	}
 
 	Map<CacheKey, Boolean> cache = new HashMap<>();
@@ -121,9 +121,8 @@ class PerStatementPathEdges {
 				return false;
 			return true;
 		}
-
-		
 	}
+	
 	private boolean aliasInContext(Unit startNodeOfCallee, AccessGraph potentialAlias1, AccessGraph potentialAlias2, Set<Unit> visited) {
 		if(!visited.add(startNodeOfCallee))
 			return false;
