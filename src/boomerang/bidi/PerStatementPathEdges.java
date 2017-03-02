@@ -2,7 +2,9 @@ package boomerang.bidi;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
@@ -44,6 +46,8 @@ class PerStatementPathEdges {
 		reversePathEdges.put(typeLessBackwardNode, pe.getStartNode());
 		if (!processedPathEdges.add(pe))
 			return;
+		if(direction == Direction.BACKWARD)
+			return;
 		for (PointOfIndirection p : targetToPOI.get(typeLessBackwardNode)) {
 			registerPOIWithTarget(typeLessBackwardNode, p);
 		}
@@ -52,8 +56,6 @@ class PerStatementPathEdges {
 				cb.newAliasEncountered(p, pe.factAtTarget());
 			}
 		}
-		if(direction == Direction.BACKWARD)
-			return;
 		if (!pe.factAtSource().hasAllocationSite()) {
 			for (Entry<Pair<Unit, AccessGraph>, PointOfIndirection> e : parameterOriginToPOI.entries()) {
 				PointOfIndirection p = e.getValue();
@@ -71,12 +73,68 @@ class PerStatementPathEdges {
 		return aliasInContext(start,potentialAlias1, potentialAlias2, new HashSet<>());
 	}
 
+	Map<CacheKey, Boolean> cache = new HashMap<>();
+	private class CacheKey{
+		private Unit startNodeOfCallee;
+		private AccessGraph potentialAlias1;
+		private AccessGraph potentialAlias2;
+
+		public CacheKey(Unit startNodeOfCallee, AccessGraph potentialAlias1, AccessGraph potentialAlias2) {
+			this.startNodeOfCallee = startNodeOfCallee;
+			this.potentialAlias1 = potentialAlias1;
+			this.potentialAlias2 = potentialAlias2;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((potentialAlias1 == null) ? 0 : potentialAlias1.hashCode());
+			result = prime * result + ((potentialAlias2 == null) ? 0 : potentialAlias2.hashCode());
+			result = prime * result + ((startNodeOfCallee == null) ? 0 : startNodeOfCallee.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			CacheKey other = (CacheKey) obj;
+			if (potentialAlias1 == null) {
+				if (other.potentialAlias1 != null)
+					return false;
+			} else if (!potentialAlias1.equals(other.potentialAlias1))
+				return false;
+			if (potentialAlias2 == null) {
+				if (other.potentialAlias2 != null)
+					return false;
+			} else if (!potentialAlias2.equals(other.potentialAlias2))
+				return false;
+			if (startNodeOfCallee == null) {
+				if (other.startNodeOfCallee != null)
+					return false;
+			} else if (!startNodeOfCallee.equals(other.startNodeOfCallee))
+				return false;
+			return true;
+		}
+
+		
+	}
 	private boolean aliasInContext(Unit startNodeOfCallee, AccessGraph potentialAlias1, AccessGraph potentialAlias2, Set<Unit> visited) {
 		if(!visited.add(startNodeOfCallee))
 			return false;
 		if(potentialAlias1.hasSetBasedFieldGraph() || potentialAlias2.hasSetBasedFieldGraph())
 			return false;
-//		System.out.println(context.icfg.getMethodOf(startNodeOfCallee) + " " + potentialAlias1 + " " + potentialAlias2);
+		CacheKey key = new CacheKey(startNodeOfCallee,potentialAlias1,potentialAlias2);
+		if(cache.containsKey(key))
+			return cache.get(key);
+		key = new CacheKey(startNodeOfCallee,potentialAlias2,potentialAlias1);
+		if(cache.containsKey(key))
+			return cache.get(key);
 		Set<? extends IPathEdge<Unit, AccessGraph>> pathEdges1 = context
 				.getForwardIncomings(new Pair<Unit, AccessGraph>(startNodeOfCallee, potentialAlias1));
 		Set<? extends IPathEdge<Unit, AccessGraph>> pathEdges2 = context
@@ -84,17 +142,23 @@ class PerStatementPathEdges {
 		for (IPathEdge<Unit, AccessGraph> edge1 : pathEdges1) {
 			for (IPathEdge<Unit, AccessGraph> edge2 : pathEdges2) {
 				if (edge1.getStartNode().equals(edge2.getStartNode())) {
+					cache.put(new CacheKey(startNodeOfCallee,potentialAlias1,potentialAlias2), true);
 					return true;
 				}
 				if (!edge1.factAtSource().hasAllocationSite() && !edge1.factAtSource().hasAllocationSite()
 						&& edge2.getStart().equals(edge1.getStart())) {
-					return aliasInContext(edge1.getStart(), edge1.factAtSource(), edge2.factAtSource(),visited);
+					boolean res = aliasInContext(edge1.getStart(), edge1.factAtSource(), edge2.factAtSource(),visited);
+					cache.put(new CacheKey(startNodeOfCallee,potentialAlias1,potentialAlias2), res);
+					return res;
 				}
 			}
 		}
+		cache.put(new CacheKey(startNodeOfCallee,potentialAlias1,potentialAlias2), false);
 		return false;
 	}
 
+	
+	
 	public void registerPointOfIndirectionAt(PointOfIndirection poi, AliasCallback callback) {
 		Pair<Unit, AccessGraph> aliasTarget = poi.getTarget();
 		if (poisToCallback.put(poi, callback))
@@ -117,8 +181,11 @@ class PerStatementPathEdges {
 				// alias.
 				for (Pair<Unit, AccessGraph> existingPathEdgeOrigin : forwardPathEdges.keySet()) {
 					if (!existingPathEdgeOrigin.getO2().hasNullAllocationSite()) {
-						if (aliasInContext(origin.getO1(), origin.getO2(), existingPathEdgeOrigin.getO2()))
-								cb.newAliasEncountered(poi, existingPathEdgeOrigin.getO2());
+						if (!aliasInContext(origin.getO1(), origin.getO2(), existingPathEdgeOrigin.getO2()))
+							continue;
+						for(Pair<Unit,AccessGraph> target : forwardPathEdges.get(existingPathEdgeOrigin)){
+							cb.newAliasEncountered(poi, target.getO2());
+						}
 					}
 				}
 			}
@@ -140,10 +207,13 @@ class PerStatementPathEdges {
 				// alias.
 				for (Pair<Unit, AccessGraph> existingPathEdgeOrigin : forwardPathEdges.keySet()) {
 					if (!existingPathEdgeOrigin.getO2().hasNullAllocationSite()) {
-						if (aliasInContext(origin.getO1(), origin.getO2(), existingPathEdgeOrigin.getO2()))
-							for (AliasCallback cb : poisToCallback.get(poi)) {
-								cb.newAliasEncountered(poi, existingPathEdgeOrigin.getO2());
+						if (!aliasInContext(origin.getO1(), origin.getO2(), existingPathEdgeOrigin.getO2()))
+							continue;
+						for (AliasCallback cb : poisToCallback.get(poi)) {
+							for(Pair<Unit,AccessGraph> target : forwardPathEdges.get(existingPathEdgeOrigin)){
+								cb.newAliasEncountered(poi, target.getO2());
 							}
+						}
 					}
 				}
 			}
