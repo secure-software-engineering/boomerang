@@ -247,16 +247,6 @@ public class BoomerangContext {
 		return contextRequester;
 	}
 	
-	
-	public Set<AccessGraph> getBackwardTargetsFor(AccessGraph d1, Unit callSite,
-		      SootMethod callee) {
-		    BackwardFlowFunctions allocAnalysisFlowFunctions = new BackwardFlowFunctions(this);
-		    FlowFunction<AccessGraph> returnFlowFunction =
-		        allocAnalysisFlowFunctions.getReturnFlowFunction(null, callSite, callee, null);
-		    Set<AccessGraph> targets = returnFlowFunction.computeTargets(d1);
-		    return targets;
-	}
-
 	public Set<AccessGraph> getForwardTargetsFor(AccessGraph d2, Unit callSite, SootMethod callee) {
 		Collection<Unit> calleeSps = this.icfg.getStartPointsOf(callee);
 		Set<AccessGraph> factsInCallee = new HashSet<>();
