@@ -123,11 +123,6 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 							}
 						}
 						//Strong update on fields
-						if(source.firstFieldMustMatch(field)){
-							System.out.println("STRONG UPDATE " + curr);
-							context.getForwardPathEdges().registerPointOfIndirectionAt(curr, new PointOfIndirection(new AccessGraph((Local) base, ((Local)base).getType()), curr, context), new StrongUpdateCallback(new PathEdge<Unit,AccessGraph>(edge.getStart(),edge.factAtSource(),succ,source), context));
-							return Collections.emptySet();
-						}
 						if(source.baseAndFirstFieldMatches(base, field))
 							return Collections.emptySet();
 					}

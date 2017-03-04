@@ -16,9 +16,13 @@ import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
 import boomerang.pointsofindirection.ForwardAliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
+import boomerang.pointsofindirection.StrongUpdateCallback;
+import soot.Local;
 import soot.SootMethod;
 import soot.Unit;
+import soot.Value;
 import soot.jimple.AssignStmt;
+import soot.jimple.InstanceFieldRef;
 
 class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 
@@ -86,6 +90,19 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		if (!isActivePath(succEdge.getTarget())) {
 			return Collections.emptySet();
 		}
+
+		Unit curr = prevEdge.getTarget();
+		if (curr instanceof AssignStmt && ((AssignStmt) curr).getLeftOp() instanceof InstanceFieldRef) {
+			InstanceFieldRef instanceFieldRef = (InstanceFieldRef) ((AssignStmt) curr).getLeftOp();
+			Value base = instanceFieldRef.getBase();
+			if (prevEdge.factAtTarget().firstFieldMustMatch(instanceFieldRef.getField())) {
+				// System.out.println("STRONG UPDATE " + curr);
+				context.getForwardPathEdges().registerPointOfIndirectionAt(curr,
+						new PointOfIndirection(new AccessGraph((Local) base, ((Local) base).getType()), curr, context),
+						new StrongUpdateCallback(succEdge, context));
+				return Collections.emptySet();
+			}
+		}
 		return Collections.singleton(succEdge);
 	}
 
@@ -113,13 +130,15 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			out.add(succEdge);
 			if (succEdge.factAtTarget().getFieldCount() > 0) {
 				AccessGraph d2 = succEdge.factAtTarget();
-				if(d2.getLastField() != null && !d2.isStatic() && !d2.hasSetBasedFieldGraph()){
-					for(final WrappedSootField field : d2.getLastField()){
+				if (d2.getLastField() != null && !d2.isStatic() && !d2.hasSetBasedFieldGraph()) {
+					for (final WrappedSootField field : d2.getLastField()) {
 						Set<AccessGraph> withoutLast = d2.popLastField();
-						if(withoutLast == null)
+						if (withoutLast == null)
 							continue;
-						for(AccessGraph subgraph : withoutLast){
-							context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(callSite,d1,succEdge.getTarget(),new WrappedSootField[]{field},context));
+						for (AccessGraph subgraph : withoutLast) {
+							context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context),
+									new ForwardAliasCallback(callSite, d1, succEdge.getTarget(),
+											new WrappedSootField[] { field }, context));
 						}
 					}
 				}
@@ -145,7 +164,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		return false;
 	}
 
-
 	@Override
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> balancedReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge,
@@ -165,19 +183,20 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		return Collections.singleton(succEdge);
 	}
 
-	private void createAliasEdgesOnBalanced(Unit callSite,
-			final IPathEdge<Unit, AccessGraph> succEdge) {
+	private void createAliasEdgesOnBalanced(Unit callSite, final IPathEdge<Unit, AccessGraph> succEdge) {
 		AccessGraph d2 = succEdge.factAtTarget();
 		if (isOverridenByCall(d2, callSite))
 			return;
-		if(d2.getLastField() == null  || d2.hasSetBasedFieldGraph() || d2.isStatic())
+		if (d2.getLastField() == null || d2.hasSetBasedFieldGraph() || d2.isStatic())
 			return;
-		for(final WrappedSootField field : d2.getLastField()){
+		for (final WrappedSootField field : d2.getLastField()) {
 			Set<AccessGraph> withoutLast = d2.popLastField();
-			if(withoutLast == null)
+			if (withoutLast == null)
 				continue;
-			for(AccessGraph subgraph : withoutLast){
-				context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context), new ForwardAliasCallback(succEdge.getStart(),succEdge.factAtSource(),succEdge.getTarget(),new WrappedSootField[]{field},context));
+			for (AccessGraph subgraph : withoutLast) {
+				context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context),
+						new ForwardAliasCallback(succEdge.getStart(), succEdge.factAtSource(), succEdge.getTarget(),
+								new WrappedSootField[] { field }, context));
 			}
 		}
 	}
