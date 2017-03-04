@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.google.common.base.Joiner;
+
 import soot.Scene;
 import soot.SootField;
 import soot.Type;
@@ -129,7 +131,7 @@ public class SetBasedFieldGraph implements IFieldGraph {
 	}
 
 	public String toString() {
-		return " **" + fields.toString() + "**";
+		return " {" + Joiner.on(",").join(fields) + "}";
 	}
 	@Override
 	public int hashCode() {

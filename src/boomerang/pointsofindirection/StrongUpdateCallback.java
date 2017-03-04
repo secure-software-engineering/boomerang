@@ -24,8 +24,9 @@ public class StrongUpdateCallback extends AliasCallback {
 	@Override
 	public void newAliasEncountered(PointOfIndirection poi, AccessGraph alias, Pair<Unit,AccessGraph> origin) {
 		if(origins.add(origin)){
-			if(origins.size() > 1)
+			if(origins.size() > 1){
 				context.getForwardSolver().inject(pausedEdge, PropagationType.Normal);
+			}
 		}
 		if(!origin.getO2().hasAllocationSite()){
 			context.getForwardSolver().inject(pausedEdge, PropagationType.Normal);

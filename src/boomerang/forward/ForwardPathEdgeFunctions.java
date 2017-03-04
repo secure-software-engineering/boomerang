@@ -7,6 +7,7 @@ import java.util.Set;
 
 import com.google.common.base.Optional;
 
+import boomerang.AliasFinder;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.accessgraph.WrappedSootField;
@@ -91,16 +92,18 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			return Collections.emptySet();
 		}
 
-		Unit curr = prevEdge.getTarget();
-		if (curr instanceof AssignStmt && ((AssignStmt) curr).getLeftOp() instanceof InstanceFieldRef) {
-			InstanceFieldRef instanceFieldRef = (InstanceFieldRef) ((AssignStmt) curr).getLeftOp();
-			Value base = instanceFieldRef.getBase();
-			if (prevEdge.factAtTarget().firstFieldMustMatch(instanceFieldRef.getField())) {
-				// System.out.println("STRONG UPDATE " + curr);
-				context.getForwardPathEdges().registerPointOfIndirectionAt(curr,
-						new PointOfIndirection(new AccessGraph((Local) base, ((Local) base).getType()), curr, context),
-						new StrongUpdateCallback(succEdge, context));
-				return Collections.emptySet();
+		if(AliasFinder.STRONG_UPDATES_FIELDS){
+			Unit curr = prevEdge.getTarget();
+			if (curr instanceof AssignStmt && ((AssignStmt) curr).getLeftOp() instanceof InstanceFieldRef) {
+				InstanceFieldRef instanceFieldRef = (InstanceFieldRef) ((AssignStmt) curr).getLeftOp();
+				Value base = instanceFieldRef.getBase();
+				if (prevEdge.factAtTarget().firstFieldMustMatch(instanceFieldRef.getField())) {
+					// System.out.println("STRONG UPDATE " + curr);
+					context.getForwardPathEdges().registerPointOfIndirectionAt(curr,
+							new PointOfIndirection(new AccessGraph((Local) base, ((Local) base).getType()), curr, context),
+							new StrongUpdateCallback(succEdge, context));
+					return Collections.emptySet();
+				}
 			}
 		}
 		return Collections.singleton(succEdge);

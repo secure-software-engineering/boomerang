@@ -39,7 +39,6 @@ public class AccessGraph {
 	 * allocation site.
 	 */
 	private final IFieldGraph fieldGraph;
-	private static List<IFieldGraph> apgs;
 
 	private int hashCode = 0;
 
@@ -198,8 +197,9 @@ public class AccessGraph {
 	@Override
 	public String toString() {
 		String str = "";
-		if (value != null)
-      str += value.toString() + (WrappedSootField.TRACK_TYPE ? "(" + getBaseType() + ")" : "");
+		if (value != null){
+			str += value.toString() + (WrappedSootField.TRACK_TYPE ? "(" + getBaseType() + ")" : "");
+		}
 		if (fieldGraph != null) {
 			
 			 str += fieldGraph.toString();

@@ -27,6 +27,7 @@ import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 
 public class AliasFinder {
 
+	public static boolean STRONG_UPDATES_FIELDS = false;
 	public final static SootField ARRAY_FIELD = new SootField("array", RefType.v("java.lang.Object")) {
 		@Override
 		public String toString() {
