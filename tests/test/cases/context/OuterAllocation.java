@@ -3,6 +3,7 @@ package test.cases.context;
 import org.junit.Test;
 
 import test.core.selfrunning.AbstractBoomerangTest;
+import test.core.selfrunning.AllocatedObject;
 
 public class OuterAllocation extends AbstractBoomerangTest{
 	@Test
@@ -21,7 +22,7 @@ public class OuterAllocation extends AbstractBoomerangTest{
 	    queryFor(field);
 	  }
 	  
-	  private static class File{
+	  private static class File implements AllocatedObject{
 		  public void open(){}
 	  }
 	  private static class ObjectWithField{

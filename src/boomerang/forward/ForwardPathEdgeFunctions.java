@@ -99,9 +99,13 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 				Value base = instanceFieldRef.getBase();
 				if (prevEdge.factAtTarget().firstFieldMustMatch(instanceFieldRef.getField())) {
 					// System.out.println("STRONG UPDATE " + curr);
+					StrongUpdateCallback strongUpdateCallback = new StrongUpdateCallback(succEdge, context);
 					context.getForwardPathEdges().registerPointOfIndirectionAt(curr,
 							new PointOfIndirection(new AccessGraph((Local) base, ((Local) base).getType()), curr, context),
-							new StrongUpdateCallback(succEdge, context));
+							strongUpdateCallback);
+					context.getForwardPathEdges().registerPointOfIndirectionAt(curr,
+							new PointOfIndirection(prevEdge.factAtTarget().dropTail(), curr, context),
+							strongUpdateCallback);
 					return Collections.emptySet();
 				}
 			}

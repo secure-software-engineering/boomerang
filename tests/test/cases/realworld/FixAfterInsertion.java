@@ -5,6 +5,7 @@ import java.util.Map;
 import org.junit.Test;
 
 import test.core.selfrunning.AbstractBoomerangTest;
+import test.core.selfrunning.AllocatedObject;
 
 public class FixAfterInsertion<K,V>{
 	
@@ -13,7 +14,7 @@ public class FixAfterInsertion<K,V>{
     private static final boolean BLACK = true;
 
     private transient Entry<K,V> root = null;
-	static final class Entry<K,V> implements Map.Entry<K,V> {
+	static final class Entry<K,V> implements Map.Entry<K,V>, AllocatedObject {
         K key;
         V value;
         Entry<K,V> left = null;
