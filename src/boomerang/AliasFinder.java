@@ -269,6 +269,7 @@ public class AliasFinder {
 	}
 
 	public void startQuery() {
+		ARRAY_COPY = null;
 		context.startTime = Stopwatch.createStarted();
 		if (SetBasedFieldGraph.allFields != null)
 			SetBasedFieldGraph.allFields.clear();

@@ -6,9 +6,9 @@ import boomerang.accessgraph.AccessGraph;
 import boomerang.bidi.Incomings;
 import boomerang.bidi.PathEdgeStore;
 import boomerang.bidi.Summaries;
+import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IFDSSolver;
 import boomerang.ifdssolver.IPathEdge;
-import boomerang.ifdssolver.IPathEdges;
 import boomerang.ifdssolver.PathEdge;
 import soot.SootMethod;
 import soot.Unit;
@@ -26,7 +26,7 @@ public class ForwardSolver extends
   public ForwardSolver(ForwardProblem tabulationProblem, BoomerangContext context) {
     super(tabulationProblem, context.debugger);
     this.context = context;
-    this.pathEdges = new PathEdgeStore(context);
+    this.pathEdges = new PathEdgeStore(context,Direction.FORWARD);
     this.summaries = new Summaries(context);
     this.incomings = new Incomings();
   }

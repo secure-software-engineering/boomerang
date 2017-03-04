@@ -381,7 +381,8 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
 	}
 
 	public void inject(IPathEdge<N, D> edge, PropagationType normal) {
-		if (!pathEdges.hasAlreadyProcessed(edge))
+		if (!pathEdges.hasAlreadyProcessed(edge)){
 			propagate(edge, normal);
+		}
 	}
 }

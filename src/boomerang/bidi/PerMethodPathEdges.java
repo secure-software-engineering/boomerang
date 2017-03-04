@@ -2,7 +2,6 @@ package boomerang.bidi;
 
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -11,6 +10,7 @@ import com.google.common.collect.Multimap;
 
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
+import boomerang.ifdssolver.DefaultIFDSTabulationProblem.Direction;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.pointsofindirection.AliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
@@ -21,9 +21,11 @@ import soot.Unit;
 class PerMethodPathEdges {
 	private Map<Unit, PerStatementPathEdges> stmtToPathEdges = new HashMap<>();
 	private final BoomerangContext context;
+	private Direction direction;
 
-	public PerMethodPathEdges(BoomerangContext context) {
+	public PerMethodPathEdges(BoomerangContext context, Direction direction) {
 		this.context = context;
+		this.direction = direction;
 	}
 
 	boolean hasAlreadyProcessed(IPathEdge<Unit, AccessGraph> pe) {
@@ -34,7 +36,7 @@ class PerMethodPathEdges {
 	private PerStatementPathEdges getOrCreate(Unit stmt) {
 		PerStatementPathEdges perStatementPathEdges = stmtToPathEdges.get(stmt);
 		if (perStatementPathEdges == null)
-			perStatementPathEdges = new PerStatementPathEdges(context);
+			perStatementPathEdges = new PerStatementPathEdges(context,direction);
 		stmtToPathEdges.put(stmt, perStatementPathEdges);
 		return perStatementPathEdges;
 	}

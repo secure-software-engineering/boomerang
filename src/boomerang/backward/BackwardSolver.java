@@ -23,7 +23,7 @@ public class BackwardSolver extends
   public BackwardSolver(BackwardProblem tabulationProblem, BoomerangContext context) {
     super(tabulationProblem, context.debugger);
     this.context = context;
-    this.pathEdges = new PathEdgeStore(context);
+    this.pathEdges = new PathEdgeStore(context,Direction.BACKWARD);
     this.summaries = new Summaries(context);
     this.incomings = new Incomings();
   }

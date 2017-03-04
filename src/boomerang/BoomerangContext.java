@@ -31,6 +31,7 @@ import boomerang.mock.NativeCallHandler;
 import boomerang.pointsofindirection.AliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
 import heros.FlowFunction;
+import heros.solver.Pair;
 import soot.Local;
 import soot.SootMethod;
 import soot.Unit;
@@ -231,6 +232,9 @@ public class BoomerangContext {
 		return (PathEdgeStore) getForwardSolver().getPathEdges();
 	}
 
+	public Set<? extends IPathEdge<Unit, AccessGraph>> getForwardIncomings(Pair<Unit,AccessGraph> startNode) {
+		return getForwardSolver().incoming(startNode, icfg.getMethodOf(startNode.getO1()));
+	}
 	public void registerPOI(Unit stmt, PointOfIndirection poi, AliasCallback cb) {
 		getForwardPathEdges().registerPointOfIndirectionAt(stmt, poi,cb);
 	}
@@ -243,16 +247,6 @@ public class BoomerangContext {
 		return contextRequester;
 	}
 	
-	
-	public Set<AccessGraph> getBackwardTargetsFor(AccessGraph d1, Unit callSite,
-		      SootMethod callee) {
-		    BackwardFlowFunctions allocAnalysisFlowFunctions = new BackwardFlowFunctions(this);
-		    FlowFunction<AccessGraph> returnFlowFunction =
-		        allocAnalysisFlowFunctions.getReturnFlowFunction(null, callSite, callee, null);
-		    Set<AccessGraph> targets = returnFlowFunction.computeTargets(d1);
-		    return targets;
-	}
-
 	public Set<AccessGraph> getForwardTargetsFor(AccessGraph d2, Unit callSite, SootMethod callee) {
 		Collection<Unit> calleeSps = this.icfg.getStartPointsOf(callee);
 		Set<AccessGraph> factsInCallee = new HashSet<>();

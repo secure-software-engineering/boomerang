@@ -81,9 +81,6 @@ public class AbstractBoomerangTest {
 
 		});
 
-//	    PreparationTransformer preparationTransformer = new PreparationTransformer();
-//	    PackManager.v().getPack("wjtp")
-//	        .add(new Transform("wjtp.preparationTransform", preparationTransformer));
 		PackManager.v().getPack("wjtp").add(transform);
 		PackManager.v().getPack("cg").apply();
 		PackManager.v().getPack("wjtp").apply();

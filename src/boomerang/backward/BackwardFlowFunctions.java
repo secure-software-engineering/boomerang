@@ -144,8 +144,8 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 					Value base = fr.getBase();
 					SootField field = fr.getField();
 					if (source.baseMatches(base) && source.firstFirstFieldMayMatch(field)) {
-						if (rightOp instanceof NullConstant) {
-							if(source.getFieldCount() == 1 || source.hasSetBasedFieldGraph()){
+						if (rightOp instanceof NullConstant) {							
+							if(source.getFieldCount() == 1){
 								Alloc alloc = new Alloc(source,as,context.icfg.getMethodOf(as),context, true);
 								alloc.execute();
 							}
@@ -461,9 +461,9 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 			factAtTarget= factAtTarget.dropTail();
 		}
 			
-			context.debugger.onAllocationSiteReached(as, pe);
-			Alloc alloc = new Alloc(factAtTarget,pe.getTarget(),context.icfg.getMethodOf(as),context, false);
-			alloc.execute();
+		context.debugger.onAllocationSiteReached(as, pe);
+		Alloc alloc = new Alloc(factAtTarget,pe.getTarget(),context.icfg.getMethodOf(as),context, val instanceof NullConstant);
+		alloc.execute();
 	}
 
 	private boolean queryTypeMatch(Type allocationSiteType) {
