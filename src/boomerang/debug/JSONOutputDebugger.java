@@ -181,6 +181,8 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 			List<String> stringList = new LinkedList<String>();
 			List<String> methods = new LinkedList<String>();
 			for (ExplodedSuperGraph c : methodToCfg.values()) {
+				if(c.facts.isEmpty())
+					continue;
 				stringList.add(c.toJSONObject().toJSONString());
 				methods.add(new Method(c.method).toJSONString());
 			}
@@ -199,6 +201,7 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 
 	@Override
 	public void onAliasTimeout(Query q) {
+		writeToFile();
 	}
 
 	private class CalleeESGNode extends ESGNode {
