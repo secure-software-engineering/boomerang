@@ -70,10 +70,10 @@ public class WrappedSootField {
   }
 
   public String toString() {
-    return field.getName().toString()  + (TRACK_TYPE ?  "(" + type + ")" : "");// + (stmt != null ? "@" + stmt
+    return field.toString()  + (TRACK_TYPE ?  "(" + type + ")" : "");// + (stmt != null ? "@" + stmt
   }
 
   public Type getType() {
-    return type;
+    return (TRACK_TYPE ? type :field.getType());
   }
 }

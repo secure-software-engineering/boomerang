@@ -265,8 +265,8 @@ public class AccessGraph {
 	   * @return <code>true</code> if the field can be appended.
 	   */
 	  public boolean canAppend(WrappedSootField firstField) {
-		 if(!WrappedSootField.TRACK_TYPE)
-			 return true;
+//		 if(!WrappedSootField.TRACK_TYPE)
+//			 return true;
 	    if (firstField.getField().equals(AliasFinder.ARRAY_FIELD))
 	      return true;
 	    SootField field = firstField.getField();
@@ -275,15 +275,15 @@ public class AccessGraph {
 	    if (this.getFieldCount() < 1) {
 	      parent = this.getBaseType();
 
-	      return Scene.v().getFastHierarchy().canStoreType(child, parent)
-	    		  || Scene.v().getFastHierarchy().canStoreType(parent, child);
+	      return Scene.v().getOrMakeFastHierarchy().canStoreType(child, parent)
+	    		  || Scene.v().getOrMakeFastHierarchy().canStoreType(parent, child);
 	    } else {
 	      if (firstFirstFieldMayMatch(AliasFinder.ARRAY_FIELD))
 	        return true;
 	      for(WrappedSootField lastField : this.getLastField()){
 		      parent = lastField.getType();
-	  	    if(Scene.v().getFastHierarchy().canStoreType(child, parent)
-	  	        || Scene.v().getFastHierarchy().canStoreType(parent, child)){
+	  	    if(Scene.v().getOrMakeFastHierarchy().canStoreType(child, parent)
+	  	        || Scene.v().getOrMakeFastHierarchy().canStoreType(parent, child)){
 	  	    	return true;
 	  	    }
 	      }
