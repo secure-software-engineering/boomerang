@@ -197,9 +197,6 @@ public class AliasFinder {
 		assert stmt != null;
 		context.validateInput(ap, stmt);
 		context.setContextRequester(req);
-		if (context.isOutOfBudget()) {
-			throw new BoomerangTimeoutException();
-		}
 		if (stmt instanceof ThrowStmt)
 			return new AliasResults();
 
@@ -239,11 +236,14 @@ public class AliasFinder {
 	private AliasResults fixpointIteration(Unit stmt, AccessGraph accessGraph) {
 		BackwardSolver backwardSolver = context.getBackwardSolver();
 		ForwardSolver forwardSolver = context.getForwardSolver();
+		try{
 		backwardSolver.startPropagation(accessGraph, stmt);
 		backwardSolver.awaitExecution();
 		while(!backwardSolver.isDone() || !forwardSolver.isDone()){
 			forwardSolver.awaitExecution();
 			backwardSolver.awaitExecution();
+		}
+		} catch(BoomerangTimeoutException e){
 		}
 		
 		AliasResults res = new AliasResults();

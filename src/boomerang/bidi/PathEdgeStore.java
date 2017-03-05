@@ -36,7 +36,6 @@ private Direction direction;
   }
 
   public void register(IPathEdge<Unit, AccessGraph> pe) {
-    precheck();
     Unit target = pe.getTarget();
     SootMethod m = context.icfg.getMethodOf(target);
     PerMethodPathEdges perMethodPathEdges = getOrCreatePerStmt(m);
@@ -49,13 +48,8 @@ private Direction direction;
 	    perMethodPathEdges.registerPointOfIndirectionAt(stmt,poi,cb);
   }
   
-  private void precheck() {
-    if (context.isOutOfBudget())
-      throw new BoomerangTimeoutException();
-  }
 
   public boolean hasAlreadyProcessed(IPathEdge<Unit, AccessGraph> pe) {
-    precheck();
     Unit target = pe.getTarget();
     SootMethod m = context.icfg.getMethodOf(target);
     PerMethodPathEdges perMethodPathEdges = stmtToPathEdges.get(m);
@@ -66,7 +60,6 @@ private Direction direction;
 
   public Multimap<Pair<Unit, AccessGraph>, AccessGraph> getResultAtStmtContainingValue(Unit stmt,
       final AccessGraph fact, Set<Pair<Unit,AccessGraph>> visited) {
-    precheck();
     SootMethod m = context.icfg.getMethodOf(stmt);
     PerMethodPathEdges perMethodPathEdges = stmtToPathEdges.get(m);
     if (perMethodPathEdges == null)
@@ -77,7 +70,6 @@ private Direction direction;
   }
 
   public void printStats() {
-    precheck();
     for (SootMethod m : stmtToPathEdges.keySet()) {
       PerMethodPathEdges perMethodPathEdges = stmtToPathEdges.get(m);
       System.out.println(m + " ::: " + perMethodPathEdges.size());
@@ -87,7 +79,6 @@ private Direction direction;
 
 
   public int size() {
-    precheck();
     int c = 0;
     for (SootMethod u : this.stmtToPathEdges.keySet())
       c += this.stmtToPathEdges.get(u).size();
@@ -100,7 +91,6 @@ private Direction direction;
 
 
   private PerMethodPathEdges getOrCreatePerStmt(SootMethod method) {
-    precheck();
     PerMethodPathEdges perMethodPathEdges = stmtToPathEdges.get(method);
     if (perMethodPathEdges == null) {
       perMethodPathEdges = new PerMethodPathEdges(context, direction);
@@ -110,7 +100,6 @@ private Direction direction;
   }
   @Override
   public void printTopMethods(int i) {
-    precheck();
     TreeSet<SootMethod> set = new TreeSet<>(new Comparator<SootMethod>() {
       @Override
       public int compare(SootMethod o1, SootMethod o2) {
