@@ -183,6 +183,8 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 			for (ExplodedSuperGraph c : methodToCfg.values()) {
 				if(c.facts.isEmpty())
 					continue;
+				if(!context.visitedBackwardMethod(c.method))
+					continue;
 				stringList.add(c.toJSONObject().toJSONString());
 				methods.add(new Method(c.method).toJSONString());
 			}
@@ -412,8 +414,10 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 				if (icfg.isCallStmt(u)) {
 					label.put("callSite", icfg.isCallStmt(u));
 					JSONArray callees = new JSONArray();
-					for (SootMethod callee : icfg.getCalleesOfCallAt(u))
-						callees.add(new Method(callee));
+					for (SootMethod callee : icfg.getCalleesOfCallAt(u)){
+						if(context.visitedBackwardMethod(callee))
+							callees.add(new Method(callee));
+					}
 					label.put("callees", callees);
 				}
 				if (icfg.isExitStmt(u)) {
@@ -423,8 +427,10 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 					for (Unit callsite : icfg.getCallersOf(context.icfg.getMethodOf(u)))
 						callers.add(context.icfg.getMethodOf(callsite));
 
-					for (SootMethod caller : callers)
-						callees.add(new Method(caller));
+					for (SootMethod caller : callers){
+						if(context.visitedBackwardMethod(caller))
+							callees.add(new Method(caller));
+					}
 					label.put("callers", callees);
 				}
 				label.put("stmtId", id(u));
