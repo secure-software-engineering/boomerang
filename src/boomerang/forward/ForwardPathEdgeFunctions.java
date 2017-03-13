@@ -37,37 +37,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	}
 
 
-	@Override
-	public Collection<? extends IPathEdge<Unit, AccessGraph>> normalFunction(IPathEdge<Unit, AccessGraph> prevEdge,
-			Unit succ) {
-		return super.normalFunction(prevEdge, succ);
-	};
-
-	@Override
-	public Collection<? extends IPathEdge<Unit, AccessGraph>> callFunction(IPathEdge<Unit, AccessGraph> prevEdge,
-			SootMethod callee, Unit calleeSp) {
-		Unit callSite = prevEdge.getTarget();
-		if (!isActivePath(callSite)) {
-			// The call is done in the appropriate call2Return furnction
-			// onPathendReached(parentedEdge);
-			return Collections.emptySet();
-		}
-
-		return super.callFunction(prevEdge, callee, calleeSp);
-	};
-
-	@Override
-	public Collection<? extends IPathEdge<Unit, AccessGraph>> balancedReturnFunction(
-			IPathEdge<Unit, AccessGraph> prevEdge, Unit returnSite, SootMethod callee,
-			IPathEdge<Unit, AccessGraph> incomingEdge) {
-		return super.balancedReturnFunction(prevEdge, returnSite, callee, incomingEdge);
-	};
-
-	@Override
-	public Collection<? extends IPathEdge<Unit, AccessGraph>> call2ReturnFunction(IPathEdge<Unit, AccessGraph> prevEdge,
-			Unit returnSite, Collection<SootMethod> callees) {
-		return super.call2ReturnFunction(prevEdge, returnSite, callees);
-	}
 
 	@Override
 	public Collection<? extends IPathEdge<Unit, AccessGraph>> unbalancedReturnFunction(

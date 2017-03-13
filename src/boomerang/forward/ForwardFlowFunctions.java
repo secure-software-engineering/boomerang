@@ -143,7 +143,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 					if (op instanceof Local) {
 						if (!source.isStatic() && source.baseMatches(op)
 								&& typeCompatible(castExpr.getCastType(), source.getBaseType())) {
-							Type newType = (Scene.v().getFastHierarchy().canStoreType(castExpr.getCastType(),
+							Type newType = (Scene.v().getOrMakeFastHierarchy().canStoreType(castExpr.getCastType(),
 									source.getBaseType()) ? castExpr.getCastType() : source.getBaseType());
 							out.add(source.deriveWithNewLocal((Local) leftOp, newType));
 						}
@@ -193,9 +193,14 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 						StaticFieldRef fr = (StaticFieldRef) leftOp;
 						SootField field = fr.getField();
 
-						AccessGraph staticap = source.makeStatic();
-						AccessGraph newAp = staticap
-								.prependField(new WrappedSootField(field, source.getBaseType(), curr));
+						AccessGraph newAp = source
+								.prependField(new WrappedSootField(field, source.getBaseType(), curr)).makeStatic();
+
+						if(newAp.hasSetBasedFieldGraph()){
+							newAp = source.dropTail()
+									.prependField(new WrappedSootField(field, source.getBaseType(), curr)).makeStatic();
+							out.add(newAp);
+						}
 						out.add(newAp);
 						return out;
 					}

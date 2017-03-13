@@ -120,9 +120,12 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 						return out;
 					} else if (rightOp instanceof StaticFieldRef && context.trackStaticFields()) {
 						StaticFieldRef fr = (StaticFieldRef) rightOp;
-						AccessGraph prependField = source
-								.prependField(new WrappedSootField(fr.getField(), source.getBaseType(), curr));
-						AccessGraph ap = prependField.makeStatic();
+						AccessGraph ap  = source
+								.prependField(new WrappedSootField(fr.getField(), source.getBaseType(), curr)).makeStatic();
+						
+						if(ap.hasSetBasedFieldGraph()){
+							ap = source.dropTail().prependField(new WrappedSootField(fr.getField(), source.getBaseType(), curr)).makeStatic();
+						} 
 						return Collections.singleton(ap);
 					}
 				} else if (leftOp instanceof ArrayRef) {
@@ -339,7 +342,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 									out.add(ap);
 									
 									//Fields that do not have a null assignment must turn around 
-									if(source.getFieldCount() == 1 && !source.isStatic()){
+									if((source.getFieldCount() == 1 || source.hasSetBasedFieldGraph()) && !source.isStatic()){
 										SootMethod caller = context.icfg.getMethodOf(callSite);
 										if(callee.isConstructor() && (!caller.isConstructor() || !caller.getActiveBody().getThisLocal().equals(newBase))){
 												Alloc alloc = new Alloc(source, edge.getTarget(), callee,context, true);
@@ -425,7 +428,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 					AssignStmt as = (AssignStmt) callSite;
 					Value leftOp = as.getLeftOp();
 					// mapping of return value
-					if (leftOp instanceof Local && source.getBase().equals(leftOp)) {
+					if (leftOp instanceof Local && !source.isStatic() &&  source.getBase().equals(leftOp)) {
 						sourceIsKilled = true;
 					}
 				}

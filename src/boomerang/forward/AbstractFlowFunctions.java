@@ -16,8 +16,8 @@ import soot.Type;
 public abstract class AbstractFlowFunctions {
 	protected BoomerangContext context;
 	public static boolean hasCompatibleTypesForCall(AccessGraph apBase, SootClass dest) {
-		if(!WrappedSootField.TRACK_TYPE)
-			return true;
+//		if(!WrappedSootField.TRACK_TYPE)
+//			return true;
 		// Cannot invoke a method on a primitive type
 		if (apBase.getBaseType() instanceof PrimType)
 			return false;
@@ -29,8 +29,8 @@ public abstract class AbstractFlowFunctions {
 	}
 
 	protected static boolean typeCompatible(Type a, Type b){
-		if(!WrappedSootField.TRACK_TYPE)
-			return true;
+//		if(!WrappedSootField.TRACK_TYPE)
+//			return true;
 		return Scene.v().getOrMakeFastHierarchy().canStoreType(a,b)
 				|| Scene.v().getOrMakeFastHierarchy().canStoreType(b,a);
 	}
