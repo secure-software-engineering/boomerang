@@ -19,6 +19,7 @@ import boomerang.pointsofindirection.ForwardAliasCallback;
 import boomerang.pointsofindirection.PointOfIndirection;
 import boomerang.pointsofindirection.StrongUpdateCallback;
 import soot.Local;
+import soot.Scene;
 import soot.SootMethod;
 import soot.Unit;
 import soot.Value;
@@ -48,7 +49,6 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		if (!currEdge.factAtSource().hasAllocationSite()) {
 			return Collections.emptySet();
 		}
-		context.addAsVisitedBackwardMethod(callee);
 		return super.unbalancedReturnFunction(currEdge, callSite, returnSite, callee);
 
 	}
@@ -101,6 +101,11 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		context.sanityCheckEdge(prevEdge);
 
 		AccessGraph d1 = prevEdge.factAtSource();
+
+		AccessGraph targetFact = succEdge.factAtTarget();
+		if(!targetFact .isStatic() && Scene.v().getPointsToAnalysis().reachingObjects(targetFact.getBase()).isEmpty()){
+			return Collections.emptySet();
+		}
 		HashSet<IPathEdge<Unit, AccessGraph>> out = new HashSet<>();
 		if (d1.hasAllocationSite()) {
 			out.add(succEdge);
@@ -119,12 +124,11 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 					}
 				}
 			}
+
+			context.addAsVisitedBackwardMethod(context.icfg.getMethodOf(callSite));
 			return out;
 		}
-		Unit exitStmt = prevEdge.getTarget();
-		assert d1.isStatic() || context.isParameterOrThisValue(exitStmt, d1.getBase());
-		sanitize(out);
-		return out;
+		return Collections.emptySet();
 	}
 
 	private boolean isOverridenByCall(AccessGraph ap, Unit callSite) {
@@ -144,7 +148,11 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> balancedReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge,
 			IPathEdge<Unit, AccessGraph> incEdge) {
-
+		AccessGraph targetFact = succEdge.factAtTarget();
+		if(!targetFact.isStatic() && Scene.v().getPointsToAnalysis().reachingObjects(targetFact.getBase()).isEmpty()){
+			return Collections.emptySet();
+		}
+		
 		if (!isActivePath(succEdge.getTarget())) {
 			return Collections.emptySet();
 		}

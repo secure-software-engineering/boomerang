@@ -33,6 +33,7 @@ import soot.Value;
 import soot.ValueBox;
 import soot.jimple.AssignStmt;
 import soot.jimple.FieldRef;
+import soot.jimple.Jimple;
 import soot.jimple.StaticFieldRef;
 import soot.jimple.Stmt;
 import soot.jimple.toolkits.callgraph.Edge;
@@ -60,6 +61,7 @@ public class InfoflowCFG implements IInfoflowCFG {
 
 	public static final Set<SootMethod> METHODS_TO_STRING = new HashSet<>();
 	public static final Set<SootMethod> METHODS_EQUALS = new HashSet<>();
+	public static final Set<SootMethod> IGNORED_METHODS = new HashSet<>();
 
 	protected final BiDiInterproceduralCFG<Unit, SootMethod> delegate;
 
@@ -108,16 +110,19 @@ public class InfoflowCFG implements IInfoflowCFG {
 	private FieldPreanalysis preanalysis;
 
 	public InfoflowCFG() {
-		this(new JimpleBasedInterproceduralCFG());
+		this(true);
+	}
+	public InfoflowCFG(boolean exceptionAnalysis) {
+		this(new JimpleBasedInterproceduralCFG(exceptionAnalysis));
 	}
 
 	public InfoflowCFG(BiDiInterproceduralCFG<Unit, SootMethod> delegate) {
 		this.delegate = delegate;
-//		preanalysis();
+		preanalysis();
 	}
 
 	private void preanalysis() {
-		preanalysis = new FieldPreanalysis(this);
+//		preanalysis = new FieldPreanalysis(this);
 		selectSpecialMethods();
 	}
 
@@ -127,10 +132,21 @@ public class InfoflowCFG implements IInfoflowCFG {
 		while (listener.hasNext()) {
 			SootMethod method = listener.next().method();
 			if (method.getSubSignature().equals("java.lang.String toString()")) {
+//				if(method.hasActiveBody())
+//					method.setActiveBody(Jimple.v().newBody(method));
 				METHODS_TO_STRING.add(method);
+				IGNORED_METHODS.add(method);
 			}
 			if (method.getSubSignature().equals("boolean equals(java.lang.Object)")) {
+//				if(method.hasActiveBody())
+//					method.setActiveBody(Jimple.v().newBody(method));
 				METHODS_EQUALS.add(method);
+				IGNORED_METHODS.add(method);
+			}
+			if (method.getName().equals("hashCode")) {
+//				if(method.hasActiveBody())
+//					method.setActiveBody(Jimple.v().newBody(method));
+				IGNORED_METHODS.add(method);
 			}
 		}
 	}
@@ -143,7 +159,12 @@ public class InfoflowCFG implements IInfoflowCFG {
 	@Override
 	public boolean isToStringMethod(SootMethod method) {
 		return METHODS_TO_STRING.contains(method);
-	};
+	}
+
+	@Override
+	public boolean isIgnoredMethod(SootMethod method) {
+		return IGNORED_METHODS.contains(method);
+	}
 
 	@Override
 	public UnitContainer getPostdominatorOf(Unit u) {

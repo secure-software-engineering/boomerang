@@ -8,7 +8,9 @@ import java.util.List;
 import java.util.Set;
 
 import boomerang.AliasFinder;
+import soot.ArrayType;
 import soot.Local;
+import soot.RefType;
 import soot.Scene;
 import soot.SootField;
 import soot.Type;
@@ -269,21 +271,18 @@ public class AccessGraph {
 //			 return true;
 	    if (firstField.getField().equals(AliasFinder.ARRAY_FIELD))
 	      return true;
+
 	    SootField field = firstField.getField();
 	    Type child = field.getDeclaringClass().getType();
-	    Type parent = null;
-	    if (this.getFieldCount() < 1) {
-	      parent = this.getBaseType();
-
-	      return Scene.v().getOrMakeFastHierarchy().canStoreType(child, parent)
-	    		  || Scene.v().getOrMakeFastHierarchy().canStoreType(parent, child);
+	    if (this.getFieldCount() < 1 && !hasSetBasedFieldGraph()) {
+	    	Type parent = this.getBaseType();
+	      return Scene.v().getOrMakeFastHierarchy().canStoreType(child, parent);
 	    } else {
 	      if (firstFirstFieldMayMatch(AliasFinder.ARRAY_FIELD))
 	        return true;
 	      for(WrappedSootField lastField : this.getLastField()){
-		      parent = lastField.getType();
-	  	    if(Scene.v().getOrMakeFastHierarchy().canStoreType(child, parent)
-	  	        || Scene.v().getOrMakeFastHierarchy().canStoreType(parent, child)){
+		      Type parent = lastField.getType();
+	  	    if(Scene.v().getOrMakeFastHierarchy().canStoreType(child,parent)){
 	  	    	return true;
 	  	    }
 	      }
@@ -301,23 +300,24 @@ public class AccessGraph {
 	   * @return <code>true</code> if the field can be appended.
 	   */
 	  public boolean canPrepend(WrappedSootField newFirstField) {
-		  if(!WrappedSootField.TRACK_TYPE)
-				 return true;
+//		  if(!WrappedSootField.TRACK_TYPE)
+//				 return true;
+//		  if(hasSetBasedFieldGraph())
+//			  return true;
 	    SootField newFirst = newFirstField.getField();
 	    if (newFirst.equals(AliasFinder.ARRAY_FIELD))
 	      return true;
-
-	    if (this.getFieldCount() < 1) {
+	    if (this.getFieldCount() < 1 && !hasSetBasedFieldGraph()) {
+	    	return true;
 	    } else {
-	      if (firstFieldMustMatch(AliasFinder.ARRAY_FIELD))
-	        return true;
+	      for(WrappedSootField oldFirstField : getFirstField()){
+	    	  if(oldFirstField.getField().equals(AliasFinder.ARRAY_FIELD))
+	    		  return true;
+	    	  if(Scene.v().getOrMakeFastHierarchy().canStoreType(newFirstField.getType(), oldFirstField.getField().getDeclaringClass().getType()))
+	    		  return true;
+	      }
 	    }
-	    Type child = newFirst.getDeclaringClass().getType();
-	    Type parent = this.getBaseType();
-	    boolean res =
-	        Scene.v().getOrMakeFastHierarchy().canStoreType(child, parent)
-	            || Scene.v().getOrMakeFastHierarchy().canStoreType(parent, child);
-	    return res;
+	    return false;
 	  }
 	
 	/**
@@ -480,7 +480,7 @@ public class AccessGraph {
 	 * @return <code>true</code> if it is static.
 	 */
 	public boolean isStatic() {
-		return value == null && getFieldCount() > 0;
+		return value == null && (getFieldCount() > 0);
 	}
 
 	/**

@@ -143,4 +143,6 @@ public interface IInfoflowCFG extends BiDiInterproceduralCFG<Unit, SootMethod> {
 
   public boolean isToStringMethod(SootMethod method);
 
+public boolean isIgnoredMethod(SootMethod callee);
+
 }

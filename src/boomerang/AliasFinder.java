@@ -13,6 +13,7 @@ import boomerang.backward.BackwardSolver;
 import boomerang.context.IContextRequester;
 import boomerang.context.NoContextRequester;
 import boomerang.forward.ForwardSolver;
+import boomerang.ifdssolver.IFDSSolver;
 import heros.solver.Pair;
 import soot.Local;
 import soot.RefType;
@@ -28,6 +29,7 @@ import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 public class AliasFinder {
 
 	public static boolean STRONG_UPDATES_FIELDS = true;
+	public static boolean HANDLE_EXCEPTION_FLOW = true;
 	public final static SootField ARRAY_FIELD = new SootField("array", RefType.v("java.lang.Object")) {
 		@Override
 		public String toString() {
@@ -203,7 +205,6 @@ public class AliasFinder {
 		context.debugger.startQuery(q);
 		AliasResults res = fixpointIteration(stmt,ap);
 		context.debugger.finishedQuery(q, res);
-
 		return res;
 	}
 
@@ -221,36 +222,27 @@ public class AliasFinder {
 		return res;
 	}
 
-	/**
-	 * Enables or disables type checking on the access graph. When accesses are
-	 * appended to an access graph, a check is performed by evaluating the type
-	 * of the fields if the access graph might actually exist.
-	 * 
-	 * @param val
-	 *            Boolean value to enable or disable type checking.
-	 */
-	public static void setTypeChecking(boolean val) {
-		WrappedSootField.TRACK_TYPE = val;
-	}
-
 	private AliasResults fixpointIteration(Unit stmt, AccessGraph accessGraph) {
 		BackwardSolver backwardSolver = context.getBackwardSolver();
 		ForwardSolver forwardSolver = context.getForwardSolver();
+		boolean timedout = false;
+		context.addAsVisitedBackwardMethod(context.icfg.getMethodOf(stmt));
 		try{
-		backwardSolver.startPropagation(accessGraph, stmt);
-		backwardSolver.awaitExecution();
-		while(!backwardSolver.isDone() || !forwardSolver.isDone()){
-			forwardSolver.awaitExecution();
+			backwardSolver.startPropagation(accessGraph, stmt);
 			backwardSolver.awaitExecution();
-		}
+			while(!backwardSolver.isDone() || !forwardSolver.isDone()){
+				forwardSolver.awaitExecution();
+				backwardSolver.awaitExecution();
+			}
 		} catch(BoomerangTimeoutException e){
+			timedout = true;
 		}
-		
 		AliasResults res = new AliasResults();
 		res.putAll(context.getForwardPathEdges().getResultAtStmtContainingValue(stmt, accessGraph, new HashSet<Pair<Unit,AccessGraph>>()));
 
-		AliasResults aliasRes = new AliasResults(res);
-		return aliasRes;
+		if(timedout)
+			res.setTimedout();
+		return res;
 	}
 
 

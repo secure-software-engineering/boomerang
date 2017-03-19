@@ -91,6 +91,8 @@ public class BoomerangContext {
 		this.budgetInMilliSeconds = options.getTimeBudget();
 		WrappedSootField.TRACK_STMT = options.getTrackStatementsInFields();
 		this.trackStaticFields = options.getTrackStaticFields();
+		if(!trackStaticFields)
+			System.err.println("Boomerang does not track static fields");
 
 	}
 

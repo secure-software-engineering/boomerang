@@ -3,6 +3,7 @@ package boomerang.backward;
 import java.util.Collection;
 import java.util.Collections;
 
+import boomerang.AliasResults;
 import boomerang.BoomerangContext;
 import boomerang.accessgraph.AccessGraph;
 import boomerang.forward.AbstractPathEdgeFunctions;
@@ -11,6 +12,7 @@ import boomerang.pointsofindirection.Alloc;
 import boomerang.ifdssolver.FlowFunctions;
 import boomerang.ifdssolver.IPathEdge;
 import boomerang.ifdssolver.PathEdge;
+import soot.Scene;
 import soot.SootMethod;
 import soot.Unit;
 
@@ -18,23 +20,6 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	BackwardPathEdgeFunctions(FlowFunctions<Unit, AccessGraph, SootMethod> flowFunctions, BoomerangContext context) {
 		super(flowFunctions, context, Direction.BACKWARD);
 	}
-
-	/**
-	 * The backward analysis does not to unbalanced returns. But still, a check
-	 * is performed if the analysis should add an
-	 * {@link BackwardParameterTurnHandler}.
-	 */
-	// public Collection<? extends IPathEdge<Unit, AccessGraph>>
-	// unbalancedReturnFunction(
-	// IPathEdge<Unit, AccessGraph> prevEdge, Unit callSite, Unit returnSite,
-	// SootMethod callee) {
-	// // do not propagate further if the query was started inside this method.
-	//// if (isQueryStartedInsideMethod(prevEdge, callee)) {
-	// // System.out.println("UnBALNACEd");
-	//
-	//// }
-	// return Collections.emptySet();
-	// };
 
 
 	@Override
@@ -48,6 +33,11 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			IPathEdge<Unit, AccessGraph> prevEdge, final IPathEdge<Unit, AccessGraph> initialSelfLoop,
 			SootMethod callee) {
 
+		AccessGraph targetFact = initialSelfLoop.factAtTarget();
+		if(!targetFact.isStatic() && Scene.v().getPointsToAnalysis().reachingObjects(targetFact.getBase()).isEmpty()){
+			return Collections.emptySet();
+		}
+		context.addAsVisitedBackwardMethod(callee);
 		return Collections.singleton(new PathEdge<>(null, initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(),
 				initialSelfLoop.factAtTarget()));
 	}
@@ -56,13 +46,18 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> balancedReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> calleeEdge, IPathEdge<Unit, AccessGraph> succEdge,
 			IPathEdge<Unit, AccessGraph> incEdge) {
+
+		AccessGraph targetFact = succEdge.factAtTarget();
+		if(!targetFact.isStatic() && Scene.v().getPointsToAnalysis().reachingObjects(targetFact.getBase()).isEmpty()){
+			return Collections.emptySet();
+		}
 		return Collections.singleton(succEdge);
 	}
 
 	@Override
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> call2ReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
-
+		context.addAsVisitedBackwardMethod(context.icfg.getMethodOf(succEdge.getTarget()));
 		return Collections.singleton(succEdge);
 	}
 
@@ -80,6 +75,10 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 		}
 		succEdge = new PathEdge<Unit, AccessGraph>(null, succEdge.factAtTarget(), succEdge.getTarget(),
 				succEdge.factAtTarget());
+		AccessGraph targetFact = succEdge.factAtTarget();
+		if(!targetFact.isStatic() && Scene.v().getPointsToAnalysis().reachingObjects(targetFact.getBase()).isEmpty()){
+			return Collections.emptySet();
+		}
 		return Collections.singleton(succEdge);
 	}
 

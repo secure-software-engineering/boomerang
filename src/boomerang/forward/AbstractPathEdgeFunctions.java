@@ -43,6 +43,7 @@ public abstract class AbstractPathEdgeFunctions extends
 
   private void assertAccessPath(AccessGraph a) {
 	  assert a.isStatic() || a.getBase() != null;
+	  assert !(a.getBase() == null && a.hasSetBasedFieldGraph());
     if (!WrappedSootField.TRACK_TYPE)
       return;
 //    Type type = a.getBaseType();

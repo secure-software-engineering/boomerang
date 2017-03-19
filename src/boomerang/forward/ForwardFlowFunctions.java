@@ -33,7 +33,9 @@ import soot.Value;
 import soot.jimple.ArrayRef;
 import soot.jimple.AssignStmt;
 import soot.jimple.CastExpr;
+import soot.jimple.CaughtExceptionRef;
 import soot.jimple.Constant;
+import soot.jimple.IdentityStmt;
 import soot.jimple.InstanceFieldRef;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
@@ -59,6 +61,22 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 
 			@Override
 			public Set<AccessGraph> computeTargets(AccessGraph source) {
+				if (AliasFinder.HANDLE_EXCEPTION_FLOW && !source.isStatic() && curr instanceof IdentityStmt) {
+					IdentityStmt identityStmt = (IdentityStmt) curr;
+					if (identityStmt.getRightOp() instanceof CaughtExceptionRef
+							&& identityStmt.getLeftOp() instanceof Local) {
+						Local leftOp = (Local) identityStmt.getLeftOp();
+						// e = d;
+						if (Scene.v().getOrMakeFastHierarchy().canStoreType( source.getBaseType(),((Local) leftOp).getType())){
+							HashSet<AccessGraph> out = new HashSet<AccessGraph>();
+							out.add(source);
+							out.add(source.deriveWithNewLocal((Local) leftOp, source.getBaseType()));
+							return out;
+						} else{
+							return Collections.emptySet();
+						}
+					}
+				}
 				assert thisLocal == null || !source.baseMatches(thisLocal)
 						|| ForwardFlowFunctions.hasCompatibleTypesForCall(source, method.getDeclaringClass()) : edge
 								.toString();
@@ -278,6 +296,8 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 		return new FlowFunction<AccessGraph>() {
 			@Override
 			public Set<AccessGraph> computeTargets(AccessGraph source) {
+				if(context.icfg.isIgnoredMethod(callee))
+					Collections.emptySet();
 				assert source != null;
 				Set<AccessGraph> out = new HashSet<>();
 				Stmt is = (Stmt) callSite;
@@ -370,7 +390,8 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 			@Override
 			public Set<AccessGraph> computeTargets(AccessGraph source) {
 				HashSet<AccessGraph> out = new HashSet<AccessGraph>();
-
+				if(context.icfg.isIgnoredMethod(callee))
+					Collections.emptySet();
 				// mapping of fields of AccessPath those will be killed in
 				// callToReturn
 				if (context.trackStaticFields() && source.isStatic())

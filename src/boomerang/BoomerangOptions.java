@@ -1,14 +1,17 @@
 package boomerang;
 
+import java.io.File;
 import java.util.concurrent.TimeUnit;
 
 import boomerang.debug.IBoomerangDebugger;
+import boomerang.debug.JSONOutputDebugger;
 import boomerang.debug.NullBoomerangDebugger;
 
 public class BoomerangOptions {
   private boolean trackStaticField = true;
   private boolean trackStatementsInFields = false;
   private long timeBudget = TimeUnit.SECONDS.toMillis(100);
+//  private IBoomerangDebugger debugger = new JSONOutputDebugger(new File("/Users/johannesspath/Documents/workspace/AliasAnalysis/visualization/data.js"));//;new NullBoomerangDebugger();
   private IBoomerangDebugger debugger = new NullBoomerangDebugger();
 
   /**

@@ -246,7 +246,7 @@ class PerStatementPathEdges {
 			boolean maintainPathEdge = false;
 			if (context.icfg.getStartPointsOf(callee).contains(pathEdgeStart)) {
 				for (Unit callSite : context.icfg.getCallersOf(callee)) {
-					maintainPathEdge |= !context.getContextRequester().continueAtCallSite(callSite, callee);
+//					maintainPathEdge |= !context.getContextRequester().continueAtCallSite(callSite, callee);
 					Set<? extends IPathEdge<Unit, AccessGraph>> pathEdgesAtCallSite = context.getForwardIncomings(key);
 					for (IPathEdge<Unit, AccessGraph> pathEdgeAtCallSite : pathEdgesAtCallSite) {
 						Multimap<Pair<Unit, AccessGraph>, AccessGraph> aliasesAtCallSite = context.getForwardPathEdges()

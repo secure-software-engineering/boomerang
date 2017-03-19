@@ -19,6 +19,7 @@ import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 
 public class AliasResults extends ForwardingMultimap<Pair<Unit, AccessGraph>, AccessGraph> {
 	private Multimap<Pair<Unit, AccessGraph>, AccessGraph> delegate;
+	private boolean timedout;
 
 	/**
 	 * Creates a deep copy of with the supplied Multimap of results.
@@ -156,6 +157,16 @@ public class AliasResults extends ForwardingMultimap<Pair<Unit, AccessGraph>, Ac
 			if(!key.getO2().hasNullAllocationSite())
 				res.putAll(key, get(key));
 		}
+		if(timedout)
+			res.setTimedout();
 		return res;
+	}
+	
+	public void setTimedout() {
+		timedout = true;
+	}
+
+	public boolean queryTimedout(){
+		return timedout;
 	}
 }

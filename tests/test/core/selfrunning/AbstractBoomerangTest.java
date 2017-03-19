@@ -20,6 +20,7 @@ import boomerang.accessgraph.WrappedSootField;
 import boomerang.context.AllCallersRequester;
 import boomerang.context.IContextRequester;
 import boomerang.context.NoContextRequester;
+import boomerang.preanalysis.PreparationTransformer;
 import heros.solver.Pair;
 import soot.ArrayType;
 import soot.Body;
@@ -70,8 +71,7 @@ public class AbstractBoomerangTest {
 		Transform transform = new Transform("wjtp.ifds", new SceneTransformer() {
 
 			protected void internalTransform(String phaseName, @SuppressWarnings("rawtypes") Map options) {
-				icfg = new InfoflowCFG(new JimpleBasedInterproceduralCFG());
-
+				icfg = new InfoflowCFG(new JimpleBasedInterproceduralCFG(true));
 				Query q = parseQuery(sootTestMethod);
 				contextReuqester = (q.getMethod().equals(sootTestMethod) ? new NoContextRequester() : new AllCallersRequester());
 				AliasResults expectedResults = parseExpectedQueryResults(q);
@@ -80,7 +80,7 @@ public class AbstractBoomerangTest {
 			}
 
 		});
-
+		PackManager.v().getPack("wjtp").add(new Transform("wjtp.prepare", new PreparationTransformer()));
 		PackManager.v().getPack("wjtp").add(transform);
 		PackManager.v().getPack("cg").apply();
 		PackManager.v().getPack("wjtp").apply();
@@ -247,7 +247,6 @@ public class AbstractBoomerangTest {
 			for(SootMethod callee : icfg.getCalleesOfCallAt(callSite))
 				parseQuery(callee, queries,visited);
 		}
-		System.out.println(m.getActiveBody());
 		for (Unit u : activeBody.getUnits()) {
 			if (!(u instanceof Stmt))
 				continue;
@@ -307,6 +306,7 @@ public class AbstractBoomerangTest {
 			// Options.v().setPhaseOption("cg", "all-reachable:true");
 		}
 
+		Options.v().set_exclude(excludedPackages());
 		Options.v().set_soot_classpath(sootCp);
 		// Options.v().set_main_class(this.getTargetClass());
 		SootClass sootTestCaseClass = Scene.v().forceResolve(getTestCaseClassName(), SootClass.BODIES);
@@ -329,6 +329,7 @@ public class AbstractBoomerangTest {
 		ePoints.add(methodByName);
 		Scene.v().setEntryPoints(ePoints);
 	}
+
 
 	private String getTargetClass() {
 		SootClass sootClass = new SootClass("dummyClass");
@@ -357,6 +358,20 @@ public class AbstractBoomerangTest {
 		return false;
 	}
 
+	
+	public List<String> excludedPackages(){
+		List<String > excludedPackages = new LinkedList<>();
+      excludedPackages.add("java.*");
+      excludedPackages.add("sun.*");
+      excludedPackages.add("javax.*");
+      excludedPackages.add("com.sun.*");
+      excludedPackages.add("com.ibm.*");
+      excludedPackages.add("org.xml.*");
+      excludedPackages.add("org.w3c.*");
+      excludedPackages.add("apple.awt.*");
+      excludedPackages.add("com.apple.*");
+      return excludedPackages;
+	}
 	/**
 	 * The methods parameter describes the variable that a query is issued for.
 	 * Note: We misuse the @Deprecated annotation to highlight the method in the

@@ -24,6 +24,8 @@ import soot.Value;
 import soot.jimple.ArrayRef;
 import soot.jimple.AssignStmt;
 import soot.jimple.CastExpr;
+import soot.jimple.CaughtExceptionRef;
+import soot.jimple.IdentityStmt;
 import soot.jimple.InstanceFieldRef;
 import soot.jimple.InstanceInvokeExpr;
 import soot.jimple.InvokeExpr;
@@ -53,6 +55,12 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 		return new FlowFunction<AccessGraph>() {
 			@Override
 			public Set<AccessGraph> computeTargets(final AccessGraph source) {
+
+				if(curr instanceof IdentityStmt){
+					IdentityStmt identityStmt = (IdentityStmt) curr;
+					if (identityStmt.getRightOp() instanceof CaughtExceptionRef)
+						return Collections.emptySet();
+				}
 				assert thisLocal == null || !source.baseMatches(thisLocal)
 						|| ForwardFlowFunctions.hasCompatibleTypesForCall(source, method.getDeclaringClass());
 				assert !context.isIgnoredMethod(context.icfg.getMethodOf(curr));
@@ -207,11 +215,13 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 		for (int i = 0; i < callee.getParameterCount(); i++)
 			paramLocals[i] = callee.getActiveBody().getParameterLocal(i);
 
-		context.addAsVisitedBackwardMethod(callee);
+		
 		final Local thisLocal = callee.isStatic() ? null : callee.getActiveBody().getThisLocal();
 		return new FlowFunction<AccessGraph>() {
 			@Override
 			public Set<AccessGraph> computeTargets(AccessGraph source) {
+				if(context.icfg.isIgnoredMethod(callee))
+					Collections.emptySet();
 				if (calleeSp instanceof ThrowStmt) {
 					return Collections.emptySet();
 				}
@@ -306,6 +316,8 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 
 			@Override
 			public Set<AccessGraph> computeTargets(AccessGraph source) {
+				if(context.icfg.isIgnoredMethod(callee))
+					Collections.emptySet();
 				AccessGraph derivedSource = source;
 				Set<AccessGraph> out = new HashSet<>();
 				if(!context.getContextRequester().continueAtCallSite(callSite, callee) && !context.visitedBackwardMethod(context.icfg.getMethodOf(callSite))){
@@ -365,7 +377,7 @@ public class BackwardFlowFunctions extends AbstractFlowFunctions
 	@Override
 	public FlowFunction<AccessGraph> getCallToReturnFlowFunction(final IPathEdge<Unit, AccessGraph> edge,
 			Unit returnSite, final Collection<SootMethod> callees) {
-		context.addAsVisitedBackwardMethod(context.icfg.getMethodOf(edge.getTarget()));
+		
 		final Unit callSite = edge.getTarget();
 		return new FlowFunction<AccessGraph>() {
 			@Override
