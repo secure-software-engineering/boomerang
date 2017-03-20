@@ -267,8 +267,8 @@ public class AccessGraph {
 	   * @return <code>true</code> if the field can be appended.
 	   */
 	  public boolean canAppend(WrappedSootField firstField) {
-//		 if(!WrappedSootField.TRACK_TYPE)
-//			 return true;
+		 if(!WrappedSootField.TRACK_TYPE)
+			 return true;
 	    if (firstField.getField().equals(AliasFinder.ARRAY_FIELD))
 	      return true;
 
@@ -300,8 +300,8 @@ public class AccessGraph {
 	   * @return <code>true</code> if the field can be appended.
 	   */
 	  public boolean canPrepend(WrappedSootField newFirstField) {
-//		  if(!WrappedSootField.TRACK_TYPE)
-//				 return true;
+		  if(!WrappedSootField.TRACK_TYPE)
+				 return true;
 //		  if(hasSetBasedFieldGraph())
 //			  return true;
 	    SootField newFirst = newFirstField.getField();
