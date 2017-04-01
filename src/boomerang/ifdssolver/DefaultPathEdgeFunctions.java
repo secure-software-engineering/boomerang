@@ -25,7 +25,6 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
   @Override
   public Collection<? extends IPathEdge<N, D>> normalFunction(IPathEdge<N, D> prevEdge, N succ) {
     FlowFunction<D> flowFunction = flowFunctions.getNormalFlowFunction(prevEdge, succ);
-    N sP = prevEdge.getStart();
     D d1 = prevEdge.factAtSource();
     D d2 = prevEdge.factAtTarget();
     Set<D> res = flowFunction.computeTargets(d2);
@@ -34,7 +33,7 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
       if (!isValid(d3))
         continue;
       debugger.normalFlow(direction, prevEdge.getTarget(), d2, succ, d3);
-      PathEdge<N, D> succEdge = new PathEdge<N, D>(sP, d1, succ, d3);
+      PathEdge<N, D> succEdge = new PathEdge<N, D>(d1, succ, d3);
       out.addAll(normalFunctionExtendor(prevEdge, succEdge));
     }
     sanitize(out);
@@ -66,7 +65,7 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
     for (D d3 : res) {
       if (!isValid(d3))
         continue;
-      PathEdge<N, D> succEdge = new PathEdge<N, D>(calleeSp, d3, calleeSp, d3);
+      PathEdge<N, D> succEdge = new PathEdge<N, D>(d3, calleeSp, d3);
       debugger.callFlow(direction, prevEdge.getTarget(), d2, calleeSp, d3);
       out.addAll(callFunctionExtendor(prevEdge, succEdge, callee));
     }
@@ -77,7 +76,6 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
   @Override
   public Collection<? extends IPathEdge<N, D>> balancedReturnFunction(IPathEdge<N, D> prevEdge,
       N returnSite, M callee, IPathEdge<N, D> incEdge) {
-    N sP = incEdge.getStart();
     N n = incEdge.getTarget();
     D d2 = prevEdge.factAtTarget();
     D newD1 = incEdge.factAtSource();
@@ -89,7 +87,7 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
     for (D d3 : targets) {
       if (!isValid(d3))
         continue;
-      PathEdge<N, D> succEdge = new PathEdge<N, D>(sP, newD1, returnSite, d3);
+      PathEdge<N, D> succEdge = new PathEdge<N, D>(newD1, returnSite, d3);
       debugger.returnFlow(direction, prevEdge.getTarget(), d2, returnSite, d3);
       out.addAll(balancedReturnFunctionExtendor(prevEdge, succEdge, incEdge));
     }
@@ -113,7 +111,6 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
     // d1,prevTargetVal,computeCallToReturnFlowFunction(callToReturnFlowFunction, d1,
     // prevTargetVal));
     D d1 = prevEdge.factAtSource();
-    N sP = prevEdge.getStart();
     D d2 = prevEdge.factAtTarget();
     Set<D> targets = callToReturnFlowFunction.computeTargets(d2);
     Collection<IPathEdge<N, D>> out = new HashSet<>();
@@ -121,7 +118,7 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
       if (!isValid(d3))
         continue;
       debugger.callToReturn(direction, prevEdge.getTarget(), d2, returnSite, d3);
-      PathEdge<N, D> succEdge = new PathEdge<N, D>(sP, d1, returnSite, d3);
+      PathEdge<N, D> succEdge = new PathEdge<N, D>(d1, returnSite, d3);
       out.addAll(call2ReturnFunctionExtendor(prevEdge, succEdge));
     }
     sanitize(out);
@@ -137,11 +134,13 @@ public abstract class DefaultPathEdgeFunctions<N, D, M> implements PathEdgeFunct
         flowFunctions.getReturnFlowFunction(prevEdge, callSite, callee, returnSite);
     final Set<D> targets = retFunction.computeTargets(d2);
     Collection<IPathEdge<N, D>> out = new HashSet<>();
+	  if(returnSite == null)
+		  return out;
     for (D d3 : targets) {
       if (!isValid(d3))
         continue;
       debugger.returnFlow(direction, prevEdge.getTarget(), d2, returnSite, d3);
-      PathEdge<N, D> succEdge = new PathEdge<N, D>(callSite, d1, returnSite, d3);
+      PathEdge<N, D> succEdge = new PathEdge<N, D>(d1, returnSite, d3);
       out.addAll(unbalancedReturnFunctionExtendor(prevEdge, succEdge, callSite, returnSite));
     }
     sanitize(out);

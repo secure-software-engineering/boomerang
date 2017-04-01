@@ -255,10 +255,10 @@ public class AliasFinder {
 				continue;
 			assert methodOf.getActiveBody().getLocals().contains(a.getBase());
 		}
-		for (Pair<Unit, AccessGraph> key : res.keySet()) {
-			assert methodOf.getActiveBody().getUnits().contains(key
-					.getO1()) : "The allocation sites should always be local to a method, when no context was resolved!";
-		}
+//		for (Pair<Unit, AccessGraph> key : res.keySet()) {
+//			assert methodOf.getActiveBody().getUnits().contains(key
+//					.getO1()) : "The allocation sites should always be local to a method, when no context was resolved!";
+//		}
 	}
 
 	public void startQuery() {

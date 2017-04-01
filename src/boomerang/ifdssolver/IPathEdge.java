@@ -24,10 +24,8 @@ import heros.InterproceduralCFG;
 public interface IPathEdge<N,D> {
 
 	public N getTarget();
-	public N getStart();
 	public D factAtSource();
 	public D factAtTarget();
 
-	public Pair<N,D> getStartNode();
 	public Pair<N,D> getTargetNode();
 }

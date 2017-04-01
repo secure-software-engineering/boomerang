@@ -58,7 +58,7 @@ private Direction direction;
     return perMethodPathEdges.hasAlreadyProcessed(pe);
   }
 
-  public Multimap<Pair<Unit, AccessGraph>, AccessGraph> getResultAtStmtContainingValue(Unit stmt,
+  public Multimap<AccessGraph, AccessGraph> getResultAtStmtContainingValue(Unit stmt,
       final AccessGraph fact, Set<Pair<Unit,AccessGraph>> visited) {
     SootMethod m = context.icfg.getMethodOf(stmt);
     PerMethodPathEdges perMethodPathEdges = stmtToPathEdges.get(m);

@@ -13,11 +13,11 @@ import boomerang.accessgraph.AccessGraph;
 import boomerang.ifdssolver.IPathEdge;
 
 class PerMethodSummary implements IPerMethodSummary{
-	private Multimap<Pair<Unit,AccessGraph>, IPathEdge<Unit,AccessGraph>> startNodeToSummary = HashMultimap.create();
+	private Multimap<AccessGraph, IPathEdge<Unit,AccessGraph>> startNodeToSummary = HashMultimap.create();
 	public void addEndSummary(IPathEdge<Unit, AccessGraph> edge) {
-		startNodeToSummary.put(edge.getStartNode(), edge);
+		startNodeToSummary.put(edge.factAtSource(), edge);
 	}
-	public Collection<IPathEdge<Unit, AccessGraph>> endSummary(Pair<Unit, AccessGraph> startNode) {
+	public Collection<IPathEdge<Unit, AccessGraph>> endSummary(AccessGraph startNode) {
 		return startNodeToSummary.get(startNode);
 	}
 }

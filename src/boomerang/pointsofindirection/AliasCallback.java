@@ -14,5 +14,5 @@ public abstract class AliasCallback {
 	public AliasCallback(BoomerangContext context){
 		this.context = context;
 	}
-	public abstract void newAliasEncountered(PointOfIndirection poi, AccessGraph alias, Pair<Unit, AccessGraph> pair);
+	public abstract void newAliasEncountered(PointOfIndirection poi, AccessGraph alias, AccessGraph sourceFact);
 }

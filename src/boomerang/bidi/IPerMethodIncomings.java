@@ -9,6 +9,6 @@ import boomerang.ifdssolver.IPathEdge;
 import soot.Unit;
 
 interface IPerMethodIncomings {
-	public boolean addIncoming(Pair<Unit, AccessGraph> pair,IPathEdge<Unit, AccessGraph> pe);
-	public Collection<IPathEdge<Unit, AccessGraph>> getIncomings(Pair<Unit, AccessGraph> startNode);
+	public boolean addIncoming(AccessGraph startFact,IPathEdge<Unit, AccessGraph> pe);
+	public Collection<IPathEdge<Unit, AccessGraph>> getIncomings(AccessGraph startNode);
 }

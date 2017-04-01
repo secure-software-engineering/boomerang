@@ -21,7 +21,6 @@ import soot.Unit;
 public class PathEdge<N, D> implements IPathEdge<N, D> {
 
   private final N target;
-  private final N start;
   private final D dSource, dTarget;
   private final int hashCode;
 
@@ -30,11 +29,10 @@ public class PathEdge<N, D> implements IPathEdge<N, D> {
    * @param target The target statement.
    * @param dTarget The fact at the target.
    */
-  public PathEdge(N start, D dSource, N target, D dTarget) {
+  public PathEdge(D dSource, N target, D dTarget) {
 	super();
 	assert target != null;
     this.target = target;
-    this.start = start;
     this.dSource = dSource;
     this.dTarget = dTarget;
 
@@ -42,7 +40,6 @@ public class PathEdge<N, D> implements IPathEdge<N, D> {
     int result = 1;
     result = prime * result + ((dSource == null) ? 0 : dSource.hashCode());
     result = prime * result + ((dTarget == null) ? 0 : dTarget.hashCode());
-    result = prime * result + ((start == null) ? 0 : start.hashCode());
     result = prime * result + ((target == null) ? 0 : target.hashCode());
     this.hashCode = result;
     assert target != null;
@@ -50,10 +47,6 @@ public class PathEdge<N, D> implements IPathEdge<N, D> {
 
   public N getTarget() {
     return target;
-  }
-
-  public N getStart() {
-    return start;
   }
 
 
@@ -95,11 +88,6 @@ public class PathEdge<N, D> implements IPathEdge<N, D> {
         return false;
     } else if (!target.equals(other.target))
       return false;
-    if (start == null) {
-      if (other.start != null)
-        return false;
-    } else if (!start.equals(other.start))
-      return false;
     assert this.hashCode() == other.hashCode();
     return true;
   }
@@ -109,19 +97,12 @@ public class PathEdge<N, D> implements IPathEdge<N, D> {
     StringBuffer result = new StringBuffer();
     result.append("<");
     result.append(dSource);
-    result.append("@");
-    result.append(start);
     result.append("> -> <");
     result.append(dTarget);
     result.append("@");
     result.append(target.toString());
     result.append(">");
     return result.toString();
-  }
-
-  @Override
-  public Pair<N, D> getStartNode() {
-    return new Pair<N, D>(start, dSource);
   }
 
   @Override

@@ -4,12 +4,14 @@ package test.cases.sets;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import test.core.selfrunning.AbstractBoomerangTest;
 import test.core.selfrunning.AllocatedObject;
 
 public class TreeSets extends AbstractBoomerangTest{
+	@Ignore
 	@Test
 	public void addAndRetrieve(){
 		Set<Object> set = new TreeSet<Object>();

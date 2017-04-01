@@ -136,7 +136,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 							if (rightOp instanceof Local) {
 								Local local = (Local) rightOp;
 								AccessGraph a = new AccessGraph(local, local.getType());
-								context.getBackwardSolver().inject(new PathEdge<Unit, AccessGraph>(null, a, curr, a),
+								context.getBackwardSolver().inject(new PathEdge<Unit, AccessGraph>(a, curr, a),
 										PropagationType.Normal);
 							}
 						}
@@ -151,7 +151,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 							&& rightOp instanceof Local) {
 						Local local = (Local) rightOp;
 						AccessGraph a = new AccessGraph(local, local.getType());
-						context.getBackwardSolver().inject(new PathEdge<Unit, AccessGraph>(null, a, curr, a),
+						context.getBackwardSolver().inject(new PathEdge<Unit, AccessGraph>( a, curr, a),
 								PropagationType.Normal);
 					}
 				}
@@ -279,7 +279,7 @@ public class ForwardFlowFunctions extends AbstractFlowFunctions
 					.getFields();
 		if (toAppend.length > 0)
 			context.registerPOI(curr, new PointOfIndirection(new AccessGraph(lBase, lBase.getType()), curr, context),
-					new ForwardAliasCallback(edge.getStart(), edge.factAtSource(), succ, toAppend, context));
+					new ForwardAliasCallback( edge.factAtSource(), succ, toAppend, context));
 	}
 
 	@Override

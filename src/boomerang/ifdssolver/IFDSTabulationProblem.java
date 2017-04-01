@@ -69,5 +69,5 @@ public interface IFDSTabulationProblem<N, D, M, I extends BiDiInterproceduralCFG
 	PathEdgeFunctions<N,D,M> pathEdgeFunctions();
 
 	void cleanup();
-	void onSolverAddIncoming(M callee, Pair<N, D> pair, IPathEdge<N, D> pe);
+	void onSolverAddIncoming(M callee, D d, IPathEdge<N, D> pe);
 }
