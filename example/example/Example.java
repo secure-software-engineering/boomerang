@@ -46,7 +46,7 @@ public class Example {
     af.startQuery();
     aliases = af.findAliasAtStmt(query.getAccessGraph(), query.getStatement());
     System.out.println(query);
-    System.out.println(aliases.withMethodOfAllocationSite(icfg));
+    System.out.println(aliases);
 
 
     // Example 3a
@@ -62,7 +62,7 @@ public class Example {
     // allocation sites are found, if we use the AllCallersRequester (see Example 3b).
     aliases = af.findAliasAtStmt(query.getAccessGraph(), query.getStatement());
     System.out.println(query);
-    System.out.println(aliases.withMethodOfAllocationSite(icfg));
+    System.out.println(aliases);
 
     // Example 3b
     // Client-driven context-resolution (using All context)
@@ -79,7 +79,7 @@ public class Example {
     aliases = af.findAliasAtStmt(query.getAccessGraph(), query.getStatement(),
         new AllCallersRequester());
     System.out.println(query);
-    System.out.println(aliases.withMethodOfAllocationSite(icfg));
+    System.out.println(aliases);
   }
 
 
