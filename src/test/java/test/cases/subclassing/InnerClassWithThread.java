@@ -15,9 +15,9 @@ public class InnerClassWithThread extends AbstractBoomerangTest {
 			@Override
 			public void run() {
 				String cmd = System.getProperty("");
-				if(cmd!=null){
-					param = new Allocation();
-				}
+//				if(cmd!=null){
+//					param = new Allocation();
+//				}
 				for(int i = 1; i < 3; i++){
 					queryFor(param);
 				}

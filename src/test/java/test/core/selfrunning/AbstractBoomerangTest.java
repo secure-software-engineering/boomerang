@@ -1,5 +1,6 @@
 package test.core.selfrunning;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -275,7 +276,11 @@ public class AbstractBoomerangTest {
 		String userdir = System.getProperty("user.dir");
 		String sootCp = userdir + "/target/test-classes";
 		if (includeJDK()) {
-			Options.v().set_prepend_classpath(true);
+			String javaHome = System.getProperty("java.home");
+			if(javaHome == null || javaHome.equals(""))
+				throw new RuntimeException("Could not get property java.home!");
+			sootCp += File.pathSeparator + javaHome+ "/lib/rt.jar";
+			System.out.println(sootCp);
 			Options.v().setPhaseOption("cg", "trim-clinit:false");
 			Options.v().set_no_bodies_for_excluded(true);
 			Options.v().set_allow_phantom_refs(true);
