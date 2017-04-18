@@ -90,9 +90,9 @@ public class AbstractBoomerangTest {
 		System.out.println("Boomerang Allocations Sites: " + results.keySet());
 		System.out.println("Boomerang Results: " + results);
 		System.out.println("Expected Results: " + expectedResults);
-		Set<AccessGraph> falseNegativeAllocationSites = new HashSet<>(expectedResults.keySet());
+		Set<Pair<Unit, AccessGraph>> falseNegativeAllocationSites = new HashSet<>(expectedResults.keySet());
 		falseNegativeAllocationSites.removeAll(results.keySet());
-		Set<AccessGraph> falsePositiveAllocationSites = new HashSet<>(results.keySet());
+		Set<Pair<Unit, AccessGraph>> falsePositiveAllocationSites = new HashSet<>(results.keySet());
 		falsePositiveAllocationSites.removeAll(expectedResults.keySet());
 		String answer = "Query: " + q.getAp() + "@" + q.getStmt() + "€" + q.getMethod() + " \n"
 				+ (falseNegativeAllocationSites.isEmpty() ? "" : "\nFN:" + falseNegativeAllocationSites)
@@ -141,7 +141,7 @@ public class AbstractBoomerangTest {
 		AliasResults res = new AliasResults();
 		for (Pair<Unit, AccessGraph> allocatedVariableWithStack : allocationSiteWithCallStack) {
 			for (Local l : aliasedVariables) {
-				res.put(allocatedVariableWithStack.getO2(), new AccessGraph(l, l.getType()));
+				res.put(allocatedVariableWithStack, new AccessGraph(l, l.getType()));
 			}
 		}
 		return res;
@@ -171,7 +171,7 @@ public class AbstractBoomerangTest {
 		for (Unit call : callsites) {
 			for (AccessGraph accessGraphAtAllocationSite : transitivelyReachableAllocationSite(call,
 					new HashSet<SootMethod>())) {
-				out.add(new Pair<Unit, AccessGraph>(accessGraphAtAllocationSite.getSourceStmt(), accessGraphAtAllocationSite));
+				out.add(new Pair<Unit, AccessGraph>(call, accessGraphAtAllocationSite));
 			}
 		}
 		for (Unit u : sootTestMethod.getActiveBody().getUnits()) {

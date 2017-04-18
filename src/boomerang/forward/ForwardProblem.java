@@ -60,7 +60,7 @@ public class ForwardProblem
   public void cleanup() {}
 
   @Override
-  public void onSolverAddIncoming(SootMethod callee, AccessGraph d3,
+  public void onSolverAddIncoming(SootMethod callee, Pair<Unit, AccessGraph> d3,
       IPathEdge<Unit, AccessGraph> pe) {}
 
 

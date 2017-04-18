@@ -14,7 +14,7 @@ import soot.Unit;
 public class StrongUpdateCallback extends AliasCallback {
 
 	private final IPathEdge<Unit, AccessGraph> pausedEdge;
-	private Set<AccessGraph> origins = new HashSet<>();
+	private Set<Pair<Unit,AccessGraph>> origins = new HashSet<>();
 
 	public StrongUpdateCallback(IPathEdge<Unit, AccessGraph> pausedEdge, BoomerangContext context) {
 		super(context);
@@ -22,8 +22,8 @@ public class StrongUpdateCallback extends AliasCallback {
 	}
 
 	@Override
-	public void newAliasEncountered(PointOfIndirection poi, AccessGraph alias, AccessGraph aliasOrigin) {
-		if(origins.add(aliasOrigin) && origins.size() > 1){
+	public void newAliasEncountered(PointOfIndirection poi, AccessGraph alias, Pair<Unit,AccessGraph> origin) {
+		if(origins.add(origin) && origins.size() > 1){
 			context.getForwardSolver().inject(pausedEdge, PropagationType.Normal);
 		}
 	}

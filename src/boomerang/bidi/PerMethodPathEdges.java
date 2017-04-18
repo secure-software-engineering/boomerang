@@ -36,7 +36,7 @@ class PerMethodPathEdges {
 	private PerStatementPathEdges getOrCreate(Unit stmt) {
 		PerStatementPathEdges perStatementPathEdges = stmtToPathEdges.get(stmt);
 		if (perStatementPathEdges == null)
-			perStatementPathEdges = new PerStatementPathEdges(context,direction,context.icfg.getMethodOf(stmt));
+			perStatementPathEdges = new PerStatementPathEdges(context,direction);
 		stmtToPathEdges.put(stmt, perStatementPathEdges);
 		return perStatementPathEdges;
 	}
@@ -59,7 +59,7 @@ class PerMethodPathEdges {
 		return c;
 	}
 
-	Multimap<AccessGraph, AccessGraph> getResultsAtStmtContainingValue(Unit stmt, AccessGraph fact, Set<Pair<Unit,AccessGraph>> visited) {
+	Multimap<Pair<Unit, AccessGraph>, AccessGraph> getResultsAtStmtContainingValue(Unit stmt, AccessGraph fact, Set<Pair<Unit,AccessGraph>> visited) {
 		PerStatementPathEdges pathedges = getOrCreate(stmt);
 		return pathedges.getResultsAtStmtContainingValue(stmt, fact,visited);
 	}
@@ -84,7 +84,7 @@ class PerMethodPathEdges {
 			set.add(unit);
 		for (Unit m : set) {
 			System.out.println("\t " + m + " " + stmtToPathEdges.get(m).size());
-//			stmtToPathEdges.get(m).groupByStartUnit();
+			stmtToPathEdges.get(m).groupByStartUnit();
 		}
 	}
 

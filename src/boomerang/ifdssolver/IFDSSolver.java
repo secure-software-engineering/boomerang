@@ -108,7 +108,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
 						continue;
 					}
 					// line 15.2
-					Collection<IPathEdge<N, D>> endSumm = endSummary(sCalledProcN, nextCallEdge.factAtSource());
+					Collection<IPathEdge<N, D>> endSumm = endSummary(sCalledProcN, nextCallEdge.getStartNode());
 					Collection<? extends IPathEdge<N, D>> edgesOnHold = pathEdgeFunctions.getEdgesOnHold(nextCallEdge,
 							incEdge);
 					for (IPathEdge<N, D> edgeOnHold : edgesOnHold) {
@@ -190,7 +190,7 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
 
 		addEndSummary(methodThatNeedsSummary, summaryEdge);
 
-		Set<? extends IPathEdge<N, D>> incomings = incoming(summaryEdge.factAtSource(), methodThatNeedsSummary);
+		Set<? extends IPathEdge<N, D>> incomings = incoming(summaryEdge.getStartNode(), methodThatNeedsSummary);
 
 		Collection<? extends IPathEdge<N, D>> appendToSummary = pathEdgeFunctions
 				.summaryCallback(methodThatNeedsSummary, summaryEdge);
@@ -331,8 +331,8 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
 		}
 	}
 
-	protected Collection<IPathEdge<N, D>> endSummary(M m, D d) {
-		Collection<IPathEdge<N, D>> endSummary = summaries.endSummary(m, d);
+	protected Collection<IPathEdge<N, D>> endSummary(M m, Pair<N, D> d3) {
+		Collection<IPathEdge<N, D>> endSummary = summaries.endSummary(m, d3);
 		if (endSummary == null)
 			return new HashSet<>();
 		return new HashSet<>(endSummary);
@@ -343,18 +343,18 @@ public abstract class IFDSSolver<N, D, M, I extends BiDiInterproceduralCFG<N, M>
 		summaries.addEndSummary(m, edge);
 	}
 
-	public Set<? extends IPathEdge<N, D>> incoming(D factAtSource, M m) {
+	public Set<? extends IPathEdge<N, D>> incoming(Pair<N, D> pair, M m) {
 		if (incomings == null) {
 			return new HashSet<>();
 		}
-		return new HashSet<>(incomings.incoming(factAtSource, m));
+		return new HashSet<>(incomings.incoming(pair, m));
 	};
 
 	public boolean addIncoming(M callee, IPathEdge<N, D> nextCallEdge, IPathEdge<N, D> incEdge) {
 		debugger.addIncoming(direction, callee, nextCallEdge.getTargetNode(), incEdge);
 		onRegister(incEdge);
-		tabulationProblem.onSolverAddIncoming(callee, nextCallEdge.factAtSource(), incEdge);
-		return incomings.addIncoming(callee, nextCallEdge.factAtSource(), incEdge);
+		tabulationProblem.onSolverAddIncoming(callee, nextCallEdge.getStartNode(), incEdge);
+		return incomings.addIncoming(callee, nextCallEdge.getStartNode(), incEdge);
 	}
 
 	public void cleanup() {

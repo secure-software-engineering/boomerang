@@ -38,7 +38,7 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			return Collections.emptySet();
 		}
 		context.addAsVisitedBackwardMethod(callee);
-		return Collections.singleton(new PathEdge<>(initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(),
+		return Collections.singleton(new PathEdge<>(null, initialSelfLoop.factAtSource(), initialSelfLoop.getTarget(),
 				initialSelfLoop.factAtTarget()));
 	}
 
@@ -73,7 +73,7 @@ class BackwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 			}
 			return Collections.emptySet();
 		}
-		succEdge = new PathEdge<Unit, AccessGraph>(succEdge.factAtTarget(), succEdge.getTarget(),
+		succEdge = new PathEdge<Unit, AccessGraph>(null, succEdge.factAtTarget(), succEdge.getTarget(),
 				succEdge.factAtTarget());
 		AccessGraph targetFact = succEdge.factAtTarget();
 		if(!targetFact.isStatic() && Scene.v().getPointsToAnalysis().reachingObjects(targetFact.getBase()).isEmpty()){

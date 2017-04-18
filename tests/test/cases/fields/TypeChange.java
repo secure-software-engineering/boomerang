@@ -25,7 +25,7 @@ public class TypeChange extends AbstractBoomerangTest {
 		AllocatedObject u = (AllocatedObject) t;
 		queryFor(u);
 	}
-	public static class D {
+	public class D {
 		AllocatedObject f = new AllocatedObject(){};
 		D d = new D();
 

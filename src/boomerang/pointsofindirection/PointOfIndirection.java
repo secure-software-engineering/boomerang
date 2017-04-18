@@ -22,7 +22,7 @@ public class PointOfIndirection {
 	
 	public void sendBackward(){
 		for(Unit u :context.icfg.getPredsOf(fromStmt)){
-			PathEdge<Unit, AccessGraph> pe = new PathEdge<>(sendBackward, u, sendBackward);
+			PathEdge<Unit, AccessGraph> pe = new PathEdge<>(null, sendBackward, u, sendBackward);
 			context.getBackwardSolver().inject(pe, PropagationType.Normal);
 		}
 	}

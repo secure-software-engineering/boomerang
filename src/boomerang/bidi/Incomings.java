@@ -17,7 +17,7 @@ public class Incomings implements IIncomings<Unit, SootMethod, AccessGraph> {
 	
 	private Map<SootMethod, IPerMethodIncomings> methodToInc = new HashMap<>();
 	@Override
-	public Collection<IPathEdge<Unit, AccessGraph>> incoming(AccessGraph startNode, SootMethod m) {
+	public Collection<IPathEdge<Unit, AccessGraph>> incoming(Pair<Unit,AccessGraph> startNode, SootMethod m) {
 		IPerMethodIncomings perMethodIncomings = methodToInc.get(m);
 		if(perMethodIncomings == null)
 			return Collections.emptySet();
@@ -25,10 +25,10 @@ public class Incomings implements IIncomings<Unit, SootMethod, AccessGraph> {
 	}
 
 	@Override
-	public boolean addIncoming(SootMethod callee, AccessGraph startFact,
+	public boolean addIncoming(SootMethod callee, Pair<Unit, AccessGraph> pair,
 			IPathEdge<Unit, AccessGraph> pe) {
 		IPerMethodIncomings perMethod = getOrCreate(callee);
-		return perMethod.addIncoming(startFact,pe);
+		return perMethod.addIncoming(pair,pe);
 	}
 
 	private IPerMethodIncomings getOrCreate(SootMethod m){

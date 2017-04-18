@@ -46,7 +46,7 @@ public class ForwardSolver extends
   public void startPropagationAlongPath(final Unit stmt, final AccessGraph d1, final AccessGraph d2,
       final IPathEdge<Unit, AccessGraph> bwedge) {
     for (Unit succStmt : icfg.getSuccsOf(stmt)) {
-      PathEdge<Unit, AccessGraph> pathEdge = new PathEdge<Unit, AccessGraph>(d1, succStmt, d2);
+      PathEdge<Unit, AccessGraph> pathEdge = new PathEdge<Unit, AccessGraph>(stmt, d1, succStmt, d2);
       propagate(pathEdge, PropagationType.Normal);
     }
 

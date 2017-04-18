@@ -23,28 +23,27 @@ import soot.SootMethod;
 import soot.Unit;
 
 class PerStatementPathEdges {
-	private Multimap< AccessGraph, Pair<Unit, AccessGraph>> forwardPathEdges = HashMultimap.create();
-	private Multimap<Pair<Unit, AccessGraph>, AccessGraph> reversePathEdges = HashMultimap.create();
+	private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> forwardPathEdges = HashMultimap.create();
+	private Multimap<Pair<Unit, AccessGraph>, Pair<Unit, AccessGraph>> reversePathEdges = HashMultimap.create();
 	private Set<IPathEdge<Unit, AccessGraph>> processedPathEdges = new HashSet<>();
 	private Multimap<Pair<Unit, AccessGraph>, PointOfIndirection> targetToPOI = HashMultimap.create();
-	private Multimap<AccessGraph, PointOfIndirection> originToPOI = HashMultimap.create();
-	private Multimap<AccessGraph, PointOfIndirection> parameterOriginToPOI = HashMultimap.create();
+	private Multimap<Pair<Unit, AccessGraph>, PointOfIndirection> originToPOI = HashMultimap.create();
+	private Multimap<Pair<Unit, AccessGraph>, PointOfIndirection> parameterOriginToPOI = HashMultimap.create();
 	private Multimap<PointOfIndirection, AliasCallback> poisToCallback = HashMultimap.create();
 	private Set<PointOfIndirection> pois = new HashSet<>();
 	private final BoomerangContext context;
 	private Direction direction;
-	private SootMethod method;
-	public PerStatementPathEdges(BoomerangContext context, Direction direction,SootMethod method) {
+
+	public PerStatementPathEdges(BoomerangContext context, Direction direction) {
 		this.context = context;
 		this.direction = direction;
-		this.method = method;
 	}
 
 	void register(IPathEdge<Unit, AccessGraph> pe) {
 		Pair<Unit, AccessGraph> typeLessBackwardNode = new Pair<Unit, AccessGraph>(pe.getTarget(),
 				pe.factAtTarget().noType());
-		forwardPathEdges.put(pe.factAtSource(), pe.getTargetNode());
-		reversePathEdges.put(typeLessBackwardNode, pe.factAtSource());
+		forwardPathEdges.put(pe.getStartNode(), pe.getTargetNode());
+		reversePathEdges.put(typeLessBackwardNode, pe.getStartNode());
 		if (!processedPathEdges.add(pe))
 			return;
 		if(direction == Direction.BACKWARD)
@@ -52,35 +51,35 @@ class PerStatementPathEdges {
 		for (PointOfIndirection p : targetToPOI.get(typeLessBackwardNode)) {
 			registerPOIWithTarget(typeLessBackwardNode, p);
 		}
-		for (PointOfIndirection p : originToPOI.get(pe.factAtSource())) {
+		for (PointOfIndirection p : originToPOI.get(pe.getStartNode())) {
 			for (AliasCallback cb : poisToCallback.get(p)) {
-				cb.newAliasEncountered(p, pe.factAtTarget(),pe.factAtSource());
+				cb.newAliasEncountered(p, pe.factAtTarget(),pe.getStartNode());
 			}
 		}
 		if (!pe.factAtSource().hasAllocationSite()) {
-			for (Entry<AccessGraph, PointOfIndirection> e : parameterOriginToPOI.entries()) {
+			for (Entry<Pair<Unit, AccessGraph>, PointOfIndirection> e : parameterOriginToPOI.entries()) {
 				PointOfIndirection p = e.getValue();
 				// TODO add check only if type match
-				if (aliasInContext(e.getKey(), pe.factAtSource())) {
+				if (aliasInContext(pe.getStart(), e.getKey().getO2(), pe.factAtSource())) {
 					for (AliasCallback cb : poisToCallback.get(p)) {
-						cb.newAliasEncountered(p, pe.factAtTarget(),pe.factAtSource());
+						cb.newAliasEncountered(p, pe.factAtTarget(),pe.getStartNode());
 					}
 				}
 			}
 		}
 	}
 
-	private boolean aliasInContext(AccessGraph potentialAlias1, AccessGraph potentialAlias2) {
-		return aliasInContext(method, potentialAlias1, potentialAlias2, new HashSet<SootMethod>());
+	private boolean aliasInContext(Unit start, AccessGraph potentialAlias1, AccessGraph potentialAlias2) {
+		return aliasInContext(start,potentialAlias1, potentialAlias2, new HashSet<Unit>());
 	}
 
 	Map<CacheKey, Boolean> cache = new HashMap<>();
 	private class CacheKey{
-		private SootMethod startNodeOfCallee;
+		private Unit startNodeOfCallee;
 		private AccessGraph potentialAlias1;
 		private AccessGraph potentialAlias2;
 
-		public CacheKey(SootMethod startNodeOfCallee, AccessGraph potentialAlias1, AccessGraph potentialAlias2) {
+		public CacheKey(Unit startNodeOfCallee, AccessGraph potentialAlias1, AccessGraph potentialAlias2) {
 			this.startNodeOfCallee = startNodeOfCallee;
 			this.potentialAlias1 = potentialAlias1;
 			this.potentialAlias2 = potentialAlias2;
@@ -124,38 +123,36 @@ class PerStatementPathEdges {
 		}
 	}
 	
-	private boolean aliasInContext(SootMethod method, AccessGraph potentialAlias1, AccessGraph potentialAlias2, Set<SootMethod> visited) {
-		if(!visited.add(method))
+	private boolean aliasInContext(Unit startNodeOfCallee, AccessGraph potentialAlias1, AccessGraph potentialAlias2, Set<Unit> visited) {
+		if(!visited.add(startNodeOfCallee))
 			return false;
 		if(potentialAlias1.hasSetBasedFieldGraph() || potentialAlias2.hasSetBasedFieldGraph())
 			return false;
-		CacheKey key = new CacheKey(method,potentialAlias1,potentialAlias2);
+		CacheKey key = new CacheKey(startNodeOfCallee,potentialAlias1,potentialAlias2);
 		if(cache.containsKey(key))
 			return cache.get(key);
-		key = new CacheKey(method,potentialAlias2,potentialAlias1);
+		key = new CacheKey(startNodeOfCallee,potentialAlias2,potentialAlias1);
 		if(cache.containsKey(key))
 			return cache.get(key);
 		Set<? extends IPathEdge<Unit, AccessGraph>> pathEdges1 = context
-				.getForwardIncomings( potentialAlias1,method);
+				.getForwardIncomings(new Pair<Unit, AccessGraph>(startNodeOfCallee, potentialAlias1));
 		Set<? extends IPathEdge<Unit, AccessGraph>> pathEdges2 = context
-				.getForwardIncomings( potentialAlias2,method);
+				.getForwardIncomings(new Pair<Unit, AccessGraph>(startNodeOfCallee, potentialAlias2));
 		for (IPathEdge<Unit, AccessGraph> edge1 : pathEdges1) {
 			for (IPathEdge<Unit, AccessGraph> edge2 : pathEdges2) {
-				SootMethod callerMethod1 = context.icfg.getMethodOf(edge1.getTarget());
-				SootMethod callerMethod2 = context.icfg.getMethodOf(edge2.getTarget());
-				if (edge1.factAtSource().equals(edge2.factAtSource())) {
-					cache.put(new CacheKey(method,potentialAlias1,potentialAlias2), true);
+				if (edge1.getStartNode().equals(edge2.getStartNode())) {
+					cache.put(new CacheKey(startNodeOfCallee,potentialAlias1,potentialAlias2), true);
 					return true;
 				}
 				if (!edge1.factAtSource().hasAllocationSite() && !edge1.factAtSource().hasAllocationSite()
-						&&  callerMethod1.equals(callerMethod2)) {
-					boolean res = aliasInContext(callerMethod1, edge1.factAtSource(), edge2.factAtSource(),visited);
-					cache.put(new CacheKey(callerMethod1,potentialAlias1,potentialAlias2), res);
+						&& edge2.getStart().equals(edge1.getStart())) {
+					boolean res = aliasInContext(edge1.getStart(), edge1.factAtSource(), edge2.factAtSource(),visited);
+					cache.put(new CacheKey(startNodeOfCallee,potentialAlias1,potentialAlias2), res);
 					return res;
 				}
 			}
 		}
-		cache.put(new CacheKey(method,potentialAlias1,potentialAlias2), false);
+		cache.put(new CacheKey(startNodeOfCallee,potentialAlias1,potentialAlias2), false);
 		return false;
 	}
 
@@ -174,16 +171,16 @@ class PerStatementPathEdges {
 	}
 
 	private void executeCallback(Pair<Unit, AccessGraph> aliasTarget, PointOfIndirection poi, AliasCallback cb) {
-		for (AccessGraph origin : reversePathEdges.get(aliasTarget)) {
+		for (Pair<Unit, AccessGraph> origin : reversePathEdges.get(aliasTarget)) {
 			for (Pair<Unit, AccessGraph> aliases : forwardPathEdges.get(origin)) {
 				cb.newAliasEncountered(poi, aliases.getO2(),origin);
 			}
-			if (!origin.hasAllocationSite()) {
+			if (!origin.getO2().hasAllocationSite()) {
 				// TODO Check all existing path edges with no origin if they
 				// alias.
-				for (AccessGraph existingPathEdgeOrigin : forwardPathEdges.keySet()) {
-					if (!existingPathEdgeOrigin.hasNullAllocationSite()) {
-						if (!aliasInContext(origin, existingPathEdgeOrigin))
+				for (Pair<Unit, AccessGraph> existingPathEdgeOrigin : forwardPathEdges.keySet()) {
+					if (!existingPathEdgeOrigin.getO2().hasNullAllocationSite()) {
+						if (!aliasInContext(origin.getO1(), origin.getO2(), existingPathEdgeOrigin.getO2()))
 							continue;
 						for(Pair<Unit,AccessGraph> target : forwardPathEdges.get(existingPathEdgeOrigin)){
 							cb.newAliasEncountered(poi, target.getO2(),existingPathEdgeOrigin);
@@ -195,7 +192,7 @@ class PerStatementPathEdges {
 	}
 
 	private void registerPOIWithTarget(Pair<Unit, AccessGraph> aliasTarget, PointOfIndirection poi) {
-		for (AccessGraph origin : reversePathEdges.get(aliasTarget)) {
+		for (Pair<Unit, AccessGraph> origin : reversePathEdges.get(aliasTarget)) {
 			if (originToPOI.put(origin, poi)) {
 				for (Pair<Unit, AccessGraph> aliases : forwardPathEdges.get(origin)) {
 					for (AliasCallback cb : poisToCallback.get(poi)) {
@@ -203,13 +200,13 @@ class PerStatementPathEdges {
 					}
 				}
 			}
-			if (!origin.hasAllocationSite()) {
+			if (!origin.getO2().hasAllocationSite()) {
 				parameterOriginToPOI.put(origin, poi);
 				// TODO Check all existing path edges with no origin if they
 				// alias.
-				for (AccessGraph existingPathEdgeOrigin : forwardPathEdges.keySet()) {
-					if (!existingPathEdgeOrigin.hasNullAllocationSite()) {
-						if (!aliasInContext(origin, existingPathEdgeOrigin))
+				for (Pair<Unit, AccessGraph> existingPathEdgeOrigin : forwardPathEdges.keySet()) {
+					if (!existingPathEdgeOrigin.getO2().hasNullAllocationSite()) {
+						if (!aliasInContext(origin.getO1(), origin.getO2(), existingPathEdgeOrigin.getO2()))
 							continue;
 						for (AliasCallback cb : poisToCallback.get(poi)) {
 							for(Pair<Unit,AccessGraph> target : forwardPathEdges.get(existingPathEdgeOrigin)){
@@ -222,43 +219,45 @@ class PerStatementPathEdges {
 		}
 	}
 
-	Multimap<AccessGraph, AccessGraph> getResultsAtStmtContainingValue(Unit stmt, AccessGraph fact,
+	Multimap<Pair<Unit, AccessGraph>, AccessGraph> getResultsAtStmtContainingValue(Unit stmt, AccessGraph fact,
 			Set<Pair<Unit, AccessGraph>> visited) {
 		Pair<Unit, AccessGraph> visit = new Pair<Unit, AccessGraph>(stmt, fact);
 		if (visited.contains(visit)) {
 			return HashMultimap.create();
 		}
 		visited.add(visit);
-		Multimap< AccessGraph, AccessGraph> pathEdges = HashMultimap.create();
+		Multimap<Pair<Unit, AccessGraph>, AccessGraph> pathEdges = HashMultimap.create();
 		Pair<Unit, AccessGraph> o = new Pair<>(stmt, fact.noType());
 		if (!reversePathEdges.containsKey(o))
 			return HashMultimap.create();
 
-		Collection<AccessGraph> matchingStarts = new HashSet<>();
+		Collection<Pair<Unit, AccessGraph>> matchingStarts = new HashSet<>();
 		matchingStarts = reversePathEdges.get(o);
-		for (AccessGraph start : matchingStarts) {
+		for (Pair<Unit, AccessGraph> start : matchingStarts) {
 			Collection<Pair<Unit, AccessGraph>> fwPair = forwardPathEdges.get(start);
 			for (Pair<Unit, AccessGraph> target : fwPair) {
 				pathEdges.put(start, target.getO2());
 			}
 		}
-		Multimap<AccessGraph, AccessGraph> out = HashMultimap.create();
-		for (AccessGraph key : pathEdges.keySet()) {
+		Multimap<Pair<Unit, AccessGraph>, AccessGraph> out = HashMultimap.create();
+		for (Pair<Unit, AccessGraph> key : pathEdges.keySet()) {
+			Unit pathEdgeStart = key.getO1();
+			SootMethod callee = context.icfg.getMethodOf(pathEdgeStart);
 			boolean maintainPathEdge = false;
-			if (!key.hasAllocationSite()) {
-				for (Unit callSite : context.icfg.getCallersOf(method)) {
+			if (context.icfg.getStartPointsOf(callee).contains(pathEdgeStart)) {
+				for (Unit callSite : context.icfg.getCallersOf(callee)) {
 //					maintainPathEdge |= !context.getContextRequester().continueAtCallSite(callSite, callee);
-					Set<? extends IPathEdge<Unit, AccessGraph>> pathEdgesAtCallSite = context.getForwardIncomings(key, method);
+					Set<? extends IPathEdge<Unit, AccessGraph>> pathEdgesAtCallSite = context.getForwardIncomings(key);
 					for (IPathEdge<Unit, AccessGraph> pathEdgeAtCallSite : pathEdgesAtCallSite) {
-						Multimap<AccessGraph, AccessGraph> aliasesAtCallSite = context.getForwardPathEdges()
+						Multimap<Pair<Unit, AccessGraph>, AccessGraph> aliasesAtCallSite = context.getForwardPathEdges()
 								.getResultAtStmtContainingValue(callSite, pathEdgeAtCallSite.factAtTarget(), visited);
-						for (Entry<AccessGraph, AccessGraph> aliasEntry : aliasesAtCallSite.entries()) {
+						for (Entry<Pair<Unit, AccessGraph>, AccessGraph> aliasEntry : aliasesAtCallSite.entries()) {
 							Set<AccessGraph> withinCalleeFacts = context.getForwardTargetsFor(aliasEntry.getValue(),
-									callSite, method);
-							for (AccessGraph withinCalleeFact : withinCalleeFacts) {
+									callSite, callee);
+							for (AccessGraph wihinCalleeFact : withinCalleeFacts) {
 
 								Collection<Pair<Unit, AccessGraph>> fwPair = forwardPathEdges
-										.get( withinCalleeFact);
+										.get(new Pair<Unit, AccessGraph>(pathEdgeStart, wihinCalleeFact));
 								for (Pair<Unit, AccessGraph> target : fwPair) {
 									out.put(aliasEntry.getKey(), target.getO2());
 								}
@@ -286,12 +285,12 @@ class PerStatementPathEdges {
 		return forwardPathEdges.size();
 	}
 
-//	void groupByStartUnit() {
-//		for (Pair<Unit, AccessGraph> pe : forwardPathEdges.keySet()) {
-//			System.out.println(pe + " :: " + forwardPathEdges.get(pe).size());
-//			prettyPrint(forwardPathEdges.get(pe));
-//		}
-//	}
+	void groupByStartUnit() {
+		for (Pair<Unit, AccessGraph> pe : forwardPathEdges.keySet()) {
+			System.out.println(pe + " :: " + forwardPathEdges.get(pe).size());
+			prettyPrint(forwardPathEdges.get(pe));
+		}
+	}
 
 	private void prettyPrint(Collection<Pair<Unit, AccessGraph>> collection) {
 		Multimap<Unit, AccessGraph> unitToAccessPath = HashMultimap.create();

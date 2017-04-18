@@ -14,13 +14,13 @@ import boomerang.accessgraph.AccessGraph;
 import boomerang.ifdssolver.IPathEdge;
 
 class PerMethodIncomings implements IPerMethodIncomings {
-	private Multimap<AccessGraph,IPathEdge<Unit, AccessGraph>> startNodeToIncEdges = HashMultimap.create();
-	public boolean addIncoming( AccessGraph start,
+	private Multimap<Pair<Unit,AccessGraph>,IPathEdge<Unit, AccessGraph>> startNodeToIncEdges = HashMultimap.create();
+	public boolean addIncoming(Pair<Unit, AccessGraph> pair,
 			IPathEdge<Unit, AccessGraph> pe) {
-		return startNodeToIncEdges.put(start, pe);
+		return startNodeToIncEdges.put(pair, pe);
 	}
 	public Collection<IPathEdge<Unit, AccessGraph>> getIncomings(
-			AccessGraph startNode) {
+			Pair<Unit, AccessGraph> startNode) {
 		Collection<IPathEdge<Unit, AccessGraph>> collection = startNodeToIncEdges.get(startNode);
 		if(collection == null)
 			return Collections.emptySet();

@@ -56,11 +56,8 @@ public class JSONOutputDebugger implements IBoomerangDebugger {
 	public void addSummary(Direction direction, SootMethod methodToSummary, IPathEdge<Unit, AccessGraph> summary) {
 		for (Unit callSite : context.icfg.getCallersOf(methodToSummary)) {
 			ExplodedSuperGraph cfg = generateCFG(icfg.getMethodOf(callSite));
-			SootMethod summarizedMethod = icfg.getMethodOf(summary.getTarget());
-			for(Unit sp : icfg.getStartPointsOf(summarizedMethod)){
-				cfg.addSummary(new ESGNode(sp, summary.factAtSource(), direction),
-						new ESGNode(summary.getTarget(), summary.factAtTarget(), direction));
-			}
+			cfg.addSummary(new ESGNode(summary.getStart(), summary.factAtSource(), direction),
+					new ESGNode(summary.getTarget(), summary.factAtTarget(), direction));
 		}
 	}
 

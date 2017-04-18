@@ -56,7 +56,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	@Override
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> normalFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
-//		assert prevEdge.getStartNode().equals(succEdge.getStartNode());
+		assert prevEdge.getStartNode().equals(succEdge.getStartNode());
 		if (!isActivePath(succEdge.getTarget())) {
 			return Collections.emptySet();
 		}
@@ -85,6 +85,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 	@Override
 	protected Collection<? extends IPathEdge<Unit, AccessGraph>> call2ReturnFunctionExtendor(
 			IPathEdge<Unit, AccessGraph> prevEdge, IPathEdge<Unit, AccessGraph> succEdge) {
+		assert prevEdge.getStartNode().equals(succEdge.getStartNode());
 		if (!isActivePath(succEdge.getTarget())) {
 			return Collections.emptySet();
 		}
@@ -117,7 +118,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 							continue;
 						for (AccessGraph subgraph : withoutLast) {
 							context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context),
-									new ForwardAliasCallback(d1, succEdge.getTarget(),
+									new ForwardAliasCallback(callSite, d1, succEdge.getTarget(),
 											new WrappedSootField[] { field }, context));
 						}
 					}
@@ -158,6 +159,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 
 		// For balanced problems we continue with the path edge which actually
 		// was incoming!
+		assert incEdge.getStartNode().equals(succEdge.getStartNode());
 		if (succEdge.factAtTarget().getFieldCount() > 0 && !isIdentityEdge(prevEdge)) {
 			sanitize(succEdge);
 			createAliasEdgesOnBalanced(incEdge.getTarget(), succEdge);
@@ -177,7 +179,7 @@ class ForwardPathEdgeFunctions extends AbstractPathEdgeFunctions {
 				continue;
 			for (AccessGraph subgraph : withoutLast) {
 				context.registerPOI(callSite, new PointOfIndirection(subgraph, callSite, context),
-						new ForwardAliasCallback(succEdge.factAtSource(), succEdge.getTarget(),
+						new ForwardAliasCallback(succEdge.getStart(), succEdge.factAtSource(), succEdge.getTarget(),
 								new WrappedSootField[] { field }, context));
 			}
 		}

@@ -17,10 +17,26 @@ import soot.jimple.AssignStmt;
 import soot.jimple.NullConstant;
 import soot.jimple.infoflow.solver.cfg.IInfoflowCFG;
 
-public class AliasResults extends ForwardingMultimap<AccessGraph, AccessGraph> {
-	private Multimap< AccessGraph, AccessGraph> delegate;
+public class AliasResults extends ForwardingMultimap<Pair<Unit, AccessGraph>, AccessGraph> {
+	private Multimap<Pair<Unit, AccessGraph>, AccessGraph> delegate;
 	private boolean timedout;
 
+	/**
+	 * Creates a deep copy of with the supplied Multimap of results.
+	 * 
+	 * @param res
+	 */
+	public AliasResults(Multimap<Pair<Unit, AccessGraph>, AccessGraph> res) {
+		this.delegate = HashMultimap.create();
+		for (Pair<Unit, AccessGraph> key : res.keySet()) {
+			Pair<Unit, AccessGraph> clonedKey = new Pair<>(key.getO1(), key.getO2());
+			Set<AccessGraph> out = new HashSet<>();
+			for (AccessGraph value : res.get(key)) {
+				out.add(value);
+			}
+			delegate.putAll(clonedKey, out);
+		}
+	}
 
 	/**
 	 * Creates an empty result map.
@@ -30,7 +46,7 @@ public class AliasResults extends ForwardingMultimap<AccessGraph, AccessGraph> {
 	}
 
 	@Override
-	protected Multimap<AccessGraph, AccessGraph> delegate() {
+	protected Multimap<Pair<Unit, AccessGraph>, AccessGraph> delegate() {
 		return this.delegate;
 	}
 
@@ -124,21 +140,21 @@ public class AliasResults extends ForwardingMultimap<AccessGraph, AccessGraph> {
 		return out;
 	}
 
-//	public String withMethodOfAllocationSite(IInfoflowCFG cfg) {
-//		StringBuilder sb = new StringBuilder();
-//		sb.append("{");
-//		for (Pair<Unit, AccessGraph> k : keySet()) {
-//			sb.append(k.getO1() + " in " + cfg.getMethodOf(k.getO1()));
-//			sb.append("=");
-//			sb.append(get(k));
-//		}
-//		sb.append("}");
-//		return "AliasResults: " + sb.toString();
-//	}
+	public String withMethodOfAllocationSite(IInfoflowCFG cfg) {
+		StringBuilder sb = new StringBuilder();
+		sb.append("{");
+		for (Pair<Unit, AccessGraph> k : keySet()) {
+			sb.append(k.getO1() + " in " + cfg.getMethodOf(k.getO1()));
+			sb.append("=");
+			sb.append(get(k));
+		}
+		sb.append("}");
+		return "AliasResults: " + sb.toString();
+	}
 	public AliasResults withoutNullAllocationSites(){
 		AliasResults res = new AliasResults();
-		for(AccessGraph key : keySet()){
-			if(!key.hasNullAllocationSite())
+		for(Pair<Unit,AccessGraph> key : keySet()){
+			if(!key.getO2().hasNullAllocationSite())
 				res.putAll(key, get(key));
 		}
 		if(timedout)

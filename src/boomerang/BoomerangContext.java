@@ -124,9 +124,13 @@ public class BoomerangContext {
 	}
 
 	public void sanityCheckEdge(IPathEdge<Unit, AccessGraph> edge) {
-		if (edge.getTarget() == null)
+		if (edge.getStart() == null)
 			return;
-		SootMethod m1 = icfg.getMethodOf(edge.getTarget());
+		SootMethod m1 = icfg.getMethodOf(edge.getStart());
+		SootMethod m2 = icfg.getMethodOf(edge.getTarget());
+		assert m1 == m2 : "The path edge " + edge + "contains statements of two different method: " + m1.toString()
+				+ " and " + m2.toString();
+		;
 		assert !isIgnoredMethod(m1) : "The path edge resides in a method which should be ignored " + m1.toString();
 	}
 
@@ -230,8 +234,8 @@ public class BoomerangContext {
 		return (PathEdgeStore) getForwardSolver().getPathEdges();
 	}
 
-	public Set<? extends IPathEdge<Unit, AccessGraph>> getForwardIncomings(AccessGraph startNode,SootMethod m) {
-		return getForwardSolver().incoming(startNode, m);
+	public Set<? extends IPathEdge<Unit, AccessGraph>> getForwardIncomings(Pair<Unit,AccessGraph> startNode) {
+		return getForwardSolver().incoming(startNode, icfg.getMethodOf(startNode.getO1()));
 	}
 	public void registerPOI(Unit stmt, PointOfIndirection poi, AliasCallback cb) {
 		getForwardPathEdges().registerPointOfIndirectionAt(stmt, poi,cb);
@@ -251,11 +255,10 @@ public class BoomerangContext {
 		ForwardFlowFunctions ptsFunction = new ForwardFlowFunctions(this);
 		for (Unit calleeSp : calleeSps) {
 			FlowFunction<AccessGraph> callFlowFunction = ptsFunction.getCallFlowFunction(
-					new PathEdge<Unit, AccessGraph>(null, callSite, null), callee, calleeSp);
+					new PathEdge<Unit, AccessGraph>(callSite, null, callSite, null), callee, calleeSp);
 			Set<AccessGraph> targets = callFlowFunction.computeTargets(d2);
 			factsInCallee.addAll(targets);
 		}
 		return factsInCallee;
 	}
-
 }

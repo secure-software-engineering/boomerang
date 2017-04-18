@@ -31,7 +31,7 @@ public class Summaries implements ISummaries<Unit, SootMethod, AccessGraph> {
 
 	@Override
 	public Collection<IPathEdge<Unit, AccessGraph>> endSummary(SootMethod m,
-			AccessGraph d3) {
+			Pair<Unit,AccessGraph> d3) {
 		IPerMethodSummary perMethodSummary = methodToStartFact.get(m);
 		if(perMethodSummary == null)
 			return Collections.emptySet();
