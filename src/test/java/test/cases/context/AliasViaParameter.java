@@ -5,7 +5,7 @@ import org.junit.Test;
 import test.core.selfrunning.AbstractBoomerangTest;
 import test.core.selfrunning.AllocatedObject;
 
-public class AliasViaParameter extends AbstractBoomerangTest{
+public class AliasViaParameter extends AbstractBoomerangTest {
 	@Test
 	public void aliasViaParameter(){
 		A a = new A();
@@ -22,7 +22,7 @@ public class AliasViaParameter extends AbstractBoomerangTest{
 		AllocatedObject query = a.field;
 		queryFor(query);
 	}
-	
+
 	private void passThrough(A a, A b) {
 		setAndLoadFieldOnAlias(a,b);		
 	}
@@ -30,7 +30,7 @@ public class AliasViaParameter extends AbstractBoomerangTest{
 		b.field = new AllocatedObject(){};
 	}
 
-	private static class A{
+	private static class A {
 		AllocatedObject field;
 	}
 }

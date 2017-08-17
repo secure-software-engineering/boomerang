@@ -382,7 +382,7 @@ public class AbstractBoomerangTest {
 	 * Code.
 	 */
 
-	protected void queryFor(Object variable) {
+	public static void queryFor(Object variable) {
 
 	}
 
