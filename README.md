@@ -1,3 +1,5 @@
+A new and more efficient version of Boomweng can be found [here](https://github.com/CROSSINGTUD/WPDS).
+
 # Boomerang
 
 Boomerang is a demand-driven context and flow-sensitive pointer analysis for Java. It is built on top of [Soot](https://sable.github.io/soot/) and [Heros](https://github.com/Sable/heros).
