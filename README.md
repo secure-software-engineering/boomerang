@@ -1,4 +1,4 @@
-A new and more efficient version of Boomweng can be found [here](https://github.com/CROSSINGTUD/WPDS).
+A new and more efficient version of Boomerang can be found [here](https://github.com/CROSSINGTUD/WPDS).
 
 # Boomerang
 
