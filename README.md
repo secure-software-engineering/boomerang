@@ -1,3 +1,4 @@
+**This version is no longer maintained**
 A new and more efficient version of Boomerang can be found [here](https://github.com/CROSSINGTUD/WPDS).
 
 # Boomerang
